@@ -57,7 +57,7 @@ flowchart TB
 ```
 ### 1.2 Sobre os pacotes
 #### 1.2.1 Cliente Web
-   O cliente web é um SPA (Single Page Application) e deverá ser escroto usando a biblioteca react.js com componentização. Ele roda no navegador e se comunica com o servidor via HTTP/JSON via express.
+   O cliente web é um SPA (Single Page Application) e deverá ser escrito usando a biblioteca react.js com componentização. Ele roda no navegador e se comunica com o servidor via HTTP/JSON via express.
    - **páginas**: telas e navegação entre elas.
    - **componentes**: pedaços de interface reutilizados, como formulários, listas e filtros.
    - **serviços_api**: dispara as requisições HTTP para o servidor e trata as respostas.
