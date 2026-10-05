@@ -18,7 +18,7 @@ flowchart TB
       servicos_api["<b>servicos_api</b><br>dispara as requisições (fetch)"]
    end
 
-   subgraph ServidorAplicacao ["&laquo;system&raquo; Servidor de Aplicação — um único processo Node.js"]
+   subgraph ServidorAplicacao ["&laquo;system&raquo; Servidor de Aplicação"]
 
       subgraph Apresentacao ["Camada de Apresentação"]
          routes["<b>routes</b><br>Express — método + caminho"]
@@ -43,7 +43,6 @@ flowchart TB
       subgraph postgres ["PostgreSQL"]
          sgbd["<b>sgbd</b><br>&laquo;system&raquo; SGBD relacional"]
       end
-      note1["Seta tracejada com ponta aberta = dependência.<br>Cada seta desce exatamente um nível: nenhuma camada<br>pula outra, e não há ciclo de dependência."]
    end
 
 %% Relacionamentos (Conectando os nós internos diretos)
@@ -57,10 +56,10 @@ flowchart TB
 ```
 ### 1.2 Sobre os pacotes
 #### 1.2.1 Cliente Web
-   O cliente web é um SPA (Single Page Application) e deverá ser escroto usando a biblioteca react.js com componentização. Ele roda no navegador e se comunica com o servidor via HTTP/JSON via express.
+   O cliente web é um SPA (Single Page Application) e deverá ser escrito usando a biblioteca react.js para componentização. Ele roda no navegador e se comunica com o servidor via HTTP/JSON via express.
    - **páginas**: telas e navegação entre elas.
    - **componentes**: pedaços de interface reutilizados, como formulários, listas e filtros.
-   - **serviços_api**: dispara as requisições HTTP para o servidor e trata as respostas.
+   - **serviços_api**: dispara as requisições HTTP para o servidor e trata as respostas, disponibilizando os dados para os componentes.
 
 #### 1.2.2 Servidor de Aplicação
    O servidor de aplicação é um processo Node.js que expõe uma API RESTful e implementa a lógica de negócio.
