@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: extensao_db
+    environment:
+      POSTGRES_USER: extensao
+      POSTGRES_PASSWORD: extensao
+      POSTGRES_DB: extensao
+    ports:
+      # 5433 no host para nao conflitar com um PostgreSQL ja instalado na maquina
+      - "5433:5432"
+    volumes:
+      # os scripts rodam em ordem alfabetica na primeira subida do container
+      - ./db:/docker-entrypoint-initdb.d:ro
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U extensao -d extensao"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
