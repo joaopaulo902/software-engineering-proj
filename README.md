@@ -3,8 +3,10 @@
 INF01127 — Engenharia de Software — Etapa 2
 Implementação do caso de uso **C04 — Candidatar-se à Vaga de Extensão**.
 
-## Arquitetura do Projeto
-### Cada camada conhece apenas a camada imediatamente abaixo
+## 1. Arquitetura do Projeto
+### 1.1 Sobre a Arquitetura
+
+Arquitetura do projeto segue o padrão Cliente-Servidor/Camadas, com o seguinte diagrama de pacotes:
 > **Diagrama de pacotes** · Conexão entre projetos de extensão e alunos do INF · Etapa 2
 
 ```mermaid
@@ -51,8 +53,32 @@ flowchart TB
    Persistencia -.- |"&laquo;access&raquo;"| Apoio
 
 %% Estilização
+   style Dominio fill:#7a3b3b,stroke:#333,stroke-width:1px
 ```
-   style Dominio fill:#f0f8ff,stroke:#333,stroke-width:1px
+### 1.2 Sobre os pacotes
+#### 1.2.1 Cliente Web
+   O cliente web é um SPA (Single Page Application) e deverá ser escroto usando a biblioteca react.js com componentização. Ele roda no navegador e se comunica com o servidor via HTTP/JSON via express.
+   - **páginas**: telas e navegação entre elas.
+   - **componentes**: pedaços de interface reutilizados, como formulários, listas e filtros.
+   - **serviços_api**: dispara as requisições HTTP para o servidor e trata as respostas.
+
+#### 1.2.2 Servidor de Aplicação
+   O servidor de aplicação é um processo Node.js que expõe uma API RESTful e implementa a lógica de negócio.
+   - **Camada de Apresentação**: traduz as requisições HTTP para chamadas ao domínio.
+     - **routes**: define os endpoints da API e associa métodos HTTP a funções.
+     - **middlewares**: funções intermediárias para autenticação, logging e tratamento de erros.
+     - **controllers**: recebem as requisições, validam dados e chamam os serviços do domínio.
+   - **Camada de Domínio**: contém as regras de negócio e o controle da transação.
+     - **Serviços**: implementam as regras de negócio e coordenam a transação entre entidades e repositórios.
+     - **Entidades**: representam os objetos do domínio (Usuário, Projeto, Vaga, Candidatura) com seus comportamentos.
+   - **Camada de Persistência**: gerencia o acesso ao banco de dados.
+     - **Interfaces**: definem a fachada que o domínio utiliza para acessar os repositórios.
+     - **Repositórios**: implementam a persistência dos dados, contendo o SQL necessário.
+     - **infra_db**: gerencia conexões, migrations e seed do banco.
+#### 1.2.3 Camada de Apoio de Sistema
+   - **PostgreSQL**: SGBD relacional utilizado para armazenar os dados do sistema.
+
+**Nota**: As setas tracejadas com ponta aberta representam dependências entre os pacotes, garantindo que cada camada só interaja com a camada imediatamente inferior.
 ## O que está implementado
 
 | Caso de uso                                | Situação                                                |
