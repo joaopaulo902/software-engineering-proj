@@ -44,15 +44,15 @@ flowchart TB
       note1["Seta tracejada com ponta aberta = dependência.<br>Cada seta desce exatamente um nível: nenhuma camada<br>pula outra, e não há ciclo de dependência."]
    end
 
-%% Relacionamentos
-   ClienteWeb -.- |"&laquo;use&raquo; — conector HTTP / JSON"| ServidorAplicacao
+%% Relacionamentos (Conectando os nós internos diretos)
+   servicos_api -.- |"&laquo;use&raquo; — conector HTTP / JSON"| routes
    Apresentacao -.- |"&laquo;use&raquo;"| Dominio
    Dominio -.- |"&laquo;use&raquo; — somente pela fachada (passo 6)"| Persistencia
    Persistencia -.- |"&laquo;access&raquo;"| Apoio
 
 %% Estilização
+```
    style Dominio fill:#f0f8ff,stroke:#333,stroke-width:1px
-   ```
 ## O que está implementado
 
 | Caso de uso                                | Situação                                                |
