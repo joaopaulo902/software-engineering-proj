@@ -9,51 +9,8 @@ Implementação do caso de uso **C04 — Candidatar-se à Vaga de Extensão**.
 Arquitetura do projeto segue o padrão Cliente-Servidor/Camadas, com o seguinte diagrama de pacotes:
 > **Diagrama de pacotes** · Conexão entre projetos de extensão e alunos do INF · Etapa 2
 
-```mermaid
-flowchart TB
+![Descrição do Diagrama](./diagrams/package.svg)
 
-   subgraph ClienteWeb ["&laquo;system&raquo; Cliente Web — executa no navegador"]
-      paginas["<b>paginas</b><br>telas e navegação"]
-      componentes["<b>componentes</b><br>formulários, listas, filtros"]
-      servicos_api["<b>servicos_api</b><br>dispara as requisições (fetch)"]
-   end
-
-   subgraph ServidorAplicacao ["&laquo;system&raquo; Servidor de Aplicação"]
-
-      subgraph Apresentacao ["Camada de Apresentação"]
-         routes["<b>routes</b><br>Express — método + caminho"]
-         middlewares["<b>middlewares</b><br>login, log, tratamento de erro"]
-         controllers["<b>controllers</b><br>traduz HTTP para o domínio"]
-      end
-
-      subgraph Dominio ["Camada de Domínio"]
-         Servicos["<b>Serviços</b><br>regras de negócio e controle da transação<br>Vaga · Candidatura · Usuario · Relatorio"]
-         Entidades["<b>Entidades</b><br>Usuario · Projeto · Vaga · Candidatura<br>com seus comportamentos"]
-      end
-
-      subgraph Persistencia ["Camada de Persistência"]
-         Interfaces["<b>Interfaces</b><br>a fachada da camada"]
-         Repositorios["<b>Repositórios</b><br>único lugar com SQL"]
-         infra_db["<b>infra_db</b><br>conexões, migrations, seed"]
-      end
-
-   end
-
-   subgraph Apoio ["Camada de Apoio de Sistema"]
-      subgraph postgres ["PostgreSQL"]
-         sgbd["<b>sgbd</b><br>&laquo;system&raquo; SGBD relacional"]
-      end
-   end
-
-%% Relacionamentos (Conectando os nós internos diretos)
-   servicos_api -.- |"&laquo;use&raquo; — conector HTTP / JSON"| routes
-   Apresentacao -.- |"&laquo;use&raquo;"| Dominio
-   Dominio -.- |"&laquo;use&raquo; — somente pela fachada (passo 6)"| Persistencia
-   Persistencia -.- |"&laquo;access&raquo;"| Apoio
-
-%% Estilização
-   style Dominio fill:#7a3b3b,stroke:#333,stroke-width:1px
-```
 ### 1.2 Sobre os pacotes
 #### 1.2.1 Cliente Web
    O cliente web é um SPA (Single Page Application) e deverá ser escrito usando a biblioteca react.js para componentização. Ele roda no navegador e se comunica com o servidor via HTTP/JSON via express.
@@ -145,9 +102,7 @@ transação. Nenhum servidor HTTP sobe: é possível justamente porque a regra d
 negócio não conhece HTTP nem SQL.
 
 
-## estrutura do projeto
-
-Cada pasta é um pacote do diagrama de pacotes.
+## Estrutura do projeto
 
 ```
 seu-projeto/
@@ -175,7 +130,7 @@ seu-projeto/
     └── main.ts                # Raiz de composição: monta tudo e injeta
 ```
 
-### Regras que o código segue
+### Regras do código
 
 - Nenhum SQL fora de `persistencia/repositorios`.
 - Nenhuma regra de negócio em `controllers`.
@@ -200,3 +155,12 @@ Para o slide de simplificações exigido pelo enunciado:
 5. **Busca por texto e área apenas.** Os demais filtros do C01 — turno,
    modalidade, carga horária — ficam para a Etapa 3.
 6. **Sem paginação.** O volume de vagas da demonstração não exige.
+
+Ferramentas usadas:
+- Node.js
+- TypeScript
+- Express
+- PostgreSQL
+Para documentação:
+- https://mermaid.ai/app/projects/ae5429b6-03b8-44b0-a4e2-04aa33d0683e/diagrams/7b982225-0751-46b7-9337-c0780e933203/version/v0.1/edit
+- https://lucid.app/lucidspark/96d1ee67-21e5-458b-8fa6-18d5327fa691/edit?viewport_loc=-12773%2C-6611%2C25142%2C11949%2C0_0&invitationId=inv_6d878542-89f8-4cd1-9a66-65c7fd7c1fb5
