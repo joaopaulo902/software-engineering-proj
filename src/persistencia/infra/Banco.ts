@@ -1,7 +1,13 @@
-import { Pool } from 'pg';
+import { Pool, types } from 'pg';
 import { IUnidadeDeTrabalho, Transacao } from '../interfaces/IUnidadeDeTrabalho';
 
 export const URL_PADRAO = 'postgres://extensao:extensao@localhost:5433/extensao';
+
+// O `pg` devolve colunas DATE como meia-noite LOCAL; o PGlite, como meia-noite
+// UTC. Pedimos o texto cru ("AAAA-MM-DD") e os repositorios convertem, para os
+// dois bancos seguirem a mesma convencao (ver dominio/calendario.ts).
+// 1082 e o codigo interno do tipo DATE no PostgreSQL.
+types.setTypeParser(1082, (texto: string) => texto);
 
 export function criarPool(): Pool {
   return new Pool({

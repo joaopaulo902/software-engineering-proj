@@ -83,3 +83,91 @@ export function linhaDeCandidatura(item) {
 export function aviso(texto, tipo = 'info') {
   return `<p class="aviso aviso--${tipo}">${escapar(texto)}</p>`;
 }
+
+/** Hoje no formato do campo de data ("AAAA-MM-DD"), pelo relogio do navegador. */
+function hojeNoFormatoDoCampo() {
+  const d = new Date();
+  const doisDigitos = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${doisDigitos(d.getMonth() + 1)}-${doisDigitos(d.getDate())}`;
+}
+
+/**
+ * Formulario do C06.
+ *
+ * `novalidate` desliga os baloes de validacao do navegador: quem valida e o
+ * servidor, e a resposta dele aparece no mesmo lugar e no mesmo estilo dos
+ * erros do C04. Os atributos min/max continuam servindo de dica para o
+ * calendario e para os campos numericos.
+ */
+export function formularioDeVaga(projetos) {
+  return `
+    <form class="card formulario" id="formVaga" novalidate>
+      <div>
+        <h2>Publicar vaga</h2>
+        <p class="formulario__nota">
+          A vaga aparece em <strong>Vagas abertas</strong> assim que for publicada
+          e passa a aceitar candidaturas até a data de encerramento.
+        </p>
+      </div>
+
+      <div class="campo">
+        <label for="projetoId">Projeto</label>
+        <select id="projetoId" name="projetoId">
+          ${projetos
+            .map((p) => `<option value="${p.id}">${escapar(p.nome)} — ${escapar(p.area)}</option>`)
+            .join('')}
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="titulo">Título da vaga</label>
+        <input type="text" id="titulo" name="titulo" maxlength="100"
+               placeholder="Ex.: Monitoria de Introdução à Programação">
+      </div>
+
+      <div class="campo">
+        <label for="requisitos">Requisitos e critérios</label>
+        <textarea id="requisitos" name="requisitos" rows="3" maxlength="500"
+                  placeholder="Conhecimentos esperados, perfil, disponibilidade"></textarea>
+      </div>
+
+      <div class="campos">
+        <div class="campo">
+          <label for="cargaHoraria">Horas por semana</label>
+          <input type="number" id="cargaHoraria" name="cargaHoraria" min="1" max="40" value="6">
+        </div>
+        <div class="campo">
+          <label for="turno">Turno</label>
+          <select id="turno" name="turno">
+            <option>Manhã</option>
+            <option>Tarde</option>
+            <option>Noite</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="modalidade">Modalidade</label>
+          <select id="modalidade" name="modalidade">
+            <option>Presencial</option>
+            <option>Remoto</option>
+            <option>Híbrido</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="semestreMinimo">Semestre mínimo</label>
+          <input type="number" id="semestreMinimo" name="semestreMinimo" min="1" max="20" value="1">
+        </div>
+        <div class="campo">
+          <label for="vagasTotais">Posições</label>
+          <input type="number" id="vagasTotais" name="vagasTotais" min="1" max="100" value="1">
+        </div>
+        <div class="campo">
+          <label for="dataEncerramento">Inscrições até</label>
+          <input type="date" id="dataEncerramento" name="dataEncerramento"
+                 min="${hojeNoFormatoDoCampo()}">
+        </div>
+      </div>
+
+      <button class="botao botao--primario" type="submit">Publicar vaga</button>
+      <div class="retorno" id="retornoPublicacao"></div>
+    </form>`;
+}

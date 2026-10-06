@@ -35,7 +35,7 @@ body {
 .entrada__nota { margin: 0 0 20px; color: var(--suave); font-size: 13.5px; }
 .entrada label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
 
-select, input[type="search"], textarea {
+select, input[type="search"], input[type="text"], input[type="number"], input[type="date"], textarea {
   width: 100%; padding: 10px 12px; font: inherit; font-size: 14px;
   border: 1px solid var(--borda); border-radius: 8px; background: #fff; color: var(--tinta);
 }
@@ -125,5 +125,21 @@ select:focus, input:focus, textarea:focus { outline: 2px solid var(--azul); outl
 
 .retorno:empty { display: none; }
 .retorno { margin-top: 12px; }
+
+/* --------------------------------------------------------- formulario */
+.formulario { display: grid; gap: 16px; }
+.formulario h2 { margin: 0; font-size: 19px; }
+.formulario__nota { margin: 4px 0 0; color: var(--suave); font-size: 13.5px; }
+.formulario .botao { justify-self: start; }
+.formulario .retorno { margin-top: 0; display: grid; gap: 8px; justify-items: start; }
+.formulario .retorno:empty { display: none; }
+
+.campo { display: grid; gap: 6px; }
+.campo label { font-size: 13px; font-weight: 600; }
+
+.campos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px 16px; }
+@media (max-width: 640px) {
+  .campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 
 .carregando { color: var(--suave); font-size: 14px; }

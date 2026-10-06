@@ -2,7 +2,13 @@
 // As telas do sistema e a navegacao entre elas.
 
 import { api } from './servicos-api.js';
-import { cardDeVaga, linhaDeCandidatura, aviso, escapar } from './componentes.js';
+import {
+  cardDeVaga,
+  linhaDeCandidatura,
+  formularioDeVaga,
+  aviso,
+  escapar
+} from './componentes.js';
 
 const tela = document.getElementById('tela');
 let usuario = null;
@@ -71,6 +77,13 @@ async function telaPrincipal(abaAtiva = 'vagas') {
       <button class="aba ${abaAtiva === 'minhas' ? 'aba--ativa' : ''}" data-aba="minhas">
         Minhas candidaturas
       </button>
+      ${
+        usuario.papel === 'COORDENADOR'
+          ? `<button class="aba ${abaAtiva === 'publicar' ? 'aba--ativa' : ''}" data-aba="publicar">
+               Publicar vaga
+             </button>`
+          : ''
+      }
     </nav>
 
     <div id="conteudo"></div>`;
@@ -86,6 +99,7 @@ async function telaPrincipal(abaAtiva = 'vagas') {
   });
 
   if (abaAtiva === 'vagas') await painelDeVagas();
+  else if (abaAtiva === 'publicar') await painelDePublicacao();
   else await painelDeCandidaturas();
 }
 
@@ -182,6 +196,80 @@ async function painelDeCandidaturas() {
       : aviso('Você ainda não se candidatou a nenhuma vaga.', 'info');
   } catch (erro) {
     conteudo.innerHTML = aviso(erro.message, 'erro');
+  }
+}
+
+// -------------------------------------------------------------------- C06
+async function painelDePublicacao() {
+  const conteudo = document.getElementById('conteudo');
+  conteudo.innerHTML = '<p class="carregando">Carregando…</p>';
+
+  let projetos;
+  try {
+    projetos = await api.meusProjetos();
+  } catch (erro) {
+    conteudo.innerHTML = aviso(erro.message, 'erro');
+    return;
+  }
+
+  // Pre-condicao do C06: existir projeto cadastrado pela Comissao de Extensao.
+  if (projetos.length === 0) {
+    conteudo.innerHTML = aviso(
+      'Você não coordena nenhum projeto cadastrado. A Comissão de Extensão ' +
+        'precisa cadastrar o projeto antes que vagas possam ser publicadas nele.',
+      'info'
+    );
+    return;
+  }
+
+  conteudo.innerHTML = formularioDeVaga(projetos);
+
+  const form = document.getElementById('formVaga');
+  form.addEventListener('submit', (evento) => {
+    evento.preventDefault();
+    publicarVaga(form);
+  });
+}
+
+/** C06 - Publicar Vaga de Projeto */
+async function publicarVaga(form) {
+  const botao = form.querySelector('button[type="submit"]');
+  const retorno = document.getElementById('retornoPublicacao');
+  const campos = new FormData(form);
+
+  botao.disabled = true;
+  botao.textContent = 'Publicando…';
+  retorno.innerHTML = '';
+
+  try {
+    const vaga = await api.publicarVaga({
+      projetoId: Number(campos.get('projetoId')),
+      titulo: campos.get('titulo'),
+      requisitos: campos.get('requisitos'),
+      cargaHoraria: Number(campos.get('cargaHoraria')),
+      turno: campos.get('turno'),
+      modalidade: campos.get('modalidade'),
+      semestreMinimo: Number(campos.get('semestreMinimo')),
+      vagasTotais: Number(campos.get('vagasTotais')),
+      dataEncerramento: campos.get('dataEncerramento')
+    });
+
+    // Pos-condicao do C06: a vaga ja esta no feed e aceita candidaturas.
+    retorno.innerHTML =
+      aviso(
+        `Vaga "${vaga.titulo}" publicada com ${vaga.vagasTotais} ` +
+          `${vaga.vagasTotais === 1 ? 'posição' : 'posições'}. ` +
+          'Ela já aparece em Vagas abertas e está aceitando candidaturas.',
+        'sucesso'
+      ) + '<button class="botao botao--texto" type="button" id="btVerFeed">Ver em Vagas abertas</button>';
+
+    document.getElementById('btVerFeed').addEventListener('click', () => telaPrincipal('vagas'));
+    form.reset();
+  } catch (erro) {
+    retorno.innerHTML = aviso(erro.message, 'erro');
+  } finally {
+    botao.disabled = false;
+    botao.textContent = 'Publicar vaga';
   }
 }
 

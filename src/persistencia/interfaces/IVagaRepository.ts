@@ -1,4 +1,4 @@
-import { Vaga } from '../../dominio/entidades/Vaga';
+import { DadosNovaVaga, Vaga } from '../../dominio/entidades/Vaga';
 import { Transacao } from './IUnidadeDeTrabalho';
 
 /** Vaga acompanhada dos dados do projeto, para as telas de listagem. */
@@ -26,4 +26,7 @@ export interface IVagaRepository {
 
   /** Desconta uma posicao da vaga. So faz sentido dentro de uma transacao. */
   reservarUmaPosicao(id: number, tx: Transacao): Promise<void>;
+
+  /** Grava uma vaga nova com todas as posicoes livres (C06). */
+  inserir(dados: DadosNovaVaga, tx: Transacao): Promise<Vaga>;
 }
