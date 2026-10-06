@@ -1,0 +1,50 @@
+flowchart LR
+
+    subgraph ClienteWeb ["&laquo;system&raquo; Cliente Web — executa no navegador"]
+        direction TB
+        paginas["<b>paginas</b><br>telas e navegação"]
+        componentes["<b>componentes</b><br>formulários, listas, filtros"]
+        servicos_api["<b>servicos_api</b><br>dispara as requisições (fetch)"]
+    end
+
+    subgraph ServidorAplicacao ["&laquo;system&raquo; Servidor de Aplicação — um único processo Node.js"]
+        direction TB
+
+        subgraph Apresentacao ["Camada de Apresentação"]
+            direction LR
+            routes["<b>routes</b><br>Express — método + caminho"]
+            middlewares["<b>middlewares</b><br>login, log, tratamento de erro"]
+            controllers["<b>controllers</b><br>traduz HTTP para o domínio"]
+        end
+
+        subgraph Dominio ["Camada de Domínio"]
+            direction LR
+            Servicos["<b>Serviços</b><br>regras de negócio e controle da transação<br>Vaga · Candidatura · Usuario · Relatorio"]
+            Entidades["<b>Entidades</b><br>Usuario · Projeto · Vaga · Candidatura<br>com seus comportamentos"]
+        end
+
+        subgraph Persistencia ["Camada de Persistência"]
+            direction LR
+            Interfaces["<b>Interfaces</b><br>a fachada da camada"]
+            Repositorios["<b>Repositórios</b><br>único lugar com SQL"]
+            infra_db["<b>infra_db</b><br>conexões, migrations, seed"]
+        end
+
+        Apresentacao -.-> |"&laquo;use&raquo;"| Dominio
+        Dominio -.-> |"&laquo;use&raquo; — somente pela fachada (passo 6)"| Persistencia
+    end
+
+    subgraph Apoio ["Camada de Apoio de Sistema"]
+        direction TB
+        subgraph postgres ["PostgreSQL"]
+            sgbd["<b>sgbd</b><br>&laquo;system&raquo; SGBD relacional"]
+        end
+        note1["Seta tracejada com ponta aberta = dependência.<br>Cada seta desce exatamente um nível: nenhuma camada<br>pula outra, e não há ciclo de dependência."]
+    end
+
+%% Relacionamentos (Conectando os nós e camadas externas)
+    servicos_api -.-> |"&laquo;use&raquo; — conector HTTP / JSON"| routes
+    Persistencia -.-> |"&laquo;access&raquo;"| Apoio
+
+%% Estilização (Ajustado o contraste para facilitar a leitura nos slides)
+    style Dominio fill:#2b4c7e,color:#fff,stroke:#333,stroke-width:1px
