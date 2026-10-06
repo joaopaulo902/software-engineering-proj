@@ -25,6 +25,10 @@ export function criarRotas(
   // C01 - consultar e filtrar vagas
   rotas.get('/vagas', exigirLogin, vaga.listar);
 
+  // C06 - publicar vaga de projeto
+  rotas.get('/projetos/meus', exigirLogin, vaga.listarProjetosParaPublicar);
+  rotas.post('/vagas', exigirLogin, vaga.publicar);
+
   // C04 - candidatar-se / C05 - acompanhar
   rotas.post('/candidaturas', exigirLogin, candidatura.criar);
   rotas.get('/candidaturas/minhas', exigirLogin, candidatura.listarMinhas);

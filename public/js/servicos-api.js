@@ -49,5 +49,11 @@ export const api = {
     }),
 
   // C05
-  minhasCandidaturas: () => pedir('/candidaturas/minhas')
+  minhasCandidaturas: () => pedir('/candidaturas/minhas'),
+
+  // C06
+  meusProjetos: () => pedir('/projetos/meus'),
+
+  publicarVaga: (dados) =>
+    pedir('/vagas', { method: 'POST', body: JSON.stringify(dados) })
 };

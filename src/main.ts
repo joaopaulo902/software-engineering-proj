@@ -9,6 +9,7 @@ import { IUnidadeDeTrabalho, Transacao } from './persistencia/interfaces/IUnidad
 import { VagaRepository } from './persistencia/repositorios/VagaRepository';
 import { CandidaturaRepository } from './persistencia/repositorios/CandidaturaRepository';
 import { UsuarioRepository } from './persistencia/repositorios/UsuarioRepository';
+import { ProjetoRepository } from './persistencia/repositorios/ProjetoRepository';
 
 // dominio
 import { CandidaturaService } from './dominio/servicos/CandidaturaService';
@@ -58,6 +59,7 @@ async function principal(): Promise<void> {
   const vagaRepository = new VagaRepository(executor);
   const candidaturaRepository = new CandidaturaRepository(executor);
   const usuarioRepository = new UsuarioRepository(executor);
+  const projetoRepository = new ProjetoRepository(executor);
 
   // --- camada de dominio -------------------------------------------------
   const candidaturaService = new CandidaturaService(
@@ -66,7 +68,12 @@ async function principal(): Promise<void> {
     vagaRepository,
     usuarioRepository
   );
-  const vagaService = new VagaService(vagaRepository);
+  const vagaService = new VagaService(
+    unidadeDeTrabalho,
+    vagaRepository,
+    projetoRepository,
+    usuarioRepository
+  );
 
   // --- camada de apresentacao -------------------------------------------
   const sessaoController = new SessaoController(usuarioRepository);

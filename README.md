@@ -1,7 +1,8 @@
 # Conexão entre projetos de extensão e alunos do INF
 
 INF01127 — Engenharia de Software — Etapa 2
-Implementação do caso de uso **C04 — Candidatar-se à Vaga de Extensão**.
+Implementação dos casos de uso **C04 — Candidatar-se à Vaga de Extensão** e
+**C06 — Publicar Vaga de Projeto**.
 
 ## 1. Arquitetura do Projeto
 ### 1.1 Sobre a Arquitetura
@@ -86,6 +87,7 @@ flowchart TB
 | **C04 — Candidatar-se à Vaga de Extensão** | Completo: fluxo básico, fluxos alternativos e transação |
 | C01 — Consultar e Filtrar Vagas            | Busca textual (ignora acento) e filtro por área         |
 | C05 — Acompanhar Status das Candidaturas   | Listagem das candidaturas do estudante                  |
+| **C06 — Publicar Vaga de Projeto**         | Completo: fluxo básico, fluxos alternativos e transação |
 
 C01 e C05 entraram porque o C04 não se demonstra sozinho: é preciso escolher
 uma vaga antes e ver o resultado depois.
@@ -140,10 +142,10 @@ npm run dev
 npm run verificar
 ```
 
-Roda o `CandidaturaService` de verdade contra um banco em memória e confere as
-14 regras do C04 — fluxo básico, cada fluxo alternativo e a atomicidade da
-transação. Nenhum servidor HTTP sobe: é possível justamente porque a regra de
-negócio não conhece HTTP nem SQL.
+Roda os serviços de domínio de verdade contra um banco em memória e confere as
+33 regras do C04, C05 e C06 — fluxo básico, cada fluxo alternativo e a
+atomicidade das transações. Nenhum servidor HTTP sobe: é possível justamente
+porque a regra de negócio não conhece HTTP nem SQL.
 
 
 ## estrutura do projeto
@@ -166,8 +168,9 @@ seu-projeto/
     │   ├── middlewares/       # ExigirLogin, tratadorDeErros
     │   └── routes/            # Tabela de rotas (Express)
     ├── dominio/               # Camada de Domínio
-    │   ├── entidades/         # Usuario, Vaga, Candidatura (com comportamento)
+    │   ├── entidades/         # Usuario, Projeto, Vaga, Candidatura (com comportamento)
     │   ├── servicos/          # CandidaturaService, VagaService (regras + transação)
+    │   ├── calendario.ts      # Convenção única para datas de prazo
     │   └── erros.ts           # Erros de domínio, sem HTTP
     ├── persistencia/          # Camada de Persistência
     │   ├── infra/             # Conexão, transação, banco em memória
@@ -196,8 +199,9 @@ Para o slide de simplificações exigido pelo enunciado:
 3. **Avaliação da candidatura (C11) e confirmação de ingresso (C07) fora
    desta etapa.** A candidatura nasce em *Em análise* e permanece assim; a
    máquina de estados completa já está no esquema do banco.
-4. **Cadastro de projetos e vagas pelo sistema (C06, C09) não implementado.**
-   Os dados vêm do seed.
+4. **Cadastro de projetos pelo sistema (C09) não implementado.** Os projetos
+   vêm do seed, como se a Comissão de Extensão já os tivesse cadastrado — que
+   é a pré-condição do C06. As vagas, essas sim, são publicadas pelo C06.
 5. **Busca por texto e área apenas.** Os demais filtros do C01 — turno,
    modalidade, carga horária — ficam para a Etapa 3.
 6. **Sem paginação.** O volume de vagas da demonstração não exige.

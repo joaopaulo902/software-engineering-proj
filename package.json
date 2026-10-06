@@ -2,7 +2,7 @@
   "name": "candidatura-extensao",
   "version": "0.1.0",
   "private": true,
-  "description": "INF01127 - Etapa 2 - Caso de uso C04: Candidatar-se a Vaga de Extensao",
+  "description": "INF01127 - Etapa 2 - Casos de uso C04 (Candidatar-se a Vaga de Extensao) e C06 (Publicar Vaga de Projeto)",
   "scripts": {
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
