@@ -1,9 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { ProjetoService } from '../../dominio/servicos/ProjetoService';
 import { Projeto } from '../../dominio/entidades/Projeto';
-import { VagaComProjeto } from '../../persistencia/interfaces/IVagaRepository';
-import { AtividadeComProjeto } from '../../persistencia/interfaces/IAtividadeRepository';
 import { lerId, lerLista, lerTexto } from '../parametros';
+import { apresentarAtividade, apresentarVagaComProjeto } from '../apresentadores';
 
 export class ProjetoController {
   constructor(private readonly servico: ProjetoService) {}
@@ -41,7 +40,7 @@ export class ProjetoController {
       res.json({
         ...apresentarProjeto(detalhe.projeto),
         coordenadorNome: detalhe.coordenadorNome,
-        vagas: detalhe.vagas.map(apresentarVaga),
+        vagas: detalhe.vagas.map(apresentarVagaComProjeto),
         atividades: detalhe.atividades.map(apresentarAtividade)
       });
     } catch (erro) {
@@ -146,40 +145,5 @@ function apresentarProjeto(projeto: Projeto) {
     coordenadorId: projeto.coordenadorId,
     coordenadorCadastrado: projeto.coordenadorCadastrado,
     incorporado: projeto.estaIncorporado()
-  };
-}
-
-/** Mesmo formato do card de vaga do GET /api/vagas, para o front reaproveitar. */
-function apresentarVaga(item: VagaComProjeto) {
-  return {
-    id: item.vaga.id,
-    titulo: item.vaga.titulo,
-    requisitos: item.vaga.requisitos,
-    cargaHoraria: item.vaga.cargaHoraria,
-    turno: item.vaga.turno,
-    modalidade: item.vaga.modalidade,
-    semestreMinimo: item.vaga.semestreMinimo,
-    vagasRestantes: item.vaga.vagasRestantes,
-    vagasTotais: item.vaga.vagasTotais,
-    dataEncerramento: item.vaga.dataEncerramento,
-    aberta: item.vaga.estaAberta(),
-    projetoNome: item.projetoNome,
-    projetoArea: item.projetoArea,
-    coordenadorNome: item.coordenadorNome
-  };
-}
-
-export function apresentarAtividade(item: AtividadeComProjeto) {
-  return {
-    id: item.atividade.id,
-    projetoId: item.atividade.projetoId,
-    projetoNome: item.projetoNome,
-    projetoArea: item.projetoArea,
-    autorId: item.atividade.autorId,
-    autorNome: item.autorNome,
-    titulo: item.atividade.titulo,
-    descricao: item.atividade.descricao,
-    fotoUrl: item.atividade.fotoUrl,
-    publicadaEm: item.atividade.publicadaEm
   };
 }

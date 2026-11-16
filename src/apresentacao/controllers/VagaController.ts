@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { VagaService } from '../../dominio/servicos/VagaService';
 import { DadosNovaVaga, Vaga } from '../../dominio/entidades/Vaga';
 import { lerDia } from '../../dominio/calendario';
+import { apresentarVagaComProjeto } from '../apresentadores';
 
 const TURNOS = ['Manhã', 'Tarde', 'Noite'];
 const MODALIDADES = ['Presencial', 'Remoto', 'Híbrido'];
@@ -17,24 +18,7 @@ export class VagaController {
 
       const lista = await this.servico.listarAbertas(termo, area);
 
-      res.json(
-        lista.map((item) => ({
-          id: item.vaga.id,
-          titulo: item.vaga.titulo,
-          requisitos: item.vaga.requisitos,
-          cargaHoraria: item.vaga.cargaHoraria,
-          turno: item.vaga.turno,
-          modalidade: item.vaga.modalidade,
-          semestreMinimo: item.vaga.semestreMinimo,
-          vagasRestantes: item.vaga.vagasRestantes,
-          vagasTotais: item.vaga.vagasTotais,
-          dataEncerramento: item.vaga.dataEncerramento,
-          aberta: item.vaga.estaAberta(),
-          projetoNome: item.projetoNome,
-          projetoArea: item.projetoArea,
-          coordenadorNome: item.coordenadorNome
-        }))
-      );
+      res.json(lista.map(apresentarVagaComProjeto));
     } catch (erro) {
       next(erro);
     }

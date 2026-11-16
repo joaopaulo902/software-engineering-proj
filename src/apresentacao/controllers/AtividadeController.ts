@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { AtividadeService } from '../../dominio/servicos/AtividadeService';
 import { Atividade, DadosAtividade } from '../../dominio/entidades/Atividade';
 import { lerId, lerLista, lerTexto } from '../parametros';
-import { apresentarAtividade } from './ProjetoController';
+import { apresentarAtividade } from '../apresentadores';
 
 export class AtividadeController {
   constructor(private readonly servico: AtividadeService) {}
