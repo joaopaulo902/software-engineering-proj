@@ -1,0 +1,142 @@
+---
+title: "Serviços: associações com as interfaces de persistência e eventos"
+config:
+  layout: elk
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+direction LR
+
+class VagaService {
+  <<control>>
+}
+class CandidaturaService {
+  <<control>
+}
+class ProjetoService {
+  <<control>>
+}
+class AtividadeService {
+  <<control>>
+}
+class AvaliacaoService {
+  <<control>>
+}
+class UsuarioService {
+  <<control>>
+}
+class NotificacaoService {
+  <<control>>
+}
+class DenunciaService {
+  <<control>>
+}
+class ModeracaoService {
+  <<control>>
+}
+class IncorporacaoService {
+  <<control>>
+}
+class BaseInstitucionalService {
+  <<control>>
+}
+class IAtividadeRepository {
+  <<interface>>
+}
+class IAvaliacaoRepository {
+  <<interface>>
+}
+class IBanimentoRepository {
+  <<interface>>
+}
+class IBaseInstitucionalRepository {
+  <<interface>>
+}
+class ICandidaturaRepository {
+  <<interface>>
+}
+class IDenunciaRepository {
+  <<interface>>
+}
+class IFonteInstitucional {
+  <<interface>>
+}
+class INotificacaoRepository {
+  <<interface>>
+}
+class IParticipacaoRepository {
+  <<interface>>
+}
+class IPedidoIncorporacaoRepository {
+  <<interface>>
+}
+class IProjetoRepository {
+  <<interface>>
+}
+class IUnidadeDeTrabalho {
+  <<interface>>
+}
+class IUsuarioRepository {
+  <<interface>>
+}
+class IVagaRepository {
+  <<interface>>
+}
+class PublicadorDeEventos {
+  <<control>>
+}
+
+VagaService --> IUnidadeDeTrabalho
+VagaService --> IVagaRepository
+VagaService --> IProjetoRepository
+VagaService --> IUsuarioRepository
+CandidaturaService --> IUnidadeDeTrabalho
+CandidaturaService --> ICandidaturaRepository
+CandidaturaService --> IVagaRepository
+CandidaturaService --> IUsuarioRepository
+CandidaturaService --> IParticipacaoRepository
+CandidaturaService --> PublicadorDeEventos
+ProjetoService --> IUnidadeDeTrabalho
+ProjetoService --> IProjetoRepository
+ProjetoService --> IVagaRepository
+ProjetoService --> IAtividadeRepository
+ProjetoService --> IParticipacaoRepository
+ProjetoService --> IAvaliacaoRepository
+ProjetoService --> PublicadorDeEventos
+AtividadeService --> IUnidadeDeTrabalho
+AtividadeService --> IAtividadeRepository
+AtividadeService --> IParticipacaoRepository
+AtividadeService --> IProjetoRepository
+AtividadeService --> PublicadorDeEventos
+AvaliacaoService --> IUnidadeDeTrabalho
+AvaliacaoService --> IAvaliacaoRepository
+AvaliacaoService --> IParticipacaoRepository
+AvaliacaoService --> PublicadorDeEventos
+UsuarioService --> IUnidadeDeTrabalho
+UsuarioService --> IUsuarioRepository
+UsuarioService --> IBanimentoRepository
+NotificacaoService --> INotificacaoRepository
+DenunciaService --> IUnidadeDeTrabalho
+DenunciaService --> IDenunciaRepository
+DenunciaService --> IUsuarioRepository
+DenunciaService --> ICandidaturaRepository
+DenunciaService --> IParticipacaoRepository
+DenunciaService --> ModeracaoService
+DenunciaService --> PublicadorDeEventos
+ModeracaoService --> IUnidadeDeTrabalho
+ModeracaoService --> IUsuarioRepository
+ModeracaoService --> IBanimentoRepository
+ModeracaoService --> ICandidaturaRepository
+ModeracaoService --> IParticipacaoRepository
+ModeracaoService --> IVagaRepository
+IncorporacaoService --> IUnidadeDeTrabalho
+IncorporacaoService --> IPedidoIncorporacaoRepository
+IncorporacaoService --> IProjetoRepository
+IncorporacaoService --> IUsuarioRepository
+IncorporacaoService --> PublicadorDeEventos
+BaseInstitucionalService --> IUnidadeDeTrabalho
+BaseInstitucionalService --> IBaseInstitucionalRepository
+BaseInstitucionalService --> IFonteInstitucional
+BaseInstitucionalService --> IUsuarioRepository
+note "Mesmas associações do diagrama 4, onde aparecem como atributos<br>(o nome do papel é o nome do atributo; multiplicidade 1 em todas).<br>A seta indica a navegabilidade: o serviço conhece a interface,<br>a interface não conhece o serviço."

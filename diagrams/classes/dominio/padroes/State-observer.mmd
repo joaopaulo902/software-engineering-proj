@@ -1,0 +1,114 @@
+---
+title: "State e Observer"
+config:
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+direction TB
+
+class Candidatura {
+  <<entity>>
+  +/status: StatusCandidatura #123;derivado do estado#125;
+  -estado: EstadoCandidatura
+  +aceitar(agora: Date) void
+  +recusar(agora: Date) void
+  +confirmar(agora: Date) void
+  +declinar(motivo: string [0..1], agora: Date) void
+  +remover(agora: Date) void
+  +ocupaPosicao() boolean
+}
+class EstadoCandidatura {
+  <<interface>>
+  +status() StatusCandidatura
+  +aceitar(c: Candidatura, agora: Date) void
+  +recusar(c: Candidatura, agora: Date) void
+  +confirmar(c: Candidatura, agora: Date) void
+  +declinar(c: Candidatura, motivo: string [0..1], agora: Date) void
+  +remover(c: Candidatura, agora: Date) void
+  +ocupaPosicao() boolean
+}
+class EstadoBase {
+  <<abstract>>
+  +para(status: StatusCandidatura) EstadoCandidatura$
+}
+class EmAnalise {
+  +aceitar(c: Candidatura, agora: Date) void
+  +recusar(c: Candidatura, agora: Date) void
+  +remover(c: Candidatura, agora: Date) void
+  +ocupaPosicao() boolean
+}
+class Aceita {
+  +confirmar(c: Candidatura, agora: Date) void
+  +declinar(c: Candidatura, motivo: string [0..1], agora: Date) void
+  +ocupaPosicao() boolean
+}
+class Confirmada {
+  +ocupaPosicao() boolean
+}
+class Recusada
+class Declinada
+class Removida
+class PublicadorDeEventos {
+  <<control>>
+  -observadores: ObservadorDeEventos [0..*]
+  +inscrever(observador: ObservadorDeEventos) void
+  +publicar(evento: EventoDeDominio) Promise~void~
+}
+class ObservadorDeEventos {
+  <<interface>>
+  +notificar(evento: EventoDeDominio) Promise~void~
+}
+class NotificadorInApp {
+  <<control>>
+  -notificacoes: INotificacaoRepository
+  -candidaturas: ICandidaturaRepository
+  -projetos: IProjetoRepository
+  -usuarios: IUsuarioRepository
+  -participacoes: IParticipacaoRepository
+  -denuncias: IDenunciaRepository
+  +notificar(evento: EventoDeDominio) Promise~void~
+  -destinatarios(evento: EventoDeDominio) Promise~number[]~
+  -texto(evento: EventoDeDominio) string
+}
+class EventoDeDominio {
+  <<datatype>>
+  +tipo: TipoEvento
+  +origemId: number
+  +autorId: number [0..1] #123;vazio = disparado pelo agendador#125;
+  +ocorridoEm: Date
+}
+class TipoEvento {
+  <<enumeration>>
+  CANDIDATURA_CRIADA
+  CANDIDATURA_AVALIADA
+  INGRESSO_CONFIRMADO
+  INGRESSO_DECLINADO
+  ATIVIDADE_POSTADA
+  AVALIACAO_REGISTRADA
+  DENUNCIA_REGISTRADA
+  INCORPORACAO_SOLICITADA
+  INCORPORACAO_AVALIADA
+  PARTICIPACAO_ENCERRADA
+  DENUNCIA_JULGADA
+}
+class INotificacaoRepository {
+  <<interface>>
+}
+
+Candidatura "1" --> "1" EstadoCandidatura : estado
+EstadoBase ..|> EstadoCandidatura
+EmAnalise --|> EstadoBase
+Aceita --|> EstadoBase
+Confirmada --|> EstadoBase
+Recusada --|> EstadoBase
+Declinada --|> EstadoBase
+Removida --|> EstadoBase
+PublicadorDeEventos "1" o--> "0..*" ObservadorDeEventos : observadores
+NotificadorInApp ..|> ObservadorDeEventos
+NotificadorInApp --> "1" INotificacaoRepository : notificacoes
+PublicadorDeEventos ..> EventoDeDominio : publica
+EventoDeDominio ..> TipoEvento
+note for EstadoBase "Toda ação não sobrescrita lança RegraDeNegocio:<br>a transição não é permitida no status atual.<br>Recusada, Declinada e Removida são finais e<br>não ocupam posição na vaga."
+note for PublicadorDeEventos "Os serviços publicam o evento depois do COMMIT.<br>Um canal novo (e-mail) entra como mais um<br>observador, sem alterar os serviços."
+note for NotificadorInApp "Atributos cujo tipo é outra classe (ex.: -vagas: IVagaRepository)<br>são associações navegáveis da classe dona para esse tipo,<br>na notação de atributo da UML (multiplicidade 1, salvo [0..1] ou [0..*])."

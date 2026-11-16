@@ -1,0 +1,118 @@
+---
+title: "Domínio: moderação, incorporação e notificações"
+config:
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+direction LR
+
+class Usuario {
+  <<entity>>
+}
+class Projeto {
+  <<entity>>
+}
+class Notificacao {
+  <<entity>>
+  +id: number
+  +destinatarioId: number
+  +tipo: TipoNotificacao
+  +texto: string
+  +referenciaId: number [0..1]
+  +lida: boolean = false
+  +criadaEm: Date
+}
+class TipoNotificacao {
+  <<enumeration>>
+  NOVA_CANDIDATURA
+  RESULTADO_DA_AVALIACAO
+  CONFIRMACAO_DE_INGRESSO
+  DECLINIO_DE_INGRESSO
+  NOVA_ATIVIDADE
+  AVALIACAO_RECEBIDA
+  NOVA_DENUNCIA
+  PEDIDO_DE_INCORPORACAO
+  RESULTADO_DA_INCORPORACAO
+  FIM_DE_PARTICIPACAO
+  ATUALIZACAO_DE_DENUNCIA
+}
+class Denuncia {
+  <<entity>>
+  +id: number
+  +denuncianteId: number
+  +denunciadoId: number
+  +motivo: MotivoDenuncia
+  +justificativa: string #123;obrigatória#125;
+  +anexos: string [0..*]
+  +status: StatusDenuncia = PENDENTE_DE_ANALISE
+  +criadaEm: Date
+  +julgadaEm: Date [0..1]
+  +estaPendente() boolean
+  +julgar(procedente: boolean, agora: Date) void
+}
+class MotivoDenuncia {
+  <<enumeration>>
+  COMPORTAMENTO_INADEQUADO
+  INFORMACOES_FALSAS
+  DESCUMPRIMENTO_DE_REGRAS
+  ABANDONO
+}
+class StatusDenuncia {
+  <<enumeration>>
+  PENDENTE_DE_ANALISE
+  PROCEDENTE
+  IMPROCEDENTE
+}
+class Banimento {
+  <<entity>>
+  +id: number
+  +usuarioId: number
+  +email: string
+  +motivo: string
+  +denunciaId: number [0..1]
+  +banidoEm: Date
+  +revertidoEm: Date [0..1]
+  +observacaoDaReversao: string [0..1]
+  +estaAtivo() boolean
+  +reverter(observacao: string [0..1], agora: Date) void
+}
+class PedidoIncorporacao {
+  <<entity>>
+  +id: number
+  +projetoId: number
+  +coordenadorId: number
+  +mensagem: string [0..1]
+  +status: StatusPedido = PENDENTE
+  +solicitadoEm: Date
+  +avaliadoEm: Date [0..1]
+  +estaPendente() boolean
+  +deferir(agora: Date) void
+  +indeferir(agora: Date) void
+}
+class StatusPedido {
+  <<enumeration>>
+  PENDENTE
+  DEFERIDO
+  INDEFERIDO
+}
+class ConfiguracaoDaImportacao {
+  <<entity>>
+  +periodicidadeEmDias: number #123;≥ 1#125;
+  +ultimaImportacaoEm: Date [0..1]
+  +importacaoVencida(agora: Date) boolean
+}
+
+Notificacao "0..*" --> "1" Usuario : destinatario
+Denuncia "0..*" --> "1" Usuario : denunciante
+Denuncia "0..*" --> "1" Usuario : denunciado
+Banimento "0..*" --> "1" Usuario : usuario
+Banimento "0..1" --> "0..1" Denuncia : origem
+PedidoIncorporacao "0..*" --> "1" Projeto : projeto
+PedidoIncorporacao "0..*" --> "1" Usuario : coordenador
+Notificacao ..> TipoNotificacao
+Denuncia ..> MotivoDenuncia
+Denuncia ..> StatusDenuncia
+PedidoIncorporacao ..> StatusPedido
+note for Banimento "Enquanto ativo, o e-mail fica bloqueado<br>para novo cadastro (RF). Reverter (C19)<br>devolve o acesso ao usuário."
+note for Denuncia "A justificativa é obrigatória (C13, fluxo 4.a).<br>Procedente aciona Remover Usuário (C14)<br>com o motivo do banimento. O resultado<br>do julgamento avisa o denunciante."

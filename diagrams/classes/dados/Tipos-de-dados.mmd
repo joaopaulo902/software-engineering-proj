@@ -1,0 +1,234 @@
+---
+title: "Tipos de dados"
+config:
+  themeCSS: ".relation { display: none; }"
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+direction TB
+
+namespace Filtros_e_opcoes_de_consulta {
+  class FiltroDeVagas {
+    <<datatype>>
+    +termo: string [0..1]
+    +areas: string [0..*]
+    +turnos: Turno [0..*]
+    +modalidades: Modalidade [0..*]
+    +cargaHorariaMaxima: number [0..1] #123;~ 0#125;
+    +ordenarPor: CriterioDeOrdenacao [0..1]
+  }
+  class CriterioDeOrdenacao {
+    <<enumeration>>
+    PUBLICACAO
+    PRAZO
+    CARGA_HORARIA
+  }
+  class FiltroDeProjetos {
+    <<datatype>>
+    +termo: string [0..1]
+    +areas: string [0..*]
+    +somenteComVagasAbertas: boolean = false
+  }
+  class FiltroDeAtividades {
+    <<datatype>>
+    +termo: string [0..1]
+    +areas: string [0..*]
+  }
+  class FiltroDeCandidaturas {
+    <<datatype>>
+    +vagaId: number [0..1]
+    +status: StatusCandidatura [0..*]
+  }
+  class FiltroDeUsuarios {
+    <<datatype>>
+    +termo: string [0..1]
+    +papeis: Papel [0..*]
+  }
+  class Decisao {
+    <<enumeration>>
+    ACEITAR
+    RECUSAR
+  }
+}
+
+namespace Dados_de_entrada {
+  class DadosNovaVaga {
+    <<datatype>>
+    +projetoId: number
+    +titulo: string
+    +descricao: string
+    +areasTematicas: string [1..*]
+    +cursosAceitos: string [0..*]
+    +semestreMinimo: number
+    +outrosRequisitos: string [0..1]
+    +cargaHoraria: number
+    +turno: Turno
+    +modalidade: Modalidade
+    +beneficio: Beneficio
+    +vagasTotais: number
+    +dataEncerramento: Date
+    +duracaoEmMeses: number [0..1]
+  }
+  class DadosAtividade {
+    <<datatype>>
+    +titulo: string
+    +descricao: string
+    +foto: string [0..1]
+  }
+  class DadosDenuncia {
+    <<datatype>>
+    +denunciadoId: number
+    +motivo: MotivoDenuncia
+    +justificativa: string
+    +anexos: string [0..*]
+  }
+  class DadosPerfil {
+    <<datatype>>
+    +curso: string [0..1] #123;só estudante#125;
+    +semestre: number [0..1] #123;só estudante, 1 a 20#125;
+    +descricao: string [0..1]
+    +lattes: string [0..1]
+    +linkedin: string [0..1]
+    +github: string [0..1]
+    +paginaPessoal: string [0..1]
+    +contato: string [0..1]
+  }
+  class DadosCadastro {
+    <<datatype>>
+    +nome: string
+    +email: string
+    +senha: string
+    +papel: Papel #123;ESTUDANTE ou COORDENADOR#125;
+    +curso: string [0..1]
+    +semestre: number [0..1]
+  }
+  class DadosInstitucionais {
+    <<datatype>>
+    +projetos: ProjetoInstitucional [0..*]
+    +cursos: string [0..*]
+  }
+  class ProjetoInstitucional {
+    <<datatype>>
+    +nome: string
+    +descricao: string
+    +area: string
+    +coordenadorCadastrado: string
+  }
+  class NovaNotificacao {
+    <<datatype>>
+    +destinatarioId: number
+    +tipo: TipoNotificacao
+    +texto: string
+    +referenciaId: number [0..1]
+  }
+}
+
+namespace Itens_de_listagem {
+  class VagaComProjeto {
+    <<datatype>>
+    +vaga: Vaga
+    +projetoNome: string
+    +projetoArea: string
+    +coordenadorNome: string
+    +publicadaEm: Date
+  }
+  class CandidaturaComVaga {
+    <<datatype>>
+    +candidatura: Candidatura
+    +vagaTitulo: string
+    +projetoId: number
+    +projetoNome: string
+    +coordenadorNome: string
+  }
+  class CandidaturaRecebida {
+    <<datatype>>
+    +candidatura: Candidatura
+    +vagaTitulo: string
+    +estudante: Usuario
+  }
+  class ResumoDeProjeto {
+    <<datatype>>
+    +projeto: Projeto
+    +coordenadorNome: string [0..1]
+    +vagasAbertas: number
+  }
+  class ParticipacaoComProjeto {
+    <<datatype>>
+    +participacao: Participacao
+    +projetoNome: string
+  }
+  class Participante {
+    <<datatype>>
+    +participacao: Participacao
+    +nome: string
+  }
+  class AtividadeComProjeto {
+    <<datatype>>
+    +atividade: Atividade
+    +projetoNome: string
+    +projetoArea: string
+    +autorNome: string
+  }
+  class ResumoDeUsuario {
+    <<datatype>>
+    +id: number
+    +nome: string
+    +papel: Papel
+    +curso: string [0..1]
+    +semestre: number [0..1]
+  }
+  class BanimentoComUsuario {
+    <<datatype>>
+    +banimento: Banimento
+    +nome: string
+    +ultimoProjeto: string [0..1]
+  }
+  class PedidoComProjeto {
+    <<datatype>>
+    +pedido: PedidoIncorporacao
+    +projetoNome: string
+    +coordenadorNome: string
+  }
+}
+
+namespace Detalhes_e_resumos {
+  class DetalheDaVaga {
+    <<datatype>>
+    +vaga: VagaComProjeto
+    +motivoDeInelegibilidade: string [0..1]
+  }
+  class DetalheDaCandidatura {
+    <<datatype>>
+    +candidatura: CandidaturaComVaga
+    +historico: HistoricoDeStatus [1..*]
+  }
+  class DetalheDoProjeto {
+    <<datatype>>
+    +projeto: Projeto
+    +coordenadorNome: string [0..1]
+    +vagas: VagaComProjeto [0..*]
+    +atividades: AtividadeComProjeto [0..*]
+    +recomendacoes: Avaliacao [0..*]
+  }
+  class PerfilDoUsuario {
+    <<datatype>>
+    +usuario: Usuario
+    +avaliacoes: Avaliacao [0..*]
+    +projetos: ParticipacaoComProjeto [0..*]
+  }
+  class ResumoDaImportacao {
+    <<datatype>>
+    +projetosNovos: number
+    +projetosAtualizados: number
+    +cursosNovos: number
+    +importadoEm: Date
+  }
+}
+
+%% Ligações só de layout: empilham os grupos em linhas.
+%% Não são relações do modelo; o themeCSS acima as esconde.
+FiltroDeUsuarios .. DadosPerfil
+DadosPerfil .. ParticipacaoComProjeto
+ParticipacaoComProjeto .. DetalheDoProjeto
+note "Atributos cujo tipo é uma entidade (ex.: +vaga: Vaga) são associações<br>navegáveis do tipo de dado para a entidade, na notação de atributo da UML."
