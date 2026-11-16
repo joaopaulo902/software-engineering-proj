@@ -30,6 +30,9 @@ export interface IProjetoRepository {
   /** Todos os projetos, com o nome do coordenador e as vagas abertas. */
   listarComCoordenador(): Promise<ResumoDeProjeto[]>;
 
+  /** Um projeto, com os mesmos dados do card da listagem (C02). */
+  buscarResumo(id: number): Promise<ResumoDeProjeto | null>;
+
   /** Projetos que este usuario coordena, para o formulario do C06 e Meus Projetos. */
   listarDoCoordenador(coordenadorId: number): Promise<Projeto[]>;
 

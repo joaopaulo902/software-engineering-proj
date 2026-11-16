@@ -8,6 +8,23 @@ import {
 } from '../interfaces/IProjetoRepository';
 import { Transacao } from '../interfaces/IUnidadeDeTrabalho';
 
+/**
+ * Projeto com o nome do coordenador e as vagas abertas. $1 e "hoje".
+ *
+ * "Hoje" vai como parametro, pelo mesmo motivo do VagaRepository: o
+ * CURRENT_DATE segue o fuso do banco, nao o do servidor da aplicacao.
+ */
+const SELECT_RESUMO = `
+  SELECT p.*,
+         u.nome AS coordenador_nome,
+         (SELECT count(*)
+            FROM vaga v
+           WHERE v.projeto_id = p.id
+             AND v.vagas_restantes > 0
+             AND v.data_encerramento >= $1::date)::int AS vagas_abertas
+    FROM projeto p
+    LEFT JOIN usuario u ON u.id = p.coordenador_id`;
+
 export class ProjetoRepository implements IProjetoRepository {
   constructor(private readonly db: Transacao) {}
 
@@ -20,30 +37,24 @@ export class ProjetoRepository implements IProjetoRepository {
     return resultado.rows.length ? montarProjeto(resultado.rows[0]) : null;
   }
 
-  /**
-   * "Hoje" vai como parametro, pelo mesmo motivo do VagaRepository: o
-   * CURRENT_DATE segue o fuso do banco, nao o do servidor da aplicacao.
-   */
   async listarComCoordenador(): Promise<ResumoDeProjeto[]> {
     const hoje = formatarDia(hojeComoDia());
     const resultado = await this.executor().query(
-      `SELECT p.*,
-              u.nome AS coordenador_nome,
-              (SELECT count(*)
-                 FROM vaga v
-                WHERE v.projeto_id = p.id
-                  AND v.vagas_restantes > 0
-                  AND v.data_encerramento >= $1::date)::int AS vagas_abertas
-         FROM projeto p
-         LEFT JOIN usuario u ON u.id = p.coordenador_id
+      `${SELECT_RESUMO}
         ORDER BY p.nome`,
       [hoje]
     );
-    return resultado.rows.map((linha) => ({
-      projeto: montarProjeto(linha),
-      coordenadorNome: linha.coordenador_nome ?? null,
-      vagasAbertas: Number(linha.vagas_abertas)
-    }));
+    return resultado.rows.map(montarResumo);
+  }
+
+  async buscarResumo(id: number): Promise<ResumoDeProjeto | null> {
+    const hoje = formatarDia(hojeComoDia());
+    const resultado = await this.executor().query(
+      `${SELECT_RESUMO}
+        WHERE p.id = $2`,
+      [hoje, id]
+    );
+    return resultado.rows.length ? montarResumo(resultado.rows[0]) : null;
   }
 
   async listarDoCoordenador(coordenadorId: number): Promise<Projeto[]> {
@@ -80,6 +91,14 @@ export class ProjetoRepository implements IProjetoRepository {
       projeto: montarProjeto(linha)
     };
   }
+}
+
+function montarResumo(linha: any): ResumoDeProjeto {
+  return {
+    projeto: montarProjeto(linha),
+    coordenadorNome: linha.coordenador_nome ?? null,
+    vagasAbertas: Number(linha.vagas_abertas)
+  };
 }
 
 function montarProjeto(linha: any): Projeto {

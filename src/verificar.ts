@@ -512,9 +512,24 @@ async function verificarFrenteB(
     'detalhe traz a vaga publicada no C06',
     robotica.vagas.some((v) => v.vaga.id === vagaPublicadaId)
   );
+  const eletronica = robotica.vagas.findIndex((v) => v.vaga.id === ELETRONICA);
   conferir(
-    'detalhe nao traz vaga encerrada',
-    !robotica.vagas.some((v) => v.vaga.id === ELETRONICA)
+    'detalhe traz a vaga encerrada, marcada como fechada',
+    eletronica >= 0 && !robotica.vagas[eletronica].vaga.estaAberta()
+  );
+  conferir(
+    'vagas abertas vem antes das encerradas',
+    robotica.vagas.slice(0, eletronica).every((v) => v.vaga.estaAberta()) &&
+      robotica.vagas.slice(eletronica).every((v) => !v.vaga.estaAberta())
+  );
+  conferir(
+    'detalhe conta as mesmas vagas abertas da listagem',
+    robotica.vagas.filter((v) => v.vaga.estaAberta()).length === abertasDaRobotica
+  );
+  const inclusao = await projetoService.detalhar(INCLUSAO_DIGITAL);
+  conferir(
+    'detalhe de projeto nao incorporado: sem coordenador e sem vagas',
+    inclusao.coordenadorNome === null && inclusao.vagas.length === 0
   );
   conferir(
     'detalhe traz as atividades, mais recente primeiro',

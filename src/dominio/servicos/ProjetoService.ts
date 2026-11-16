@@ -63,18 +63,17 @@ export class ProjetoService {
     );
   }
 
-  /** C02: o projeto, as vagas abertas dele e as atividades postadas. */
+  /**
+   * C02: o projeto, as vagas dele (abertas primeiro; as encerradas vem
+   * marcadas como fechadas) e as atividades postadas.
+   */
   async detalhar(projetoId: number): Promise<DetalheDoProjeto> {
-    const resumo = (await this.projetos.listarComCoordenador()).find(
-      (item) => item.projeto.id === projetoId
-    );
+    const resumo = await this.projetos.buscarResumo(projetoId);
     if (!resumo) {
       throw new NaoEncontrado('Projeto não encontrado.');
     }
 
-    const vagas = (await this.vagas.listarAbertas()).filter(
-      (item) => item.vaga.projetoId === projetoId
-    );
+    const vagas = await this.vagas.listarDoProjeto(projetoId);
     const atividades = await this.atividades.listarDoProjeto(projetoId);
 
     return {

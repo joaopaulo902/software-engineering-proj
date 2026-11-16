@@ -13,6 +13,12 @@ export interface IVagaRepository {
   /** Vagas com prazo aberto, para a tela de busca (C01). */
   listarAbertas(): Promise<VagaComProjeto[]>;
 
+  /**
+   * Todas as vagas de um projeto, abertas ou encerradas, para a Pagina do
+   * Projeto (C02). As abertas vem primeiro; a tela usa `estaAberta()`.
+   */
+  listarDoProjeto(projetoId: number): Promise<VagaComProjeto[]>;
+
   buscarPorId(id: number, tx?: Transacao): Promise<Vaga | null>;
 
   /**
