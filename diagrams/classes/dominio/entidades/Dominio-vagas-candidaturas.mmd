@@ -1,0 +1,199 @@
+---
+title: "Domínio: vagas, candidaturas e projetos"
+config:
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+direction LR
+
+class Usuario {
+  <<entity>>
+  +id: number
+  +nome: string
+  +email: string #123;único#125;
+  +papel: Papel
+  +curso: string [0..1]
+  +semestre: number [0..1] #123;semestre atual, 1 a 20#125;
+  +descricao: string [0..1]
+  +lattes: string [0..1]
+  +linkedin: string [0..1]
+  +github: string [0..1]
+  +paginaPessoal: string [0..1]
+  +contato: string [0..1]
+  +ativo: boolean = true
+  -senhaHash: string
+  -tentativasFalhas: number #123;0 a 5#125;
+  -bloqueadoAte: Date [0..1]
+  +ehEstudante() boolean
+  +ehCoordenador() boolean
+  +ehAdministrador() boolean
+  +podeEntrar(agora: Date) boolean
+  +registrarFalhaDeLogin(agora: Date) void
+  +registrarLoginBemSucedido() void
+}
+class Papel {
+  <<enumeration>>
+  ESTUDANTE
+  COORDENADOR
+  ADMIN
+}
+class Projeto {
+  <<entity>>
+  +id: number
+  +nome: string
+  +descricao: string
+  +area: string
+  +icone: string [0..1]
+  +situacao: SituacaoProjeto
+  +coordenadorCadastrado: string
+  +coordenadorId: number [0..1] #123;definido na incorporação#125;
+  +ehCoordenadoPor(usuario: Usuario) boolean
+  +estaIncorporado() boolean
+  +aceitaVagas() boolean
+}
+class SituacaoProjeto {
+  <<enumeration>>
+  ATIVO
+  INATIVO
+}
+class Vaga {
+  <<entity>>
+  +id: number
+  +projetoId: number
+  +titulo: string #123;3 a 100 caracteres#125;
+  +descricao: string #123;até 2000 caracteres#125;
+  +areasTematicas: string [1..*]
+  +cursosAceitos: string [0..*] #123;vazio = todos#125;
+  +semestreMinimo: number #123;1 a 20#125;
+  +outrosRequisitos: string [0..1]
+  +cargaHoraria: number #123;1 a 40 h/semana#125;
+  +turno: Turno
+  +modalidade: Modalidade
+  +beneficio: Beneficio
+  +vagasTotais: number #123;1 a 100#125;
+  +vagasRestantes: number #123;0 ≤ vagasRestantes ≤ vagasTotais#125;
+  +dataEncerramento: Date #123;dia de calendário#125;
+  +duracaoEmMeses: number [0..1] #123;1 a 24; vazio = sem prazo#125;
+  +publicadaEm: Date
+  +nova(dados: DadosNovaVaga) Vaga$
+  +temPosicaoDisponivel() boolean
+  +prazoAberto(agora: Date) boolean
+  +estaAberta(agora: Date) boolean
+  +aceitaSemestre(semestre: number) boolean
+  +aceitaCurso(curso: string) boolean
+  +motivoDeInelegibilidade(estudante: Usuario, agora: Date) string [0..1]
+}
+class Turno {
+  <<enumeration>>
+  MANHA
+  TARDE
+  NOITE
+}
+class Modalidade {
+  <<enumeration>>
+  PRESENCIAL
+  REMOTO
+  HIBRIDO
+}
+class Beneficio {
+  <<enumeration>>
+  HORAS_DE_EXTENSAO
+  BOLSA
+}
+class Candidatura {
+  <<entity>>
+  +id: number
+  +vagaId: number
+  +estudanteId: number
+  +/status: StatusCandidatura #123;derivado do estado#125;
+  +mensagem: string [0..1] #123;até 500 caracteres#125;
+  +motivoDeclinio: string [0..1]
+  +criadaEm: Date
+  -estado: EstadoCandidatura
+  +aceitar(agora: Date) void
+  +recusar(agora: Date) void
+  +confirmar(agora: Date) void
+  +declinar(motivo: string [0..1], agora: Date) void
+  +remover(agora: Date) void
+  +ocupaPosicao() boolean
+}
+class StatusCandidatura {
+  <<enumeration>>
+  EM_ANALISE
+  ACEITA
+  RECUSADA
+  CONFIRMADA
+  DECLINADA
+  REMOVIDA
+}
+class HistoricoDeStatus {
+  <<entity>>
+  +id: number
+  +candidaturaId: number
+  +status: StatusCandidatura
+  +ocorridoEm: Date
+  +observacao: string [0..1]
+}
+class Participacao {
+  <<entity>>
+  +id: number
+  +projetoId: number
+  +usuarioId: number
+  +candidaturaId: number [0..1]
+  +cargo: string
+  +inicio: Date
+  +fim: Date [0..1]
+  +previstoAte: Date [0..1] #123;inicio + duracaoEmMeses da vaga#125;
+  +mensagemDeSaida: string [0..1]
+  +estaAtiva() boolean
+  +venceu(agora: Date) boolean
+  +encerrar(mensagem: string [0..1], agora: Date) void
+}
+class Atividade {
+  <<entity>>
+  +id: number
+  +projetoId: number
+  +autorId: number
+  +titulo: string
+  +descricao: string
+  +fotoUrl: string [0..1]
+  +publicadaEm: Date
+}
+class Avaliacao {
+  <<entity>>
+  +id: number
+  +participacaoId: number
+  +autorId: number
+  +tipo: TipoAvaliacao
+  +texto: string #123;obrigatório#125;
+  +criadaEm: Date
+}
+class TipoAvaliacao {
+  <<enumeration>>
+  DO_ESTUDANTE
+  DO_PROJETO
+}
+
+Projeto "0..*" --> "0..1" Usuario : coordenador
+Vaga "0..*" --> "1" Projeto : projeto
+Candidatura "0..*" --> "1" Vaga : vaga
+Candidatura "0..*" --> "1" Usuario : estudante
+Candidatura "1" *--> "1..*" HistoricoDeStatus : historico
+Participacao "0..*" --> "1" Projeto : projeto
+Participacao "0..*" --> "1" Usuario : participante
+Participacao "0..1" --> "0..1" Candidatura : origem
+Atividade "0..*" --> "1" Projeto : projeto
+Atividade "0..*" --> "1" Usuario : autor
+Avaliacao "0..*" --> "1" Participacao : participacao
+Avaliacao "0..*" --> "1" Usuario : autor
+Usuario ..> Papel
+Projeto ..> SituacaoProjeto
+Vaga ..> Turno
+Vaga ..> Modalidade
+Vaga ..> Beneficio
+Candidatura ..> StatusCandidatura
+Avaliacao ..> TipoAvaliacao
+note for Candidatura "Só uma candidatura não removida por<br>vaga e estudante: remover (C18) libera<br>uma nova candidatura à mesma vaga.<br>/status é derivado do estado atual<br>(padrão State, página 3)."
+note for Participacao "Se a vaga tem duração, previstoAte é definido<br>ao confirmar o ingresso. O AgendadorDeTarefas<br>encerra as participações vencidas e o coordenador<br>é notificado para avaliar o estudante (C08)."
+note for Usuario "5 falhas seguidas de login bloqueiam<br>a conta por 15 minutos (RNF).<br>O cadastro aberto cria só ESTUDANTE<br>ou COORDENADOR; o ADMIN vem do seed.<br>semestre é o atual, editável no perfil."

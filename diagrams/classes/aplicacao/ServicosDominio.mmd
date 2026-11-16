@@ -1,0 +1,170 @@
+---
+title: "Serviços do domínio"
+config:
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+direction LR
+
+class VagaService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -vagas: IVagaRepository
+  -projetos: IProjetoRepository
+  -usuarios: IUsuarioRepository
+  +listarAbertas(filtro: FiltroDeVagas) Promise~VagaComProjeto[]~
+  +detalhar(vagaId: number, usuarioId: number) Promise~DetalheDaVaga~
+  +projetosParaPublicar(coordenadorId: number) Promise~Projeto[]~
+  +publicar(coordenadorId: number, dados: DadosNovaVaga, agora: Date) Promise~Vaga~
+}
+class CandidaturaService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -candidaturas: ICandidaturaRepository
+  -vagas: IVagaRepository
+  -usuarios: IUsuarioRepository
+  -participacoes: IParticipacaoRepository
+  -eventos: PublicadorDeEventos
+  +candidatar(estudanteId: number, vagaId: number, mensagem: string [0..1]) Promise~Candidatura~
+  +listarDoEstudante(estudanteId: number) Promise~CandidaturaComVaga[]~
+  +detalhar(estudanteId: number, candidaturaId: number) Promise~DetalheDaCandidatura~
+  +remover(estudanteId: number, candidaturaId: number) Promise~void~
+  +confirmarIngresso(estudanteId: number, candidaturaId: number) Promise~Participacao~
+  +declinarIngresso(estudanteId: number, candidaturaId: number, motivo: string [0..1]) Promise~void~
+  +listarRecebidas(coordenadorId: number, filtro: FiltroDeCandidaturas) Promise~CandidaturaRecebida[]~
+  +detalharRecebida(coordenadorId: number, candidaturaId: number) Promise~CandidaturaRecebida~
+  +avaliar(coordenadorId: number, candidaturaId: number, decisao: Decisao) Promise~Candidatura~
+}
+class ProjetoService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -projetos: IProjetoRepository
+  -vagas: IVagaRepository
+  -atividades: IAtividadeRepository
+  -participacoes: IParticipacaoRepository
+  -avaliacoes: IAvaliacaoRepository
+  -eventos: PublicadorDeEventos
+  +listar(filtro: FiltroDeProjetos) Promise~ResumoDeProjeto[]~
+  +detalhar(projetoId: number) Promise~DetalheDoProjeto~
+  +meusProjetos(usuarioId: number) Promise~ParticipacaoComProjeto[]~
+  +listarParticipantes(projetoId: number) Promise~Participante[]~
+  +alterarCargo(coordenadorId: number, participacaoId: number, cargo: string) Promise~void~
+  +removerParticipante(coordenadorId: number, participacaoId: number) Promise~void~
+  +sairDoProjeto(estudanteId: number, participacaoId: number, mensagem: string [0..1], recomendacao: string [0..1]) Promise~void~
+  +encerrarParticipacoesVencidas(agora: Date) Promise~number~
+}
+class AtividadeService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -atividades: IAtividadeRepository
+  -participacoes: IParticipacaoRepository
+  -projetos: IProjetoRepository
+  -eventos: PublicadorDeEventos
+  +listarRecentes(filtro: FiltroDeAtividades) Promise~AtividadeComProjeto[]~
+  +postar(autorId: number, projetoId: number, dados: DadosAtividade) Promise~Atividade~
+}
+class AvaliacaoService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -avaliacoes: IAvaliacaoRepository
+  -participacoes: IParticipacaoRepository
+  -eventos: PublicadorDeEventos
+  +avaliarEstudante(coordenadorId: number, participacaoId: number, texto: string) Promise~Avaliacao~
+  +recomendarProjeto(estudanteId: number, participacaoId: number, texto: string) Promise~Avaliacao~
+  +listarDoProjeto(projetoId: number) Promise~Avaliacao[]~
+  +listarDoEstudante(estudanteId: number) Promise~Avaliacao[]~
+}
+class UsuarioService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -usuarios: IUsuarioRepository
+  -banimentos: IBanimentoRepository
+  +entrar(email: string, senha: string, agora: Date) Promise~Usuario~
+  +cadastrar(dados: DadosCadastro) Promise~Usuario~
+  +perfil(usuarioId: number, visitanteId: number) Promise~PerfilDoUsuario~
+  +atualizarPerfil(usuarioId: number, dados: DadosPerfil) Promise~Usuario~
+  +buscar(filtro: FiltroDeUsuarios) Promise~ResumoDeUsuario[]~
+}
+class NotificacaoService {
+  <<control>>
+  -notificacoes: INotificacaoRepository
+  +listarDoUsuario(usuarioId: number, tipos: TipoNotificacao [0..*]) Promise~Notificacao[]~
+  +marcarComoLidas(usuarioId: number) Promise~void~
+}
+class DenunciaService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -denuncias: IDenunciaRepository
+  -usuarios: IUsuarioRepository
+  -candidaturas: ICandidaturaRepository
+  -participacoes: IParticipacaoRepository
+  -moderacao: ModeracaoService
+  -eventos: PublicadorDeEventos
+  +denunciar(coordenadorId: number, dados: DadosDenuncia) Promise~Denuncia~
+  +listarPendentes(adminId: number) Promise~Denuncia[]~
+  +julgar(adminId: number, denunciaId: number, procedente: boolean, motivoDoBanimento: string [0..1] #123;obrigatório se procedente#125;) Promise~void~
+}
+class ModeracaoService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -usuarios: IUsuarioRepository
+  -banimentos: IBanimentoRepository
+  -candidaturas: ICandidaturaRepository
+  -participacoes: IParticipacaoRepository
+  -vagas: IVagaRepository
+  +listarBanidos(adminId: number, termo: string [0..1]) Promise~BanimentoComUsuario[]~
+  +removerUsuario(adminId: number, usuarioId: number, motivo: string, denunciaId: number [0..1]) Promise~Banimento~
+  +reverterBanimento(adminId: number, banimentoId: number, observacao: string [0..1]) Promise~void~
+}
+class IncorporacaoService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -pedidos: IPedidoIncorporacaoRepository
+  -projetos: IProjetoRepository
+  -usuarios: IUsuarioRepository
+  -eventos: PublicadorDeEventos
+  +buscarNaBaseInstitucional(termo: string) Promise~Projeto[]~
+  +solicitar(coordenadorId: number, projetoId: number, mensagem: string [0..1]) Promise~PedidoIncorporacao~
+  +listarPendentes(adminId: number) Promise~PedidoComProjeto[]~
+  +avaliar(adminId: number, pedidoId: number, deferir: boolean) Promise~void~
+}
+class BaseInstitucionalService {
+  <<control>>
+  -unidade: IUnidadeDeTrabalho
+  -base: IBaseInstitucionalRepository
+  -fonte: IFonteInstitucional
+  -usuarios: IUsuarioRepository
+  +importar(adminId: number, agora: Date) Promise~ResumoDaImportacao~
+  +importarSeVencida(agora: Date) Promise~ResumoDaImportacao [0..1]~
+  +definirPeriodicidade(adminId: number, dias: number) Promise~void~
+  +listarCursos() Promise~string[]~
+}
+class busca {
+  <<utility>>
+  +normalizar(texto: string [0..1]) string$
+  +combinaComTermo(termo: string [0..1], campos: string [0..*]) boolean$
+  +combinaComLista(valor: string, escolhidos: string [0..*]) boolean$
+}
+class calendario {
+  <<utility>>
+  +hojeComoDia(agora: Date) Date$
+  +lerDia(texto: string) Date [0..1]$
+  +formatarDia(data: Date) string$
+}
+class ErroDeDominio {
+  <<abstract>>
+  +ErroDeDominio(mensagem: string)
+}
+class NaoEncontrado
+class RegraDeNegocio
+class SemPermissao
+class NaoAutenticado
+
+NaoEncontrado --|> ErroDeDominio
+RegraDeNegocio --|> ErroDeDominio
+SemPermissao --|> ErroDeDominio
+NaoAutenticado --|> ErroDeDominio
+DenunciaService --> "1" ModeracaoService : moderacao
+note for ErroDeDominio "O tratadorDeErros traduz em HTTP:<br>NaoEncontrado 404 · RegraDeNegocio 409<br>SemPermissao 403 · NaoAutenticado 401"
+note "Atributos cujo tipo é outra classe (ex.: -vagas: IVagaRepository)<br>são associações navegáveis da classe dona para esse tipo,<br>na notação de atributo da UML (multiplicidade 1, salvo [0..1] ou [0..*]).<br>As associações dos serviços estão desenhadas no diagrama 4b."

@@ -1,0 +1,208 @@
+---
+title: "Persistência"
+config:
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+direction LR
+
+namespace ContratosDoDominio {
+  class IUnidadeDeTrabalho {
+    <<interface>>
+    +emTransacao(trabalho: Trabalho~T~) Promise~T~
+  }
+  class Transacao {
+    <<interface>>
+  }
+  class IUsuarioRepository {
+    <<interface>>
+    +buscarPorId(id: number, tx: Transacao [0..1]) Promise~Usuario [0..1]~
+    +buscarPorEmail(email: string) Promise~Usuario [0..1]~
+    +listarTodos() Promise~Usuario[]~
+    +buscar(filtro: FiltroDeUsuarios) Promise~ResumoDeUsuario[]~
+    +inserir(dados: DadosCadastro, senhaHash: string, tx: Transacao) Promise~Usuario~
+    +atualizarPerfil(id: number, dados: DadosPerfil, tx: Transacao) Promise~void~
+    +salvarSeguranca(usuario: Usuario, tx: Transacao [0..1]) Promise~void~
+    +definirAtivo(id: number, ativo: boolean, tx: Transacao) Promise~void~
+  }
+  class IProjetoRepository {
+    <<interface>>
+    +buscarPorId(id: number, tx: Transacao [0..1]) Promise~Projeto [0..1]~
+    +listarComCoordenador() Promise~ResumoDeProjeto[]~
+    +listarDoCoordenador(coordenadorId: number) Promise~Projeto[]~
+    +listarNaoIncorporados(termo: string) Promise~Projeto[]~
+    +definirCoordenador(projetoId: number, coordenadorId: number, tx: Transacao) Promise~void~
+  }
+  class IVagaRepository {
+    <<interface>>
+    +listarAbertas() Promise~VagaComProjeto[]~
+    +listarDoProjeto(projetoId: number) Promise~VagaComProjeto[]~
+    +buscarPorId(id: number, tx: Transacao [0..1]) Promise~Vaga [0..1]~
+    +buscarParaAtualizacao(id: number, tx: Transacao) Promise~Vaga [0..1]~
+    +reservarUmaPosicao(id: number, tx: Transacao) Promise~void~
+    +liberarUmaPosicao(id: number, tx: Transacao) Promise~void~
+    +inserir(dados: DadosNovaVaga, tx: Transacao) Promise~Vaga~
+  }
+  class ICandidaturaRepository {
+    <<interface>>
+    +existeNaoRemovida(estudanteId: number, vagaId: number, tx: Transacao [0..1]) Promise~boolean~
+    +inserir(estudanteId: number, vagaId: number, mensagem: string [0..1], tx: Transacao) Promise~Candidatura~
+    +buscarParaAtualizacao(id: number, tx: Transacao) Promise~Candidatura [0..1]~
+    +atualizar(candidatura: Candidatura, tx: Transacao) Promise~void~
+    +registrarHistorico(candidaturaId: number, status: StatusCandidatura, agora: Date, tx: Transacao) Promise~void~
+    +listarHistorico(candidaturaId: number) Promise~HistoricoDeStatus[]~
+    +listarDoEstudante(estudanteId: number) Promise~CandidaturaComVaga[]~
+    +listarDaCoordenacao(coordenadorId: number, filtro: FiltroDeCandidaturas) Promise~CandidaturaRecebida[]~
+    +buscarRecebida(coordenadorId: number, candidaturaId: number) Promise~CandidaturaRecebida [0..1]~
+    +listarAtivasDoUsuario(usuarioId: number, tx: Transacao) Promise~Candidatura[]~
+  }
+  class IParticipacaoRepository {
+    <<interface>>
+    +inserir(participacao: Participacao, tx: Transacao) Promise~Participacao~
+    +buscarPorId(id: number, tx: Transacao [0..1]) Promise~Participacao [0..1]~
+    +listarDoUsuario(usuarioId: number) Promise~ParticipacaoComProjeto[]~
+    +listarDoProjeto(projetoId: number) Promise~Participante[]~
+    +estaVinculado(usuarioId: number, projetoId: number, tx: Transacao [0..1]) Promise~boolean~
+    +atualizar(participacao: Participacao, tx: Transacao) Promise~void~
+    +listarAtivasDoUsuario(usuarioId: number, tx: Transacao) Promise~Participacao[]~
+    +listarVencidas(agora: Date, tx: Transacao) Promise~Participacao[]~
+  }
+  class IAtividadeRepository {
+    <<interface>>
+    +listarRecentes() Promise~AtividadeComProjeto[]~
+    +listarDoProjeto(projetoId: number) Promise~AtividadeComProjeto[]~
+    +inserir(projetoId: number, autorId: number, dados: DadosAtividade, tx: Transacao) Promise~Atividade~
+  }
+  class IAvaliacaoRepository {
+    <<interface>>
+    +inserir(avaliacao: Avaliacao, tx: Transacao) Promise~Avaliacao~
+    +listarDoProjeto(projetoId: number) Promise~Avaliacao[]~
+    +listarDoEstudante(estudanteId: number) Promise~Avaliacao[]~
+  }
+  class INotificacaoRepository {
+    <<interface>>
+    +inserir(nova: NovaNotificacao, tx: Transacao [0..1]) Promise~Notificacao~
+    +listarDoDestinatario(usuarioId: number, tipos: TipoNotificacao [0..*]) Promise~Notificacao[]~
+    +marcarTodasComoLidas(usuarioId: number) Promise~void~
+  }
+  class IDenunciaRepository {
+    <<interface>>
+    +inserir(denuncia: Denuncia, tx: Transacao) Promise~Denuncia~
+    +buscarParaAtualizacao(id: number, tx: Transacao) Promise~Denuncia [0..1]~
+    +listarPendentes() Promise~Denuncia[]~
+    +atualizar(denuncia: Denuncia, tx: Transacao) Promise~void~
+  }
+  class IBanimentoRepository {
+    <<interface>>
+    +inserir(banimento: Banimento, tx: Transacao) Promise~Banimento~
+    +buscarParaAtualizacao(id: number, tx: Transacao) Promise~Banimento [0..1]~
+    +listarAtivos(termo: string [0..1]) Promise~BanimentoComUsuario[]~
+    +emailBloqueado(email: string) Promise~boolean~
+    +atualizar(banimento: Banimento, tx: Transacao) Promise~void~
+  }
+  class IPedidoIncorporacaoRepository {
+    <<interface>>
+    +inserir(pedido: PedidoIncorporacao, tx: Transacao) Promise~PedidoIncorporacao~
+    +existePendente(coordenadorId: number, projetoId: number, tx: Transacao [0..1]) Promise~boolean~
+    +buscarParaAtualizacao(id: number, tx: Transacao) Promise~PedidoIncorporacao [0..1]~
+    +listarPendentes() Promise~PedidoComProjeto[]~
+    +atualizar(pedido: PedidoIncorporacao, tx: Transacao) Promise~void~
+  }
+  class IBaseInstitucionalRepository {
+    <<interface>>
+    +salvarProjeto(projeto: ProjetoInstitucional, tx: Transacao) Promise~boolean~
+    +salvarCursos(cursos: string [0..*], tx: Transacao) Promise~number~
+    +listarCursos() Promise~string[]~
+    +obterConfiguracao() Promise~ConfiguracaoDaImportacao~
+    +salvarConfiguracao(configuracao: ConfiguracaoDaImportacao, tx: Transacao) Promise~void~
+  }
+  class IFonteInstitucional {
+    <<interface>>
+    +obterDados() Promise~DadosInstitucionais~
+  }
+}
+
+namespace ImplementacaoSQL {
+  class ExecutorSQL {
+    <<interface>>
+    +query(sql: string, params: unknown [0..*]) Promise~ResultadoSQL~
+  }
+  class TransacaoPostgres {
+    -cliente: PoolClient
+    +query(sql: string, params: unknown [0..*]) Promise~ResultadoSQL~
+  }
+  class ExecutorPGlite {
+    -alvo: ConsultaPGlite
+    +query(sql: string, params: unknown [0..*]) Promise~ResultadoSQL~
+  }
+  class UnidadeDeTrabalho {
+    -pool: Pool
+    +emTransacao(trabalho: Trabalho~T~) Promise~T~
+  }
+  class UnidadeDeTrabalhoEmMemoria {
+    -banco: PGlite
+    +emTransacao(trabalho: Trabalho~T~) Promise~T~
+  }
+  class RepositorioSQL {
+    <<abstract>>
+    #db: ExecutorSQL
+    #executor(tx: Transacao [0..1]) ExecutorSQL
+  }
+  class UsuarioRepository
+  class ProjetoRepository
+  class VagaRepository
+  class CandidaturaRepository
+  class ParticipacaoRepository
+  class AtividadeRepository
+  class AvaliacaoRepository
+  class NotificacaoRepository
+  class DenunciaRepository
+  class BanimentoRepository
+  class PedidoIncorporacaoRepository
+  class BaseInstitucionalRepository
+  class FonteInstitucionalEmArquivo {
+    -caminho: string
+    +obterDados() Promise~DadosInstitucionais~
+  }
+}
+
+%% contratos (esquerda) <- implementações (meio) -> infraestrutura SQL (direita)
+IUnidadeDeTrabalho <|.. UnidadeDeTrabalho
+IUnidadeDeTrabalho <|.. UnidadeDeTrabalhoEmMemoria
+Transacao <|.. TransacaoPostgres
+Transacao <|.. ExecutorPGlite
+IFonteInstitucional <|.. FonteInstitucionalEmArquivo
+IUsuarioRepository <|.. UsuarioRepository
+IProjetoRepository <|.. ProjetoRepository
+IVagaRepository <|.. VagaRepository
+ICandidaturaRepository <|.. CandidaturaRepository
+IParticipacaoRepository <|.. ParticipacaoRepository
+IAtividadeRepository <|.. AtividadeRepository
+IAvaliacaoRepository <|.. AvaliacaoRepository
+INotificacaoRepository <|.. NotificacaoRepository
+IDenunciaRepository <|.. DenunciaRepository
+IBanimentoRepository <|.. BanimentoRepository
+IPedidoIncorporacaoRepository <|.. PedidoIncorporacaoRepository
+IBaseInstitucionalRepository <|.. BaseInstitucionalRepository
+UsuarioRepository --|> RepositorioSQL
+ProjetoRepository --|> RepositorioSQL
+VagaRepository --|> RepositorioSQL
+CandidaturaRepository --|> RepositorioSQL
+ParticipacaoRepository --|> RepositorioSQL
+AtividadeRepository --|> RepositorioSQL
+AvaliacaoRepository --|> RepositorioSQL
+NotificacaoRepository --|> RepositorioSQL
+DenunciaRepository --|> RepositorioSQL
+BanimentoRepository --|> RepositorioSQL
+PedidoIncorporacaoRepository --|> RepositorioSQL
+BaseInstitucionalRepository --|> RepositorioSQL
+UnidadeDeTrabalho ..> TransacaoPostgres : cria
+UnidadeDeTrabalhoEmMemoria ..> ExecutorPGlite : cria
+TransacaoPostgres ..|> ExecutorSQL
+ExecutorPGlite ..|> ExecutorSQL
+RepositorioSQL --> "1" ExecutorSQL : db
+note for Transacao "Opaca para o domínio: não tem métodos.<br>Os services só repassam a transação aos<br>repositórios, então não conseguem executar<br>SQL (RNF: SQL só no pacote de repositórios)."
+note "RepositorioSQL: executor(tx) converte a Transacao recebida<br>em ExecutorSQL; sem tx, usa db (consulta<br>fora de transação). É o único lugar com SQL."
+note for UnidadeDeTrabalho "emTransacao abre BEGIN num PoolClient,<br>entrega a TransacaoPostgres ao trabalho<br>e faz COMMIT ou ROLLBACK."
+note "CandidaturaRepository: Esquema: UNIQUE (vaga_id, estudante_id)<br>WHERE status <> 'REMOVIDA' (índice parcial).<br>existeNaoRemovida avisa antes de inserir;<br>o índice garante sob concorrência."

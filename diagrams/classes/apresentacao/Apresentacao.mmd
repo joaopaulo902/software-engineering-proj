@@ -1,0 +1,176 @@
+---
+title: "Camada de apresentação"
+config:
+  class:
+    hideEmptyMembersBox: true
+---
+classDiagram
+direction LR
+
+class rotas {
+  <<utility>>
+  +criarRotas(controllers: Controllers) Router$
+}
+class middlewares {
+  <<utility>>
+  +exigirLogin(req: Request, res: Response, next: NextFunction) void$
+  +exigirPapel(papeis: Papel [1..*]) RequestHandler$
+  +tratadorDeErros(erro: unknown, req: Request, res: Response, next: NextFunction) void$
+}
+class parametros {
+  <<utility>>
+  +lerTexto(valor: unknown) string [0..1]$
+  +lerLista(valor: unknown) string [0..*]$
+}
+class SessaoController {
+  <<boundary>>
+  -servico: UsuarioService
+  +entrar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/sessao
+  +atual(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/sessao
+  +sair(req: Request, res: Response) void · DELETE /api/sessao
+  +cadastrar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/usuarios
+}
+class UsuarioService {
+  <<control>>
+}
+class UsuarioController {
+  <<boundary>>
+  -servico: UsuarioService
+  +perfil(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/usuarios/:id/perfil · C16
+  +atualizarPerfil(req: Request, res: Response, next: NextFunction) Promise~void~ · PUT /api/perfil · C04 2.a
+  +buscar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/usuarios · C01
+}
+class VagaController {
+  <<boundary>>
+  -servico: VagaService
+  +listar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/vagas · C01
+  +detalhar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/vagas/:id · C03
+  +listarProjetosParaPublicar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos/meus · C06
+  +publicar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/vagas · C06
+}
+class VagaService {
+  <<control>>
+}
+class CandidaturaController {
+  <<boundary>>
+  -servico: CandidaturaService
+  +criar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/candidaturas · C04
+  +listarMinhas(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/candidaturas/minhas · C05
+  +detalhar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/candidaturas/:id · C05
+  +remover(req: Request, res: Response, next: NextFunction) Promise~void~ · DELETE /api/candidaturas/:id · C18
+  +confirmar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/candidaturas/:id/confirmacao · C07
+  +declinar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/candidaturas/:id/declinio · C07
+  +listarRecebidas(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/candidaturas/recebidas · C15
+  +detalharRecebida(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/candidaturas/recebidas/:id · C15
+  +avaliar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/candidaturas/:id/avaliacao · C11
+}
+class CandidaturaService {
+  <<control>>
+}
+class ProjetoController {
+  <<boundary>>
+  -servico: ProjetoService
+  +listar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos · C01
+  +detalhar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos/:id · C02
+  +meusProjetos(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/participacoes/minhas
+  +listarParticipantes(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos/:id/participantes
+  +alterarCargo(req: Request, res: Response, next: NextFunction) Promise~void~ · PATCH /api/participacoes/:id
+  +removerParticipante(req: Request, res: Response, next: NextFunction) Promise~void~ · DELETE /api/participacoes/:id
+  +sair(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/participacoes/:id/saida · C08
+}
+class ProjetoService {
+  <<control>>
+}
+class AtividadeController {
+  <<boundary>>
+  -servico: AtividadeService
+  +listar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/atividades
+  +postar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/projetos/:id/atividades · C10
+}
+class AtividadeService {
+  <<control>>
+}
+class AvaliacaoController {
+  <<boundary>>
+  -servico: AvaliacaoService
+  +avaliarEstudante(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/participacoes/:id/avaliacao · C08
+  +recomendarProjeto(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/participacoes/:id/recomendacao · C08
+  +listarDoProjeto(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos/:id/recomendacoes
+  +listarDoEstudante(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/usuarios/:id/avaliacoes
+}
+class AvaliacaoService {
+  <<control>>
+}
+class NotificacaoController {
+  <<boundary>>
+  -servico: NotificacaoService
+  +listar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/notificacoes
+  +marcarLidas(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/notificacoes/lidas
+}
+class NotificacaoService {
+  <<control>>
+}
+class DenunciaController {
+  <<boundary>>
+  -servico: DenunciaService
+  +denunciar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/denuncias · C13
+  +listarPendentes(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/denuncias/pendentes
+  +julgar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/denuncias/:id/julgamento · C13
+}
+class DenunciaService {
+  <<control>>
+}
+class ModeracaoController {
+  <<boundary>>
+  -servico: ModeracaoService
+  +listarBanidos(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/banimentos · C12
+  +removerUsuario(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/usuarios/:id/banimento · C14
+  +reverter(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/banimentos/:id/reversao · C19
+}
+class ModeracaoService {
+  <<control>>
+}
+class IncorporacaoController {
+  <<boundary>>
+  -servico: IncorporacaoService
+  +buscarProjetos(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/base-institucional/projetos · C17
+  +solicitar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/incorporacoes · C17
+  +listarPendentes(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/incorporacoes/pendentes · C17
+  +avaliar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/incorporacoes/:id/avaliacao · C17
+}
+class IncorporacaoService {
+  <<control>>
+}
+class BaseInstitucionalController {
+  <<boundary>>
+  -servico: BaseInstitucionalService
+  +importar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/base-institucional/importacao · C09
+  +definirPeriodicidade(req: Request, res: Response, next: NextFunction) Promise~void~ · PUT /api/base-institucional/periodicidade · C09
+  +listarCursos(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/cursos · C06
+}
+class BaseInstitucionalService {
+  <<control>>
+}
+class AgendadorDeTarefas {
+  <<boundary>>
+  -base: BaseInstitucionalService
+  -projetos: ProjetoService
+  +iniciar(intervaloEmMinutos: number) void · chamado no main.ts
+  -executar(agora: Date) Promise~void~ · importarSeVencida (C09) e encerrarParticipacoesVencidas (C08)
+}
+
+SessaoController --> "1" UsuarioService : servico
+UsuarioController --> "1" UsuarioService : servico
+VagaController --> "1" VagaService : servico
+CandidaturaController --> "1" CandidaturaService : servico
+ProjetoController --> "1" ProjetoService : servico
+AtividadeController --> "1" AtividadeService : servico
+AvaliacaoController --> "1" AvaliacaoService : servico
+NotificacaoController --> "1" NotificacaoService : servico
+DenunciaController --> "1" DenunciaService : servico
+ModeracaoController --> "1" ModeracaoService : servico
+IncorporacaoController --> "1" IncorporacaoService : servico
+BaseInstitucionalController --> "1" BaseInstitucionalService : servico
+AgendadorDeTarefas --> "1" BaseInstitucionalService : base
+AgendadorDeTarefas --> "1" ProjetoService : projetos
+note for rotas "criarRotas registra as rotas fixas<br>(/minhas, /recebidas, /meus) antes das<br>rotas com :id. Senão o Express lê<br>«minhas» como se fosse um id."

@@ -141,7 +141,7 @@ seu-projeto/
 - O domínio só enxerga a persistência pelas interfaces.
 - `dominio/entidades` não importa nada de Express nem do driver do banco.
 
-## Simplificações do caso de uso implementado
+## Simplificações dos casos de uso implementados
 
 Para o slide de simplificações exigido pelo enunciado:
 
@@ -156,9 +156,15 @@ Para o slide de simplificações exigido pelo enunciado:
 4. **Cadastro de projetos pelo sistema (C09) não implementado.** Os projetos
    vêm do seed, como se a Comissão de Extensão já os tivesse cadastrado — que
    é a pré-condição do C06. As vagas, essas sim, são publicadas pelo C06.
-5. **Busca por texto e área apenas.** Os demais filtros do C01 — turno,
+5. **Perfil e histórico do estudante não são enviados.** A candidatura leva
+   apenas uma mensagem de texto livre; o coordenador vê nome, curso e semestre.
+   Por isso o pré-requisito acadêmico do C04 ficou reduzido ao semestre mínimo.
+6. **Vaga publicada não pode ser editada nem retirada.** O C06 cobre a
+   publicação; alterar uma vaga que já tem candidaturas em andamento envolve
+   regras que o relatório da Etapa 1 não define.
+7. **Busca por texto e área apenas.** Os demais filtros do C01 — turno,
    modalidade, carga horária — ficam para a Etapa 3.
-6. **Sem paginação.** O volume de vagas da demonstração não exige.
+8. **Sem paginação.** O volume de vagas da demonstração não exige.
 
 Ferramentas usadas:
 - Node.js
