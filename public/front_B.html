@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extensão INF — Projetos & Atividades (Frente B)</title>
+  <link rel="stylesheet" href="estilo.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+      background: var(--fundo);
+      color: var(--tinta);
+      font: 16px/1.55 "Segoe UI", system-ui, -apple-system, Helvetica, Arial, sans-serif;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      color: var(--tinta);
+      font-weight: 600;
+    }
+
+    /* Cards e listas com padrão do estilo.css */
+    .card--hover {
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      cursor: pointer;
+    }
+    .card--hover:hover {
+      border-color: var(--azul);
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Dropdown de Notificações */
+    #notifDropdown::after {
+      display: none !important;
+    }
+    .dropdown-menu.show {
+      display: block !important;
+    }
+    .dropdown-item:hover, .dropdown-item:focus {
+      background-color: var(--fundo);
+    }
+
+    /* Modais Bootstrap alinhados com estilo.css */
+    .modal-content {
+      border: 1px solid var(--borda);
+      border-radius: 12px;
+      box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.15);
+      background: #fff;
+    }
+    .modal-header {
+      border-bottom: 1px solid var(--borda);
+      padding: 18px 24px;
+    }
+    .modal-header .btn-close:focus {
+      box-shadow: none;
+    }
+    .modal-body {
+      padding: 24px;
+    }
+    .modal-footer {
+      border-top: 1px solid var(--borda);
+      padding: 16px 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <main class="pagina">
+    <!-- Barra Superior de Navegação -->
+    <header class="barra">
+      <div>
+        <h1 class="titulo" style="font-size: 20px;">Extensão INF</h1>
+        <span class="papel" id="sessaoInfo">Projetos &middot; Frente B</span>
+      </div>
+
+      <div class="d-flex align-items-center gap-2">
+        <!-- Seletor de Sessão -->
+        <select id="userSelector" style="width: auto; min-width: 230px; padding: 8px 12px; font-size: 13.5px;" onchange="alternarSessao(this.value)">
+          <option value="2">2 - Profa. Carla (Coord. Robótica)</option>
+          <option value="3">3 - Prof. Rui (Coord. Saúde)</option>
+          <option value="6">6 - Carla Dias (Monitora)</option>
+        </select>
+
+        <!-- Sino de Notificações com Dropdown -->
+        <div class="dropdown" id="notifDropdownContainer" style="position: relative;">
+          <button class="botao" type="button" id="notifDropdown" onclick="toggleNotificacoes(event)" aria-expanded="false" title="Notificações" style="position: relative; padding: 8px 12px;">
+            <i class="bi bi-bell"></i>
+            <span class="contador contador--zero" id="notifBadge" style="display: none; position: absolute; top: -6px; right: -6px; padding: 2px 6px; font-size: 11px;">0</span>
+          </button>
+          <div class="dropdown-menu dropdown-menu-end" id="notifMenu" aria-labelledby="notifDropdown" style="width: 360px; border: 1px solid var(--borda); border-radius: 12px; box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.12); z-index: 1055; position: absolute; right: 0; top: 100%; margin-top: 8px; background: #fff; padding: 0; overflow: hidden;">
+            <div style="padding: 14px 16px; border-bottom: 1px solid var(--borda); display: flex; justify-content: space-between; align-items: center; background: #fff;">
+              <strong style="font-size: 14.5px; color: var(--tinta);">Notificações</strong>
+              <button class="botao botao--texto" style="font-size: 13px; padding: 0;" onclick="marcarTodasLidas(event)">Marcar lidas</button>
+            </div>
+            <div id="notifItems" style="max-height: 360px; overflow-y: auto;">
+              <div class="carregando" style="padding: 24px; text-align: center;">A carregar…</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="botao" style="padding: 8px 12px;" title="Perfil">
+          <i class="bi bi-person"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navegação em Abas (Estilo Principal) -->
+    <nav class="abas">
+      <button class="aba aba--ativa" data-aba="projetos" onclick="mudarAba('projetos')">Projetos</button>
+      <button class="aba" data-aba="meus-projetos" onclick="mudarAba('meus-projetos')">Meus Projetos</button>
+      <button class="aba" data-aba="feed" onclick="mudarAba('feed')">Feed de Atividades</button>
+    </nav>
+
+    <!-- ABA 1: PROJETOS -->
+    <div id="view-projetos">
+      <div class="card" style="margin-bottom: 20px;">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-5">
+            <input type="search" id="filtroTermo" placeholder="Buscar por projeto ou vaga…" oninput="carregarProjetosReal()">
+          </div>
+          <div class="col-md-4">
+            <input type="text" id="filtroAreas" placeholder="Áreas (ex: Robótica, Saúde)…" oninput="carregarProjetosReal()">
+          </div>
+          <div class="col-md-3 d-flex align-items-center justify-content-md-end">
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; margin: 0;">
+              <input type="checkbox" id="filtroSomenteVagas" onchange="carregarProjetosReal()" style="width: auto; cursor: pointer;">
+              Vagas Abertas
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="lista" id="listaProjetos">
+        <p class="carregando">A carregar projetos…</p>
+      </div>
+    </div>
+
+    <!-- ABA 2: MEUS PROJETOS -->
+    <div id="view-meus-projetos" style="display: none;">
+      <h2 class="titulo" style="font-size: 20px; margin-bottom: 16px;">Meus Projetos & Participações</h2>
+      <div class="lista" id="listaMeusProjetos">
+        <p class="carregando">A carregar…</p>
+      </div>
+      <button class="botao" style="margin-top: 18px;" onclick="mudarAba('projetos')"><i class="bi bi-arrow-left me-1"></i> Voltar para Projetos</button>
+    </div>
+
+    <!-- ABA 3: FEED DE ATIVIDADES -->
+    <div id="view-feed" style="display: none;">
+      <h2 class="titulo" style="font-size: 20px; margin-bottom: 16px;">Feed de Atividades</h2>
+      <div class="lista" id="listaFeedAtividades">
+        <p class="carregando">A carregar feed…</p>
+      </div>
+      <button class="botao" style="margin-top: 18px;" onclick="mudarAba('projetos')"><i class="bi bi-arrow-left me-1"></i> Voltar para Projetos</button>
+    </div>
+
+    <!-- ABA 4: DETALHE DO PROJETO -->
+    <div id="view-detalhe-projeto" style="display: none;">
+      <button class="botao" style="margin-bottom: 20px;" onclick="mudarAba('projetos')"><i class="bi bi-arrow-left me-1"></i> Voltar para Projetos</button>
+      <div id="detalheProjetoConteudo"></div>
+    </div>
+  </main>
+
+  <!-- Modal Nova Atividade -->
+  <div class="modal fade" id="modalNovaAtividade" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" style="font-size: 18px; font-weight: 600; margin: 0;">Publicar Nova Atividade</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <form id="formNovaAtividade" class="formulario" onsubmit="event.preventDefault(); submeterNovaAtividade();">
+            <input type="hidden" id="atividadeProjetoId">
+            <div class="campo">
+              <label for="atividadeTitulo">Título</label>
+              <input type="text" id="atividadeTitulo" placeholder="Ex: Primeira oficina de robótica" required>
+            </div>
+            <div class="campo">
+              <label for="atividadeDescricao">Descrição</label>
+              <textarea id="atividadeDescricao" rows="3" placeholder="Detalhes da atividade realizada..." required></textarea>
+            </div>
+            <div class="campo">
+              <label for="atividadeFoto">URL da Foto (opcional)</label>
+              <input type="url" id="atividadeFoto" placeholder="https://...">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer d-flex justify-content-end gap-2">
+          <button type="button" class="botao" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="botao botao--primario" onclick="submeterNovaAtividade()">Publicar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Alterar Cargo -->
+  <div class="modal fade" id="modalAlterarCargo" tabindex="-1">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" style="font-size: 17px; font-weight: 600; margin: 0;">Alterar Cargo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="participacaoIdCargo">
+          <div class="campo">
+            <label for="novoCargoInput">Novo Cargo</label>
+            <input type="text" id="novoCargoInput" placeholder="Ex: Monitor, Pesquisador..." required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="botao botao--primario w-100" onclick="salvarNovoCargo()">Salvar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/bootstrap.bundle.min.js"></script>
+  <script>
+    let usuarioLogadoId = 2;
+    let projetoAtualIdCache = null;
+    let meusProjetosCache = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      await alternarSessao(2);
+      carregarProjetosReal();
+    });
+
+    function mudarAba(aba) {
+      document.getElementById("view-projetos").style.display = "none";
+      document.getElementById("view-meus-projetos").style.display = "none";
+      document.getElementById("view-feed").style.display = "none";
+      document.getElementById("view-detalhe-projeto").style.display = "none";
+
+      document.querySelectorAll(".aba").forEach(btn => {
+        if (btn.dataset.aba === aba) {
+          btn.classList.add("aba--ativa");
+        } else {
+          btn.classList.remove("aba--ativa");
+        }
+      });
+
+      if (aba === 'projetos') {
+        document.getElementById("view-projetos").style.display = "block";
+        carregarProjetosReal();
+      } else if (aba === 'meus-projetos') {
+        document.getElementById("view-meus-projetos").style.display = "block";
+        carregarMeusProjetos();
+      } else if (aba === 'feed') {
+        document.getElementById("view-feed").style.display = "block";
+        carregarFeed();
+      } else if (aba === 'detalhe') {
+        document.getElementById("view-detalhe-projeto").style.display = "block";
+      }
+    }
+
+    async function alternarSessao(id) {
+      usuarioLogadoId = parseInt(id);
+      try {
+        const res = await fetch('/api/sessao', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usuarioId: usuarioLogadoId })
+        });
+        if (res.ok) {
+          const u = await res.json();
+          const sessaoInfo = document.getElementById("sessaoInfo");
+          if (sessaoInfo) {
+            sessaoInfo.textContent = `${u.nome} · ${u.papel}`;
+          }
+        }
+        await atualizarCacheMeusProjetos();
+        carregarNotificacoes();
+
+        const abaAtivaEl = document.querySelector(".aba--ativa");
+        const abaAtual = abaAtivaEl ? abaAtivaEl.dataset.aba : 'projetos';
+        if (abaAtual === 'meus-projetos') {
+          await carregarMeusProjetos();
+        } else if (abaAtual === 'detalhe' && projetoAtualIdCache) {
+          await abrirDetalhesProjeto(projetoAtualIdCache);
+        }
+      } catch (e) {
+        console.error("Erro ao definir sessão:", e);
+      }
+    }
+
+    async function atualizarCacheMeusProjetos() {
+      try {
+        const res = await fetch('/api/participacoes/minhas');
+        if (res.ok) {
+          meusProjetosCache = await res.json();
+        } else {
+          meusProjetosCache = [];
+        }
+      } catch (e) {
+        meusProjetosCache = [];
+      }
+    }
+
+    async function carregarProjetosReal() {
+      const termo = document.getElementById("filtroTermo").value.trim();
+      const areas = document.getElementById("filtroAreas").value.trim();
+      const somenteVagas = document.getElementById("filtroSomenteVagas").checked;
+
+      let queryParams = new URLSearchParams();
+      if (termo) queryParams.append("termo", termo);
+      if (areas) queryParams.append("areas", areas);
+      if (somenteVagas) queryParams.append("somenteComVagasAbertas", "true");
+
+      const urlQuery = queryParams.toString() ? `?${queryParams.toString()}` : "";
+
+      try {
+        const res = await fetch(`/api/projetos${urlQuery}`);
+        const projetos = await res.json();
+        const container = document.getElementById("listaProjetos");
+        container.innerHTML = "";
+
+        if (!Array.isArray(projetos) || projetos.length === 0) {
+          container.innerHTML = `<p class="aviso aviso--info">Nenhum projeto encontrado com esses filtros.</p>`;
+          return;
+        }
+
+        projetos.forEach(p => {
+          const nomeProjeto = p.nome || p.titulo || p.descricao || "Projeto sem título";
+          // A API /api/projetos retorna o total de vagas abertas no campo `vagasAbertas`
+          const vagasCount = Number(p.vagasAbertas ?? (p.vagas ? p.vagas.filter(v => v.aberta).length : 0));
+          const coordenadorTxt = p.coordenadorNome || (p.coordenadorId ? `ID: ${p.coordenadorId}` : (p.coordenadorCadastrado || 'Não atribuído'));
+          const textoVagas = vagasCount === 1 ? '1 vaga aberta' : `${vagasCount} vagas abertas`;
+
+          container.innerHTML += `
+            <article class="card card--hover" onclick="abrirDetalhesProjeto(${p.id})">
+              <header class="card__topo">
+                <div>
+                  <h3 style="font-size: 17px; margin: 0 0 4px; font-weight: 600;">${nomeProjeto}</h3>
+                  <p class="card__projeto">${p.area ? `<span class="etiqueta" style="background: var(--azul-claro); color: var(--azul); margin-right: 6px;">${p.area}</span>` : ''}${p.descricao || ''}</p>
+                </div>
+                <span class="contador ${vagasCount === 0 ? 'contador--zero' : ''}">
+                  ${textoVagas}
+                </span>
+              </header>
+              <div style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--suave);">
+                <span>Coordenação: <strong style="color: var(--tinta);">${coordenadorTxt}</strong></span>
+                <span style="color: var(--azul); font-weight: 500;">Ver projeto &rarr;</span>
+              </div>
+            </article>
+          `;
+        });
+      } catch (err) {
+        console.error("Erro ao carregar projetos:", err);
+      }
+    }
+
+    async function abrirDetalhesProjeto(id) {
+      projetoAtualIdCache = id;
+      try {
+        const [resProj, resPart] = await Promise.all([
+          fetch(`/api/projetos/${id}`),
+          fetch(`/api/projetos/${id}/participantes`)
+        ]);
+        
+        const projeto = await resProj.json();
+        const participantes = await resPart.json();
+
+        if (projeto.erro) {
+          alert(projeto.erro);
+          return;
+        }
+
+        const nomeProj = projeto.titulo || projeto.nome || "Projeto";
+        const userEhCoord = projeto.coordenadorId === usuarioLogadoId;
+        const userTemParticipacaoAtiva = meusProjetosCache.some(mp => (mp.projetoId === id || mp.id === id) && mp.ativa !== false);
+        const podePostar = userEhCoord || userTemParticipacaoAtiva;
+
+        let vagasOrdenadas = [];
+        if (projeto.vagas && Array.isArray(projeto.vagas)) {
+          vagasOrdenadas = [...projeto.vagas].sort((a, b) => (b.aberta === a.aberta) ? 0 : a.aberta ? 1 : -1);
+        }
+
+        const atividades = Array.isArray(projeto.atividades) ? projeto.atividades : [];
+
+        let html = `
+          <!-- Cabeçalho do Projeto -->
+          <div class="card" style="margin-bottom: 28px;">
+            <header class="card__topo" style="margin-bottom: 8px;">
+              <div>
+                <h2 class="titulo" style="font-size: 22px; margin-bottom: 4px;">${nomeProj}</h2>
+                <p class="card__projeto" style="font-size: 14px;">
+                  Situação: <span class="etiqueta ${projeto.situacao === 'ATIVO' ? 'etiqueta--confirmada' : 'etiqueta--em_analise'}">${projeto.situacao || 'EM_ANDAMENTO'}</span>
+                  ${projeto.area ? ` &middot; Área: <strong>${projeto.area}</strong>` : ''}
+                  ${projeto.coordenadorNome ? ` &middot; Coordenação: <strong>${projeto.coordenadorNome}</strong>` : ''}
+                </p>
+              </div>
+              ${podePostar ? `<button class="botao botao--primario" onclick="abrirModalNovaAtividade(${id})"><i class="bi bi-plus-lg me-1"></i> Nova Atividade</button>` : ''}
+            </header>
+            ${projeto.descricao ? `<p style="margin: 12px 0 0; font-size: 14px; color: var(--suave); line-height: 1.5;">${projeto.descricao}</p>` : ''}
+          </div>
+
+          <!-- SEÇÃO 1: Vagas do Projeto (Grid Quadrado) -->
+          <section style="margin-bottom: 32px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <h3 style="font-size: 18px; margin: 0; font-weight: 600; color: var(--tinta);">Vagas do Projeto</h3>
+              <span style="font-size: 13px; color: var(--suave);">${vagasOrdenadas.length} ${vagasOrdenadas.length === 1 ? 'vaga registrada' : 'vagas registradas'}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px;">
+        `;
+
+        if (vagasOrdenadas.length > 0) {
+          vagasOrdenadas.forEach(v => {
+            const estaAberta = Boolean(v.aberta);
+            const vagasRestantes = v.vagasRestantes !== undefined ? Number(v.vagasRestantes) : 0;
+            const vagasTotais = v.vagasTotais !== undefined ? Number(v.vagasTotais) : 0;
+            const esgotada = vagasRestantes === 0;
+
+            let badgeHtml = '';
+            if (!estaAberta) {
+              badgeHtml = `<span class="contador contador--zero">Encerrada</span>`;
+            } else if (esgotada) {
+              badgeHtml = `<span class="contador contador--zero">0 de ${vagasTotais} vagas</span>`;
+            } else {
+              badgeHtml = `<span class="contador">${vagasRestantes} de ${vagasTotais} ${vagasTotais === 1 ? 'vaga' : 'vagas'}</span>`;
+            }
+
+            let dataEncFormatada = '';
+            if (v.dataEncerramento) {
+              try {
+                const d = new Date(v.dataEncerramento);
+                dataEncFormatada = d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+              } catch (_) {}
+            }
+
+            html += `
+              <div class="card" style="padding: 18px; min-height: 220px; display: flex; flex-direction: column; justify-content: space-between;">
+                <div>
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 8px;">
+                    <h4 style="font-size: 15.5px; margin: 0; font-weight: 600; color: var(--tinta);">${v.titulo || v.nome}</h4>
+                    ${badgeHtml}
+                  </div>
+                  <p class="card__projeto" style="font-size: 13px; margin: 0; line-height: 1.4;">${v.requisitos || 'Sem requisitos específicos'}</p>
+                </div>
+                <ul class="atributos" style="margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--borda);">
+                  ${v.cargaHoraria ? `<li>${v.cargaHoraria}h/sem</li>` : ''}
+                  ${v.turno ? `<li>${v.turno}</li>` : ''}
+                  ${v.modalidade ? `<li>${v.modalidade}</li>` : ''}
+                  ${v.semestreMinimo ? `<li>${v.semestreMinimo}º sem+</li>` : ''}
+                  ${dataEncFormatada ? `<li>Até ${dataEncFormatada}</li>` : ''}
+                </ul>
+              </div>
+            `;
+          });
+        } else {
+          html += `<div style="grid-column: 1 / -1;"><p class="aviso aviso--info">Sem vagas registradas neste projeto.</p></div>`;
+        }
+
+        html += `
+            </div>
+          </section>
+
+          <!-- SEÇÃO 2: Equipe & Participantes (Grid Quadrado) -->
+          <section style="margin-bottom: 36px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+              <h3 style="font-size: 18px; margin: 0; font-weight: 600; color: var(--tinta);">Equipe & Participantes</h3>
+              <span style="font-size: 13px; color: var(--suave);">${Array.isArray(participantes) ? participantes.length : 0} ${Array.isArray(participantes) && participantes.length === 1 ? 'membro' : 'membros'}</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+        `;
+
+        if (Array.isArray(participantes) && participantes.length > 0) {
+          participantes.forEach(pt => {
+            const partId = pt.participacaoId || pt.id;
+            html += `
+              <div class="card" style="padding: 20px 16px; min-height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                <div style="width: 46px; height: 46px; border-radius: 50%; background: var(--azul-claro); color: var(--azul); display: flex; align-items: center; justify-content: center; font-size: 20px; margin-bottom: 10px;">
+                  <i class="bi bi-person"></i>
+                </div>
+                <strong style="display: block; font-size: 14.5px; color: var(--tinta); margin-bottom: 4px;">${pt.nome || 'Utilizador #' + pt.usuarioId}</strong>
+                <span class="etiqueta" style="background: var(--fundo); color: var(--suave); border: 1px solid var(--borda); margin-bottom: 10px; font-size: 11.5px;">${pt.cargo || 'Membro'}</span>
+                ${userEhCoord ? `
+                  <div style="display: flex; gap: 6px; margin-top: auto;">
+                    <button class="botao" style="padding: 5px 9px; font-size: 12px;" title="Alterar Cargo" onclick="abrirModalCargo(${partId}, '${pt.cargo || ''}')"><i class="bi bi-pencil"></i></button>
+                    <button class="botao" style="padding: 5px 9px; font-size: 12px; color: var(--vermelho); border-color: var(--vermelho-claro);" title="Remover" onclick="removerParticipante(${id}, ${partId})"><i class="bi bi-trash"></i></button>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          });
+        } else {
+          html += `<div style="grid-column: 1 / -1;"><p class="aviso aviso--info">Nenhum participante ativo.</p></div>`;
+        }
+
+        html += `
+            </div>
+          </section>
+
+          <!-- SEÇÃO 3: Atividades do Projeto (Abaixo de Vagas e Participantes) -->
+          <section style="margin-top: 36px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div>
+                <h3 style="font-size: 18px; margin: 0 0 2px; font-weight: 600; color: var(--tinta);">Atividades do Projeto</h3>
+                <span style="font-size: 13px; color: var(--suave);">${atividades.length} ${atividades.length === 1 ? 'atividade registrada' : 'atividades registradas'}</span>
+              </div>
+              ${podePostar ? `<button class="botao botao--texto" onclick="abrirModalNovaAtividade(${id})"><i class="bi bi-plus-lg me-1"></i> Nova Atividade</button>` : ''}
+            </div>
+            <div class="lista">
+        `;
+
+        if (atividades.length > 0) {
+          atividades.forEach(a => {
+            const dataPublicacao = a.publicadaEm ? new Date(a.publicadaEm).toLocaleDateString('pt-BR') : 'Recente';
+            const foto = a.fotoUrl || a.foto;
+            const autorTxt = a.autorNome ? `Por <strong>${a.autorNome}</strong> &middot; ` : '';
+
+            html += `
+              <article class="card">
+                <header class="card__topo" style="margin-bottom: 8px;">
+                  <div>
+                    <h4 style="font-size: 16.5px; font-weight: 600; margin: 0 0 2px; color: var(--tinta);">${a.titulo}</h4>
+                    <span style="font-size: 12.5px; color: var(--suave);">${autorTxt}${dataPublicacao}</span>
+                  </div>
+                  <span class="etiqueta" style="background: var(--azul-claro); color: var(--azul);">Atividade</span>
+                </header>
+                <p style="margin: 8px 0 0; font-size: 14px; color: var(--tinta); line-height: 1.5;">${a.descricao}</p>
+                ${foto ? `<img src="${foto}" alt="" style="max-width: 100%; border-radius: 8px; margin-top: 12px; border: 1px solid var(--borda);">` : ''}
+              </article>
+            `;
+          });
+        } else {
+          html += `<p class="aviso aviso--info">Nenhuma atividade postada neste projeto ainda.</p>`;
+        }
+
+        html += `
+            </div>
+          </section>
+        `;
+
+        document.getElementById("detalheProjetoConteudo").innerHTML = html;
+        mudarAba('detalhe');
+
+      } catch (err) {
+        console.error("Erro ao carregar detalhe:", err);
+      }
+    }
+
+    async function carregarMeusProjetos() {
+      await atualizarCacheMeusProjetos();
+      const container = document.getElementById("listaMeusProjetos");
+      container.innerHTML = "";
+
+      const projetosAtivos = (meusProjetosCache || []).filter(p => p.ativa !== false);
+      const projetosEncerrados = (meusProjetosCache || []).filter(p => p.ativa === false);
+
+      if (projetosAtivos.length === 0 && projetosEncerrados.length === 0) {
+        container.innerHTML = `<p class="aviso aviso--info">Sem registos de participação ou coordenação.</p>`;
+        return;
+      }
+
+      if (projetosAtivos.length === 0) {
+        container.innerHTML += `<p class="aviso aviso--info" style="margin-bottom: 24px;">Sem projetos ou coordenações ativas no momento.</p>`;
+      } else {
+        projetosAtivos.forEach(p => {
+          const nomeDoProjeto = p.projetoNome || p.projetoTitulo || (p.projetoId ? `Projeto #${p.projetoId}` : 'Projeto');
+          const cargoTexto = p.coordenador ? 'Coordenador(a)' : (p.cargo || 'Participante');
+          const badgeCor = p.coordenador ? 'background: var(--tinta); color: #fff;' : 'background: var(--azul-claro); color: var(--azul);';
+
+          container.innerHTML += `
+            <article class="card">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+                <div>
+                  <h3 style="margin: 0 0 6px; font-size: 17px; font-weight: 600; color: var(--tinta);">${nomeDoProjeto}</h3>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="etiqueta" style="${badgeCor}">${cargoTexto}</span>
+                    ${p.projetoArea ? `<span class="etiqueta" style="background: var(--fundo); color: var(--suave); border: 1px solid var(--borda);">${p.projetoArea}</span>` : ''}
+                  </div>
+                </div>
+                <button class="botao botao--primario" onclick="abrirDetalhesProjeto(${p.projetoId})">Ver Projeto</button>
+              </div>
+            </article>
+          `;
+        });
+      }
+
+      if (projetosEncerrados.length > 0) {
+        let encHtml = `
+          <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid var(--borda);">
+            <details style="cursor: pointer;">
+              <summary style="font-size: 13.5px; font-weight: 600; color: var(--suave); margin-bottom: 12px; outline: none;">
+                <i class="bi bi-clock-history me-1"></i> Histórico de Participações Encerradas (${projetosEncerrados.length})
+              </summary>
+              <div class="lista" style="margin-top: 12px;">
+        `;
+
+        projetosEncerrados.forEach(p => {
+          const nomeDoProjeto = p.projetoNome || p.projetoTitulo || (p.projetoId ? `Projeto #${p.projetoId}` : 'Projeto');
+          let dataFimTxt = '';
+          if (p.fim) {
+            try {
+              dataFimTxt = ` &middot; Encerrada em ${new Date(p.fim).toLocaleDateString('pt-BR')}`;
+            } catch (_) {}
+          }
+
+          encHtml += `
+            <article class="card" style="opacity: 0.8; background: #fafafa;">
+              <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px;">
+                <div>
+                  <h4 style="margin: 0 0 4px; font-size: 16px; font-weight: 600; color: var(--tinta);">${nomeDoProjeto}</h4>
+                  <div style="display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--suave);">
+                    <span class="etiqueta etiqueta--cancelada">Encerrada</span>
+                    <span>Cargo: <strong>${p.cargo || 'Participante'}</strong>${dataFimTxt}</span>
+                    ${p.projetoArea ? `<span class="etiqueta" style="background: var(--fundo); color: var(--suave); border: 1px solid var(--borda);">${p.projetoArea}</span>` : ''}
+                  </div>
+                </div>
+                <button class="botao" onclick="abrirDetalhesProjeto(${p.projetoId})">Ver Detalhes</button>
+              </div>
+            </article>
+          `;
+        });
+
+        encHtml += `
+              </div>
+            </details>
+          </div>
+        `;
+
+        container.innerHTML += encHtml;
+      }
+    }
+
+    async function carregarFeed() {
+      try {
+        const res = await fetch('/api/atividades');
+        const atividades = await res.json();
+        const container = document.getElementById("listaFeedAtividades");
+        container.innerHTML = "";
+
+        if (!Array.isArray(atividades) || atividades.length === 0) {
+          container.innerHTML = `<p class="aviso aviso--info">Nenhuma atividade no feed.</p>`;
+          return;
+        }
+
+        atividades.forEach(a => {
+          const nomeProjeto = a.projetoNome || (a.projetoId ? `Projeto #${a.projetoId}` : 'Projeto');
+          const nomeAutor = a.autorNome ? `Por <strong>${a.autorNome}</strong> &middot; ` : '';
+          const dataPublicacao = a.publicadaEm ? new Date(a.publicadaEm).toLocaleDateString('pt-BR') : 'Recente';
+          const foto = a.fotoUrl || a.foto;
+
+          container.innerHTML += `
+            <article class="card">
+              <header class="card__topo" style="margin-bottom: 8px;">
+                <div>
+                  <h3 style="font-size: 17px; font-weight: 600; margin: 0 0 4px; color: var(--tinta);">${a.titulo}</h3>
+                  <p class="card__projeto" style="font-size: 13.5px; margin: 0; color: var(--azul); font-weight: 500;">
+                    <i class="bi bi-folder2-open me-1"></i>${nomeProjeto}${a.projetoArea ? ` &middot; <span style="color: var(--suave); font-weight: normal;">${a.projetoArea}</span>` : ''}
+                  </p>
+                </div>
+                <button class="botao" style="padding: 6px 12px; font-size: 12.5px;" onclick="abrirDetalhesProjeto(${a.projetoId})">Ver Projeto</button>
+              </header>
+              <p style="margin: 10px 0 14px; font-size: 14px; color: var(--tinta); line-height: 1.5;">${a.descricao}</p>
+              ${foto ? `<img src="${foto}" alt="" style="max-width: 100%; border-radius: 8px; margin-bottom: 12px; border: 1px solid var(--borda);">` : ''}
+              <div style="display: flex; justify-content: space-between; align-items: center; color: var(--suave); font-size: 12.5px; border-top: 1px solid var(--borda); padding-top: 10px;">
+                <span>${nomeAutor}Projeto: <strong style="color: var(--tinta);">${nomeProjeto}</strong></span>
+                <span>${dataPublicacao}</span>
+              </div>
+            </article>
+          `;
+        });
+      } catch (err) {
+        console.error("Erro ao carregar feed:", err);
+      }
+    }
+
+    function abrirModalNovaAtividade(projetoId) {
+      document.getElementById("atividadeProjetoId").value = projetoId;
+      document.getElementById("formNovaAtividade").reset();
+      new bootstrap.Modal(document.getElementById("modalNovaAtividade")).show();
+    }
+
+    async function submeterNovaAtividade() {
+      const projId = document.getElementById("atividadeProjetoId").value;
+      const titulo = document.getElementById("atividadeTitulo").value;
+      const descricao = document.getElementById("atividadeDescricao").value;
+      const foto = document.getElementById("atividadeFoto").value;
+
+      try {
+        const res = await fetch(`/api/projetos/${projId}/atividades`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ titulo, descricao, foto })
+        });
+
+        const respData = res.status === 204 ? null : await res.json();
+        
+        if (!res.ok) {
+          alert("Erro: " + (respData?.erro || res.statusText));
+          return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById("modalNovaAtividade")).hide();
+        abrirDetalhesProjeto(projId);
+        carregarNotificacoes();
+      } catch (err) {
+        console.error("Erro ao postar atividade:", err);
+      }
+    }
+
+    function abrirModalCargo(partId, cargoAtual) {
+      document.getElementById("participacaoIdCargo").value = partId;
+      document.getElementById("novoCargoInput").value = cargoAtual;
+      new bootstrap.Modal(document.getElementById("modalAlterarCargo")).show();
+    }
+
+    async function salvarNovoCargo() {
+      const partId = document.getElementById("participacaoIdCargo").value;
+      const cargo = document.getElementById("novoCargoInput").value;
+
+      try {
+        const res = await fetch(`/api/participacoes/${partId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cargo })
+        });
+
+        const respData = res.status === 204 ? null : await res.json();
+        
+        if (!res.ok) {
+          alert("Erro: " + (respData?.erro || res.statusText));
+          return;
+        }
+
+        bootstrap.Modal.getInstance(document.getElementById("modalAlterarCargo")).hide();
+        await atualizarCacheMeusProjetos();
+        if (projetoAtualIdCache) abrirDetalhesProjeto(projetoAtualIdCache);
+      } catch (err) {
+        console.error("Erro ao alterar cargo:", err);
+      }
+    }
+
+    async function removerParticipante(projId, partId) {
+      if (!confirm("Tem certeza que deseja remover este participante?")) return;
+
+      try {
+        const res = await fetch(`/api/participacoes/${partId}`, { method: 'DELETE' });
+        const respData = res.status === 204 ? null : await res.json();
+        
+        if (!res.ok) {
+          alert("Erro: " + (respData?.erro || res.statusText));
+          return;
+        }
+
+        await atualizarCacheMeusProjetos();
+        abrirDetalhesProjeto(projId);
+      } catch (err) {
+        console.error("Erro ao remover participante:", err);
+      }
+    }
+
+    async function carregarNotificacoes() {
+      const container = document.getElementById("notifItems");
+      const badge = document.getElementById("notifBadge");
+
+      try {
+        const res = await fetch('/api/notificacoes');
+        if (!res.ok) {
+          container.innerHTML = `<div class="aviso aviso--erro" style="margin: 12px;">Não foi possível carregar notificações.</div>`;
+          badge.style.display = "none";
+          return;
+        }
+
+        const notifs = await res.json();
+        container.innerHTML = "";
+
+        if (!Array.isArray(notifs) || notifs.length === 0) {
+          container.innerHTML = `<div style="padding: 24px; text-align: center; color: var(--suave); font-size: 13.5px;">Sem notificações</div>`;
+          badge.style.display = "none";
+          return;
+        }
+
+        const naoLidas = notifs.filter(n => !n.lida).length;
+        if (naoLidas > 0) {
+          badge.textContent = naoLidas;
+          badge.style.display = "inline-block";
+        } else {
+          badge.style.display = "none";
+        }
+
+        let html = "";
+        notifs.forEach(n => {
+          const textoMensagem = n.texto || n.mensagem || n.conteudo || `Aviso do tipo: ${n.tipo || 'Geral'} (Ref: #${n.referenciaId})`;
+          const badgeTipo = n.tipo ? `<span class="etiqueta" style="font-size: 11px; padding: 2px 7px; background: var(--fundo); color: var(--suave); border: 1px solid var(--borda); margin-right: 6px;">${n.tipo}</span>` : '';
+          const dotColor = n.lida ? 'var(--suave)' : 'var(--azul)';
+          const dotOpacity = n.lida ? '0.3' : '1';
+
+          let dataFormatada = '';
+          if (n.criadaEm) {
+            try {
+              const d = new Date(n.criadaEm);
+              dataFormatada = `<small style="font-size: 11.5px; color: var(--suave); display: block; margin-top: 4px;">${d.toLocaleDateString('pt-BR')} ${d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</small>`;
+            } catch (_) {}
+          }
+
+          html += `
+            <div class="dropdown-item" style="padding: 12px 16px; border-bottom: 1px solid var(--borda); cursor: pointer; white-space: normal; background: ${n.lida ? '#fff' : 'var(--azul-claro)'};" onclick="clicarNotificacao(${n.referenciaId}, '${n.tipo}')">
+              <div style="display: flex; align-items: flex-start; gap: 8px;">
+                <i class="bi bi-dot" style="font-size: 24px; line-height: 1; color: ${dotColor}; opacity: ${dotOpacity}; margin-top: -4px;"></i>
+                <div style="flex: 1;">
+                  ${badgeTipo}
+                  <div style="font-size: 13px; color: var(--tinta); font-weight: ${n.lida ? 'normal' : '600'}; line-height: 1.45;">${textoMensagem}</div>
+                  ${dataFormatada}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      } catch (err) {
+        console.error("Erro ao carregar notificações:", err);
+        container.innerHTML = `<div class="aviso aviso--erro" style="margin: 12px;">Erro ao carregar notificações.</div>`;
+      }
+    }
+
+    async function marcarTodasLidas(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      try {
+        await fetch('/api/notificacoes/lidas', { method: 'POST' });
+        await carregarNotificacoes();
+      } catch (err) {
+        console.error("Erro ao marcar lidas:", err);
+      }
+    }
+
+    function toggleNotificacoes(event) {
+      if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      const menu = document.getElementById('notifMenu');
+      if (!menu) return;
+
+      const isAberto = menu.classList.contains('show');
+      if (isAberto) {
+        fecharDropdownNotificacoes();
+      } else {
+        abrirDropdownNotificacoes();
+      }
+    }
+
+    function abrirDropdownNotificacoes() {
+      const btn = document.getElementById('notifDropdown');
+      const menu = document.getElementById('notifMenu');
+      if (!menu) return;
+
+      menu.classList.add('show');
+      if (btn) {
+        btn.classList.add('show');
+        btn.setAttribute('aria-expanded', 'true');
+      }
+
+      carregarNotificacoes();
+    }
+
+    function fecharDropdownNotificacoes() {
+      const btn = document.getElementById('notifDropdown');
+      const menu = document.getElementById('notifMenu');
+      if (!menu) return;
+
+      menu.classList.remove('show');
+      if (btn) {
+        btn.classList.remove('show');
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    document.addEventListener('click', (event) => {
+      const container = document.getElementById('notifDropdownContainer');
+      if (container && !container.contains(event.target)) {
+        fecharDropdownNotificacoes();
+      }
+    });
+
+    function clicarNotificacao(refId, tipo) {
+      fecharDropdownNotificacoes();
+
+      if (!refId) return;
+      if (tipo === 'NOVA_ATIVIDADE') {
+        abrirDetalhesProjeto(refId);
+      } else {
+        alert(`Redirecionando para Categoria / Candidatura ID: ${refId}`);
+      }
+    }
+  </script>
+</body>
+</html>
