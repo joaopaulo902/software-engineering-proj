@@ -1,11 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 import { VagaService } from '../../dominio/servicos/VagaService';
-import { DadosNovaVaga, Vaga } from '../../dominio/entidades/Vaga';
+import { DadosNovaVaga } from '../../dominio/entidades/Vaga';
 import { lerDia } from '../../dominio/calendario';
-import { apresentarVagaComProjeto } from '../apresentadores';
+import { apresentarVaga, apresentarVagaComProjeto } from '../apresentadores';
 
 const TURNOS = ['Manhã', 'Tarde', 'Noite'];
 const MODALIDADES = ['Presencial', 'Remoto', 'Híbrido'];
+/** O primeiro e o padrao. Os mesmos valores aceitos pelo banco. */
+const BENEFICIOS = ['Horas de extensão', 'Bolsa'];
 
 export class VagaController {
   constructor(private readonly servico: VagaService) {}
@@ -57,7 +59,7 @@ export class VagaController {
       }
 
       const vaga = await this.servico.publicar(req.session.usuarioId as number, leitura);
-      res.status(201).json(apresentar(vaga));
+      res.status(201).json(apresentarVaga(vaga));
     } catch (erro) {
       next(erro);
     }
@@ -111,6 +113,36 @@ function lerNovaVaga(corpo: any): DadosNovaVaga | string {
     return 'Informe uma data de encerramento válida.';
   }
 
+  // Campos da Etapa 3. Todos opcionais, para o formulario antigo continuar
+  // funcionando: quem nao manda recebe o valor padrao.
+  const descricao = texto(corpo.descricao);
+  if (descricao.length > 2000) {
+    return 'A descrição deve ter até 2000 caracteres.';
+  }
+
+  const areasTematicas = listaDeTextos(corpo.areasTematicas);
+  if (areasTematicas === null) {
+    return 'Informe as áreas temáticas como uma lista de até 10 nomes.';
+  }
+
+  const cursosAceitos = listaDeTextos(corpo.cursosAceitos);
+  if (cursosAceitos === null) {
+    return 'Informe os cursos aceitos como uma lista de até 10 nomes.';
+  }
+
+  const beneficio = texto(corpo.beneficio) || BENEFICIOS[0];
+  if (!BENEFICIOS.includes(beneficio)) {
+    return 'Escolha o benefício: Horas de extensão ou Bolsa.';
+  }
+
+  let duracaoEmMeses: number | null = null;
+  if (corpo.duracaoEmMeses !== undefined && corpo.duracaoEmMeses !== null && corpo.duracaoEmMeses !== '') {
+    duracaoEmMeses = Number(corpo.duracaoEmMeses);
+    if (!inteiroEntre(duracaoEmMeses, 1, 24)) {
+      return 'A duração deve ser de 1 a 24 meses, ou ficar em branco.';
+    }
+  }
+
   return {
     projetoId,
     titulo,
@@ -120,7 +152,12 @@ function lerNovaVaga(corpo: any): DadosNovaVaga | string {
     modalidade,
     semestreMinimo,
     vagasTotais,
-    dataEncerramento
+    dataEncerramento,
+    descricao,
+    areasTematicas,
+    cursosAceitos,
+    beneficio,
+    duracaoEmMeses
   };
 }
 
@@ -128,23 +165,20 @@ function texto(valor: unknown): string {
   return typeof valor === 'string' ? valor.trim() : '';
 }
 
+/**
+ * Lista de nomes (areas, cursos). Ausente = lista vazia. Devolve null se o
+ * valor nao for uma lista de textos de ate 60 caracteres, com no maximo 10.
+ * Repetidos e itens em branco sao descartados.
+ */
+function listaDeTextos(valor: unknown): string[] | null {
+  if (valor === undefined || valor === null) return [];
+  if (!Array.isArray(valor) || !valor.every((item) => typeof item === 'string')) return null;
+  const itens = [...new Set(valor.map((item: string) => item.trim()).filter((item) => item))];
+  if (itens.length > 10 || itens.some((item) => item.length > 60)) return null;
+  return itens;
+}
+
 function inteiroEntre(valor: number, minimo: number, maximo: number): boolean {
   return Number.isInteger(valor) && valor >= minimo && valor <= maximo;
 }
 
-function apresentar(vaga: Vaga) {
-  return {
-    id: vaga.id,
-    projetoId: vaga.projetoId,
-    titulo: vaga.titulo,
-    requisitos: vaga.requisitos,
-    cargaHoraria: vaga.cargaHoraria,
-    turno: vaga.turno,
-    modalidade: vaga.modalidade,
-    semestreMinimo: vaga.semestreMinimo,
-    vagasTotais: vaga.vagasTotais,
-    vagasRestantes: vaga.vagasRestantes,
-    dataEncerramento: vaga.dataEncerramento,
-    aberta: vaga.estaAberta()
-  };
-}

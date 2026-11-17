@@ -84,8 +84,10 @@ export class VagaRepository implements IVagaRepository {
     const resultado = await tx.query(
       `INSERT INTO vaga
          (projeto_id, titulo, requisitos, carga_horaria, turno, modalidade,
-          semestre_minimo, vagas_totais, vagas_restantes, data_encerramento)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9::date)
+          semestre_minimo, vagas_totais, vagas_restantes, data_encerramento,
+          descricao, areas_tematicas, cursos_aceitos, beneficio, duracao_em_meses)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9::date,
+               $10, $11::text[], $12::text[], $13, $14)
        RETURNING *`,
       [
         dados.projetoId,
@@ -96,7 +98,12 @@ export class VagaRepository implements IVagaRepository {
         dados.modalidade,
         dados.semestreMinimo,
         dados.vagasTotais,
-        formatarDia(dados.dataEncerramento)
+        formatarDia(dados.dataEncerramento),
+        dados.descricao,
+        dados.areasTematicas,
+        dados.cursosAceitos,
+        dados.beneficio,
+        dados.duracaoEmMeses
       ]
     );
     return montarVaga(resultado.rows[0]);
@@ -127,6 +134,12 @@ function montarVaga(linha: any): Vaga {
     linha.vagas_restantes,
     // Chega como "AAAA-MM-DD" (pg) ou como meia-noite UTC (PGlite); nos dois
     // casos `new Date` produz a meia-noite UTC do dia, a convencao do dominio.
-    new Date(linha.data_encerramento)
+    new Date(linha.data_encerramento),
+    linha.descricao ?? '',
+    linha.areas_tematicas ?? [],
+    linha.cursos_aceitos ?? [],
+    linha.beneficio,
+    linha.duracao_em_meses ?? null,
+    new Date(linha.publicada_em)
   );
 }

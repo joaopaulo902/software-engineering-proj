@@ -33,6 +33,7 @@ import { PublicadorDeEventos } from './dominio/eventos/PublicadorDeEventos';
 import { NotificadorInApp } from './dominio/eventos/NotificadorInApp';
 import { evento } from './dominio/eventos/EventoDeDominio';
 import { TipoNotificacao } from './dominio/entidades/Notificacao';
+import { verificarFrenteC } from './verificacoes/frenteC';
 
 // ids vindos do seed
 const ADMIN = 1, COORDENADORA = 2, COORDENADOR_RUI = 3;
@@ -93,6 +94,11 @@ function novaVaga(alteracoes: Partial<DadosNovaVaga> = {}): DadosNovaVaga {
     semestreMinimo: 1,
     vagasTotais: 2,
     dataEncerramento: new Date(hojeComoDia().getTime() + 30 * UM_DIA),
+    descricao: '',
+    areasTematicas: [],
+    cursosAceitos: [],
+    beneficio: 'Horas de extensão',
+    duracaoEmMeses: null,
     ...alteracoes
   };
 }
@@ -306,6 +312,7 @@ async function principal(): Promise<void> {
   conferir('o mesmo coordenador publica no projeto dele', vagaDoRui.id > 0);
 
   await verificarFrenteB(banco, candidatura.id, publicada.id);
+  await verificarFrenteC(banco, { conferir, esperaErro, novaVaga });
 
   await banco.encerrar();
 

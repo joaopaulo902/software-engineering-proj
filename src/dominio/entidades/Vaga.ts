@@ -12,6 +12,15 @@ export interface DadosNovaVaga {
   vagasTotais: number;
   /** Dia de calendario, na convencao de `calendario.ts`. */
   dataEncerramento: Date;
+  /** Texto livre que aparece em Detalhes da Vaga (C03). Pode ser vazio. */
+  descricao: string;
+  /** Vazia = o servico usa a area do projeto. */
+  areasTematicas: string[];
+  /** Vazia = aceita estudantes de todos os cursos. */
+  cursosAceitos: string[];
+  beneficio: string;
+  /** null = participacao sem prazo definido. */
+  duracaoEmMeses: number | null;
 }
 
 /**
@@ -38,7 +47,14 @@ export class Vaga {
       dados.semestreMinimo,
       dados.vagasTotais,
       dados.vagasTotais,
-      dados.dataEncerramento
+      dados.dataEncerramento,
+      dados.descricao,
+      dados.areasTematicas,
+      dados.cursosAceitos,
+      dados.beneficio,
+      dados.duracaoEmMeses,
+      // provisoria: a data que vale e a que o banco grava
+      new Date()
     );
   }
 
@@ -53,7 +69,13 @@ export class Vaga {
     public readonly semestreMinimo: number,
     public readonly vagasTotais: number,
     public readonly vagasRestantes: number,
-    public readonly dataEncerramento: Date
+    public readonly dataEncerramento: Date,
+    public readonly descricao: string,
+    public readonly areasTematicas: string[],
+    public readonly cursosAceitos: string[],
+    public readonly beneficio: string,
+    public readonly duracaoEmMeses: number | null,
+    public readonly publicadaEm: Date
   ) {}
 
   /** Ainda ha posicao livre nesta vaga. */

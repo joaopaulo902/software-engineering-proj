@@ -1,3 +1,4 @@
+import { Vaga } from '../dominio/entidades/Vaga';
 import { VagaComProjeto } from '../persistencia/interfaces/IVagaRepository';
 import { AtividadeComProjeto } from '../persistencia/interfaces/IAtividadeRepository';
 
@@ -13,20 +14,34 @@ import { AtividadeComProjeto } from '../persistencia/interfaces/IAtividadeReposi
 /** Card de vaga: GET /api/vagas e GET /api/projetos/:id. */
 export function apresentarVagaComProjeto(item: VagaComProjeto) {
   return {
-    id: item.vaga.id,
-    titulo: item.vaga.titulo,
-    requisitos: item.vaga.requisitos,
-    cargaHoraria: item.vaga.cargaHoraria,
-    turno: item.vaga.turno,
-    modalidade: item.vaga.modalidade,
-    semestreMinimo: item.vaga.semestreMinimo,
-    vagasRestantes: item.vaga.vagasRestantes,
-    vagasTotais: item.vaga.vagasTotais,
-    dataEncerramento: item.vaga.dataEncerramento,
-    aberta: item.vaga.estaAberta(),
+    ...apresentarVaga(item.vaga),
     projetoNome: item.projetoNome,
     projetoArea: item.projetoArea,
     coordenadorNome: item.coordenadorNome
+  };
+}
+
+/** Vaga sem os dados do projeto: resposta do POST /api/vagas (C06). */
+export function apresentarVaga(vaga: Vaga) {
+  return {
+    id: vaga.id,
+    projetoId: vaga.projetoId,
+    titulo: vaga.titulo,
+    descricao: vaga.descricao,
+    requisitos: vaga.requisitos,
+    areasTematicas: vaga.areasTematicas,
+    cursosAceitos: vaga.cursosAceitos,
+    cargaHoraria: vaga.cargaHoraria,
+    turno: vaga.turno,
+    modalidade: vaga.modalidade,
+    beneficio: vaga.beneficio,
+    duracaoEmMeses: vaga.duracaoEmMeses,
+    semestreMinimo: vaga.semestreMinimo,
+    vagasRestantes: vaga.vagasRestantes,
+    vagasTotais: vaga.vagasTotais,
+    dataEncerramento: vaga.dataEncerramento,
+    publicadaEm: vaga.publicadaEm,
+    aberta: vaga.estaAberta()
   };
 }
 
