@@ -50,6 +50,17 @@ CREATE TABLE vaga (
     -- nunca pode ficar negativo: o banco recusa a transacao que tentar
     vagas_restantes   INTEGER NOT NULL CHECK (vagas_restantes >= 0),
     data_encerramento DATE    NOT NULL,
+    -- Etapa 3 (frente C). Todas tem valor padrao, para que as vagas
+    -- cadastradas antes continuem validas.
+    descricao         TEXT    NOT NULL DEFAULT '' CHECK (length(descricao) <= 2000),
+    areas_tematicas   TEXT[]  NOT NULL DEFAULT '{}',
+    -- lista vazia = aceita estudantes de todos os cursos
+    cursos_aceitos    TEXT[]  NOT NULL DEFAULT '{}',
+    beneficio         TEXT    NOT NULL DEFAULT 'Horas de extensão'
+                              CHECK (beneficio IN ('Horas de extensão', 'Bolsa')),
+    -- vazio = participacao sem prazo definido
+    duracao_em_meses  INTEGER CHECK (duracao_em_meses IS NULL OR duracao_em_meses BETWEEN 1 AND 24),
+    publicada_em      TIMESTAMPTZ NOT NULL DEFAULT now(),
     CHECK (vagas_restantes <= vagas_totais)
 );
 
