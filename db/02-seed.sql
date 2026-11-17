@@ -50,3 +50,45 @@ INSERT INTO candidatura (vaga_id, estudante_id, status, mensagem) VALUES
   (1, 4, 'EM_ANALISE', 'Tenho interesse em atuar com ensino de algoritmos.');
 
 UPDATE vaga SET vagas_restantes = vagas_restantes - 1 WHERE id = 1;
+
+-- ---------------------------------------------------------------------------
+-- Frente B: projetos e avisos (Etapa 3)
+-- ---------------------------------------------------------------------------
+
+-- Campos novos dos projetos que ja existiam
+UPDATE projeto SET icone = '🤖', coordenador_cadastrado = 'Profa. Carla Menezes' WHERE id = 1;
+UPDATE projeto SET icone = '🩺', coordenador_cadastrado = 'Prof. Rui Bastos'     WHERE id = 2;
+UPDATE projeto SET icone = '📊', coordenador_cadastrado = 'Profa. Carla Menezes' WHERE id = 3;
+
+-- Projeto homologado pela Comissao, mas ainda sem coordenador no sistema:
+-- aparece na listagem, sem vagas, ate alguem incorpora-lo (C17).
+INSERT INTO projeto (nome, descricao, area, icone, situacao, coordenador_cadastrado, coordenador_id) VALUES
+  ('Inclusão Digital na Terceira Idade',
+   'Oficinas de uso de celular e internet para pessoas idosas em centros comunitários.',
+   'Educação', '📱', 'ATIVO', 'Prof. Marcos Teixeira', NULL);
+
+-- Estudantes que ja fazem parte de equipes (como se tivessem passado pelo C07)
+INSERT INTO participacao (projeto_id, usuario_id, cargo, inicio) VALUES
+  (1, 6, 'Monitora',        '2026-08-10 09:00:00-03'),
+  (2, 4, 'Desenvolvedora',  '2026-09-01 09:00:00-03');
+
+-- Atividades para a Pagina do Projeto e o feed (C10)
+INSERT INTO atividade (projeto_id, autor_id, titulo, descricao, publicada_em) VALUES
+  (1, 2, 'Primeira oficina do semestre',
+      'Recebemos 30 alunos da E.E. Rio Branco para montar robôs seguidores de linha.',
+      '2026-10-05 15:00:00-03'),
+  (1, 6, 'Kit novo de sensores',
+      'Chegaram os sensores ultrassônicos que serão usados nas próximas oficinas.',
+      '2026-10-20 10:30:00-03'),
+  (2, 3, 'Piloto no posto da Vila Jardim',
+      'O sistema de agendamento entrou em teste com a equipe de enfermagem.',
+      '2026-11-03 14:00:00-03');
+
+-- Avisos ja existentes, para o sino comecar com contador
+INSERT INTO notificacao (destinatario_id, tipo, texto, referencia_id, lida, criada_em) VALUES
+  (2, 'NOVA_CANDIDATURA',
+      'Ana Souza se candidatou à vaga "Monitoria de Algoritmos" do projeto Robótica na Escola.',
+      1, false, '2026-11-10 09:00:00-03'),
+  (4, 'NOVA_ATIVIDADE',
+      'Nova atividade em Saúde Digital: Piloto no posto da Vila Jardim.',
+      2, true,  '2026-11-03 14:00:00-03');

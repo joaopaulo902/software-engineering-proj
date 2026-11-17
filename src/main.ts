@@ -10,15 +10,26 @@ import { VagaRepository } from './persistencia/repositorios/VagaRepository';
 import { CandidaturaRepository } from './persistencia/repositorios/CandidaturaRepository';
 import { UsuarioRepository } from './persistencia/repositorios/UsuarioRepository';
 import { ProjetoRepository } from './persistencia/repositorios/ProjetoRepository';
+import { ParticipacaoRepository } from './persistencia/repositorios/ParticipacaoRepository';
+import { AtividadeRepository } from './persistencia/repositorios/AtividadeRepository';
+import { NotificacaoRepository } from './persistencia/repositorios/NotificacaoRepository';
 
 // dominio
 import { CandidaturaService } from './dominio/servicos/CandidaturaService';
 import { VagaService } from './dominio/servicos/VagaService';
+import { ProjetoService } from './dominio/servicos/ProjetoService';
+import { AtividadeService } from './dominio/servicos/AtividadeService';
+import { NotificacaoService } from './dominio/servicos/NotificacaoService';
+import { PublicadorDeEventos } from './dominio/eventos/PublicadorDeEventos';
+import { NotificadorInApp } from './dominio/eventos/NotificadorInApp';
 
 // apresentacao
 import { CandidaturaController } from './apresentacao/controllers/CandidaturaController';
 import { VagaController } from './apresentacao/controllers/VagaController';
 import { SessaoController } from './apresentacao/controllers/SessaoController';
+import { ProjetoController } from './apresentacao/controllers/ProjetoController';
+import { AtividadeController } from './apresentacao/controllers/AtividadeController';
+import { NotificacaoController } from './apresentacao/controllers/NotificacaoController';
 import { criarRotas } from './apresentacao/routes';
 import { tratadorDeErros } from './apresentacao/middlewares/tratadorDeErros';
 
@@ -60,8 +71,25 @@ async function principal(): Promise<void> {
   const candidaturaRepository = new CandidaturaRepository(executor);
   const usuarioRepository = new UsuarioRepository(executor);
   const projetoRepository = new ProjetoRepository(executor);
+  const participacaoRepository = new ParticipacaoRepository(executor);
+  const atividadeRepository = new AtividadeRepository(executor);
+  const notificacaoRepository = new NotificacaoRepository(executor);
 
   // --- camada de dominio -------------------------------------------------
+
+  // Observer: os servicos publicam eventos; o NotificadorInApp grava os avisos.
+  // Os servicos que publicam recebem `eventos` pelo construtor.
+  const eventos = new PublicadorDeEventos();
+  eventos.inscrever(
+    new NotificadorInApp(
+      notificacaoRepository,
+      projetoRepository,
+      participacaoRepository,
+      atividadeRepository,
+      usuarioRepository
+    )
+  );
+
   const candidaturaService = new CandidaturaService(
     unidadeDeTrabalho,
     candidaturaRepository,
@@ -74,11 +102,31 @@ async function principal(): Promise<void> {
     projetoRepository,
     usuarioRepository
   );
+  const projetoService = new ProjetoService(
+    unidadeDeTrabalho,
+    projetoRepository,
+    vagaRepository,
+    atividadeRepository,
+    participacaoRepository
+  );
+  const atividadeService = new AtividadeService(
+    unidadeDeTrabalho,
+    atividadeRepository,
+    participacaoRepository,
+    projetoRepository,
+    eventos
+  );
+  const notificacaoService = new NotificacaoService(notificacaoRepository);
 
   // --- camada de apresentacao -------------------------------------------
-  const sessaoController = new SessaoController(usuarioRepository);
-  const vagaController = new VagaController(vagaService);
-  const candidaturaController = new CandidaturaController(candidaturaService);
+  const controllers = {
+    sessao: new SessaoController(usuarioRepository),
+    vaga: new VagaController(vagaService),
+    candidatura: new CandidaturaController(candidaturaService),
+    projeto: new ProjetoController(projetoService),
+    atividade: new AtividadeController(atividadeService),
+    notificacao: new NotificacaoController(notificacaoService)
+  };
 
   const app = express();
   app.use(express.json());
@@ -91,7 +139,7 @@ async function principal(): Promise<void> {
     })
   );
 
-  app.use('/api', criarRotas(sessaoController, vagaController, candidaturaController));
+  app.use('/api', criarRotas(controllers));
   app.use(express.static(path.join(__dirname, '..', 'public')));
   app.use(tratadorDeErros);
 

@@ -3,6 +3,16 @@ import { formatarDia, hojeComoDia } from '../../dominio/calendario';
 import { IVagaRepository, VagaComProjeto } from '../interfaces/IVagaRepository';
 import { Transacao } from '../interfaces/IUnidadeDeTrabalho';
 
+/** Vaga com o projeto e o coordenador, para as telas de listagem. */
+const SELECT_COM_PROJETO = `
+  SELECT v.*,
+         p.nome AS projeto_nome,
+         p.area AS projeto_area,
+         u.nome AS coordenador_nome
+    FROM vaga v
+    JOIN projeto p ON p.id = v.projeto_id
+    JOIN usuario u ON u.id = p.coordenador_id`;
+
 export class VagaRepository implements IVagaRepository {
   /** Recebe o executor de SQL pela interface, nao a classe Pool do driver. */
   constructor(private readonly db: Transacao) {}
@@ -21,24 +31,25 @@ export class VagaRepository implements IVagaRepository {
   async listarAbertas(): Promise<VagaComProjeto[]> {
     const hoje = formatarDia(hojeComoDia());
     const resultado = await this.executor().query(
-      `SELECT v.*,
-              p.nome AS projeto_nome,
-              p.area AS projeto_area,
-              u.nome AS coordenador_nome
-         FROM vaga v
-         JOIN projeto p ON p.id = v.projeto_id
-         JOIN usuario u ON u.id = p.coordenador_id
+      `${SELECT_COM_PROJETO}
         WHERE v.data_encerramento >= $1::date
         ORDER BY v.data_encerramento, v.titulo`,
       [hoje]
     );
+    return resultado.rows.map(montarComProjeto);
+  }
 
-    return resultado.rows.map((linha) => ({
-      vaga: montarVaga(linha),
-      projetoNome: linha.projeto_nome,
-      projetoArea: linha.projeto_area,
-      coordenadorNome: linha.coordenador_nome
-    }));
+  /** "Hoje" vai como parametro pelo mesmo motivo do `listarAbertas`. */
+  async listarDoProjeto(projetoId: number): Promise<VagaComProjeto[]> {
+    const hoje = formatarDia(hojeComoDia());
+    const resultado = await this.executor().query(
+      `${SELECT_COM_PROJETO}
+        WHERE v.projeto_id = $1
+        ORDER BY (v.data_encerramento >= $2::date AND v.vagas_restantes > 0) DESC,
+                 v.data_encerramento, v.titulo`,
+      [projetoId, hoje]
+    );
+    return resultado.rows.map(montarComProjeto);
   }
 
   async buscarPorId(id: number, tx?: Transacao): Promise<Vaga | null> {
@@ -90,6 +101,15 @@ export class VagaRepository implements IVagaRepository {
     );
     return montarVaga(resultado.rows[0]);
   }
+}
+
+function montarComProjeto(linha: any): VagaComProjeto {
+  return {
+    vaga: montarVaga(linha),
+    projetoNome: linha.projeto_nome,
+    projetoArea: linha.projeto_area,
+    coordenadorNome: linha.coordenador_nome
+  };
 }
 
 /** Traduz uma linha do banco para a entidade de dominio. */
