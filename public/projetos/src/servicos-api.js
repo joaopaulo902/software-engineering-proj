@@ -6,7 +6,11 @@ async function request(url, options = {}) {
   if (response.status === 204) return null;
 
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(body.erro || 'Não foi possível concluir a operação.');
+  if (!response.ok) {
+    const erro = new Error(body.erro || 'Não foi possível concluir a operação.');
+    erro.status = response.status; // 401 = sessao expirada (ver vagas.js)
+    throw erro;
+  }
   return body;
 }
 
@@ -50,5 +54,33 @@ export const api = {
   }),
   removerParticipante: (participacaoId) => request(`/api/participacoes/${participacaoId}`, {
     method: 'DELETE'
+  }),
+
+  // ------------------------------------------------------- frente C · vagas
+  // C01 - GET /api/vagas com os filtros (FiltroDeVagas no diagrama).
+  // Listas vao separadas por virgula: ?turnos=Manhã,Noite
+  vagas: (filtro = {}) => {
+    const parametros = new URLSearchParams();
+    if (filtro.termo?.trim()) parametros.set('termo', filtro.termo.trim());
+    for (const chave of ['areas', 'turnos', 'modalidades']) {
+      if (filtro[chave]?.length) parametros.set(chave, filtro[chave].join(','));
+    }
+    if (filtro.cargaHorariaMaxima) parametros.set('cargaHorariaMaxima', String(filtro.cargaHorariaMaxima));
+    if (filtro.ordenarPor) parametros.set('ordenarPor', filtro.ordenarPor);
+    const consulta = parametros.toString();
+    return request(`/api/vagas${consulta ? `?${consulta}` : ''}`);
+  },
+  // C03 - a vaga, mais podeSeCandidatar e motivoDeInelegibilidade de quem esta logado
+  vaga: (id) => request(`/api/vagas/${encodeURIComponent(id)}`),
+  // C04 - candidatar-se
+  candidatar: (vagaId, mensagem) => request('/api/candidaturas', {
+    method: 'POST',
+    body: JSON.stringify({ vagaId, mensagem: mensagem?.trim() || null })
+  }),
+  // C06 - os projetos em que o coordenador pode publicar (so os ativos) e a publicacao
+  projetosParaPublicar: () => request('/api/projetos/meus'),
+  publicarVaga: (dados) => request('/api/vagas', {
+    method: 'POST',
+    body: JSON.stringify(dados)
   }),
 };

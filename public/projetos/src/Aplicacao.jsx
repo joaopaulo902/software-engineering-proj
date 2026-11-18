@@ -6,11 +6,16 @@ import { FeedDeAtividades } from './paginas/FeedDeAtividades';
 import { DetalhesDoProjeto } from './paginas/DetalhesDoProjeto';
 import { SolicitarIncorporacao } from './paginas/SolicitarIncorporacao';
 import { AvaliarIncorporacoes } from './paginas/AvaliarIncorporacoes';
+import { VagasAbertas } from './paginas/VagasAbertas';
+import { DetalhesDaVaga } from './paginas/DetalhesDaVaga';
+import { OfertarVaga } from './paginas/OfertarVaga';
 
 export default function Aplicacao() {
   const [usuario, setUsuario] = useState(null);
   const [aba, setAba] = useState('projetos');
   const [projetoId, setProjetoId] = useState(null);
+  const [vagaId, setVagaId] = useState(null); // frente C
+  const [projetoDaVaga, setProjetoDaVaga] = useState(null); // frente C
   const [meusProjetos, setMeusProjetos] = useState([]);
   const [incorporacoesPendentes, setIncorporacoesPendentes] = useState([]);
   const [erro, setErro] = useState('');
@@ -48,6 +53,14 @@ export default function Aplicacao() {
         setAba('feed');
       } else if (pedido.get('aba') === 'avaliar-incorporacoes') {
         setAba('avaliar-incorporacoes');
+      } else if (pedido.get('vaga')) { // frente C: Detalhes da Vaga (C03)
+        setVagaId(Number(pedido.get('vaga')));
+        setAba('vaga');
+      } else if (pedido.get('aba') === 'vagas') { // frente C: Vagas abertas (C01)
+        setAba('vagas');
+      } else if (pedido.get('aba') === 'ofertar-vaga') { // frente C: Ofertar nova vaga (C06)
+        setProjetoDaVaga(Number(pedido.get('projetoDaVaga')) || null);
+        setAba('ofertar-vaga');
       }
     }
     iniciar();
@@ -62,7 +75,7 @@ export default function Aplicacao() {
     <main className="pagina pagina-projetos">
       {erro && <p className="aviso aviso--erro">{erro}</p>}
 
-      {!['detalhe', 'incorporar-projeto', 'avaliar-incorporacoes'].includes(aba) && (
+      {!['detalhe', 'incorporar-projeto', 'avaliar-incorporacoes', 'vagas', 'vaga', 'ofertar-vaga'].includes(aba) && (
         <nav className="abas" aria-label="Seções">
           <button className={`aba ${aba === 'projetos' ? 'aba--ativa' : ''}`} type="button" onClick={() => setAba('projetos')}>Projetos</button>
           <button className={`aba ${aba === 'meus-projetos' ? 'aba--ativa' : ''}`} type="button" onClick={() => setAba('meus-projetos')}>Meus Projetos</button>
@@ -107,6 +120,11 @@ export default function Aplicacao() {
           <p className="aviso aviso--erro">Apenas administradores podem avaliar solicitações de incorporação.</p>
         )
       )}
+
+      {/* frente C: vagas */}
+      {aba === 'vagas' && <VagasAbertas usuario={usuario} />}
+      {aba === 'vaga' && vagaId && <DetalhesDaVaga vagaId={vagaId} usuario={usuario} />}
+      {aba === 'ofertar-vaga' && usuario && <OfertarVaga usuario={usuario} projetoInicial={projetoDaVaga} />}
     </main>
   );
 }

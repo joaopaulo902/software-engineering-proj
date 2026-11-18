@@ -120,3 +120,47 @@
   .filtros { grid-template-columns: 1fr; }
   .detalhe-cabecalho, .participacao-card { flex-direction: column; align-items: flex-start; }
 }
+
+/* ====================================================================
+   FRENTE C: vagas (Vagas abertas, Detalhes da Vaga, Ofertar nova vaga)
+   ==================================================================== */
+.vagas-titulo { margin: 0 0 4px; font-size: 22px; }
+.vagas-filtros { display: grid; gap: 12px; }
+.vagas-filtros__linha { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; }
+.vagas-filtros__grupo { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.vagas-filtros__rotulo { color: var(--suave); font-size: 13px; font-weight: 600; margin-right: 4px; }
+.vagas-filtros__carga { width: 90px !important; }
+.vaga-areas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.etiqueta--botao { border: 0; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600;
+  background: var(--azul-claro); color: var(--azul); }
+.etiqueta--botao:hover { text-decoration: underline; }
+
+.detalhe-vaga__dados { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px 24px; margin: 16px 0 0; }
+.detalhe-vaga__dados dt { color: var(--suave); font-size: 12.5px; }
+.detalhe-vaga__dados dd { margin: 0; font-size: 14.5px; }
+.detalhe-vaga__largo { grid-column: 1 / -1; }
+.detalhe-vaga__subtitulo { margin: 0; font-size: 17px; }
+.detalhe-vaga__acoes { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.detalhe-vaga__candidatar { display: grid; justify-items: end; gap: 6px; max-width: 60%; }
+.detalhe-vaga__motivo { margin: 0; color: var(--vermelho); font-size: 13.5px; text-align: right; }
+
+.ofertar-vaga h2 { margin: 0; font-size: 22px; }
+.ofertar-vaga__secao { margin: 4px 0 0; font-size: 17px; }
+.ofertar-vaga__opcoes { display: flex; flex-wrap: wrap; gap: 8px 20px; border: 0; padding: 0; margin: 0; }
+.ofertar-vaga__opcoes legend { width: 100%; margin-bottom: 6px; font-size: 13px; font-weight: 600; }
+.ofertar-vaga__opcoes label { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.ofertar-vaga__opcoes input { width: auto; }
+.lista-de-textos { display: flex; flex-wrap: wrap; gap: 6px; }
+.lista-de-textos:empty { display: none; }
+.lista-de-textos .etiqueta { display: inline-flex; align-items: center; gap: 4px; }
+.lista-de-textos__tirar { border: 0; background: transparent; color: inherit; cursor: pointer;
+  font-size: 15px; line-height: 1; padding: 0 2px; }
+.lista-de-textos__entrada { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+
+@media (max-width: 820px) {
+  .vagas-filtros__linha, .lista-de-textos__entrada { grid-template-columns: 1fr; }
+  .detalhe-vaga__acoes { flex-direction: column; align-items: stretch; }
+  .detalhe-vaga__candidatar { max-width: none; justify-items: stretch; }
+  .detalhe-vaga__motivo { text-align: left; }
+}
