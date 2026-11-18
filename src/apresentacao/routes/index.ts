@@ -6,6 +6,7 @@ import { SessaoController } from '../controllers/SessaoController';
 import { ProjetoController } from '../controllers/ProjetoController';
 import { AtividadeController } from '../controllers/AtividadeController';
 import { NotificacaoController } from '../controllers/NotificacaoController';
+import { IncorporacaoController } from '../controllers/IncorporacaoController';
 
 /** Todos os controllers, montados no main.ts. Cada frente acrescenta o seu aqui. */
 export interface Controllers {
@@ -15,6 +16,7 @@ export interface Controllers {
   projeto: ProjetoController;
   atividade: AtividadeController;
   notificacao: NotificacaoController;
+  incorporacao: IncorporacaoController;
 }
 
 /**
@@ -43,9 +45,21 @@ export function criarRotas(c: Controllers): Router {
   rotas.get('/projetos/meus', exigirLogin, c.vaga.listarProjetosParaPublicar);
   rotas.post('/vagas', exigirLogin, c.vaga.publicar);
 
+  // Candidaturas (dupla A). As rotas fixas /minhas e /recebidas vem antes de /:id.
   // C04 - candidatar-se / C05 - acompanhar
   rotas.post('/candidaturas', exigirLogin, c.candidatura.criar);
   rotas.get('/candidaturas/minhas', exigirLogin, c.candidatura.listarMinhas);
+  // C15 - visualizar candidaturas dos aplicantes
+  rotas.get('/candidaturas/recebidas', exigirLogin, c.candidatura.listarRecebidas);
+  rotas.get('/candidaturas/recebidas/:id', exigirLogin, c.candidatura.detalharRecebida);
+  // C05 - minha candidatura / C18 - remover
+  rotas.get('/candidaturas/:id', exigirLogin, c.candidatura.detalhar);
+  rotas.delete('/candidaturas/:id', exigirLogin, c.candidatura.remover);
+  // C07 - confirmar ou declinar o ingresso
+  rotas.post('/candidaturas/:id/confirmacao', exigirLogin, c.candidatura.confirmar);
+  rotas.post('/candidaturas/:id/declinio', exigirLogin, c.candidatura.declinar);
+  // C11 - avaliar candidatura
+  rotas.post('/candidaturas/:id/avaliacao', exigirLogin, c.candidatura.avaliar);
 
   // Projetos, C02 - visualizar detalhes do projeto, participantes
   rotas.get('/projetos', exigirLogin, c.projeto.listar);
@@ -64,6 +78,13 @@ export function criarRotas(c: Controllers): Router {
   // Notificacoes e contador do sino
   rotas.get('/notificacoes', exigirLogin, c.notificacao.listar);
   rotas.post('/notificacoes/lidas', exigirLogin, c.notificacao.marcarLidas);
+
+  // C17 - solicitar incorporação (coordenador) e avaliar (administrador).
+  rotas.get('/base-institucional/projetos', exigirLogin, c.incorporacao.listarProjetosDisponiveis);
+  rotas.post('/incorporacoes', exigirLogin, c.incorporacao.solicitar);
+  rotas.get('/incorporacoes/minhas', exigirLogin, c.incorporacao.listarMinhasPendentes);
+  rotas.get('/incorporacoes/pendentes', exigirLogin, c.incorporacao.listarPendentes);
+  rotas.post('/incorporacoes/:id/avaliacao', exigirLogin, c.incorporacao.avaliar);
 
   return rotas;
 }

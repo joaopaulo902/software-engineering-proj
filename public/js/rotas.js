@@ -16,10 +16,9 @@
 
 const emConstrucao = () => import('./paginas/em-construcao.js');
 
-// PROVISORIO: as telas da dupla B ainda estao na pagina separada front_B.html;
-// este arquivo so a abre dentro do app. Troque pelos arquivos de cada tela
-// quando eles existirem em `paginas/`.
-const telasDaDuplaB = () => import('./paginas/frente-b.js');
+// As telas de projetos sao servidas por uma aplicacao React compilada em
+// `public/projetos/dist`.
+const telasDeProjetos = () => import('./paginas/aplicacao-projetos.js');
 
 const TODOS = ['ESTUDANTE', 'COORDENADOR', 'ADMIN'];
 
@@ -53,15 +52,15 @@ export const ROTAS = [
     menu: '/candidaturas/recebidas',
     pagina: () => import('./paginas/candidatura-recebida.js') },
 
-  // ------------------------------------------- dupla B · projetos e avisos
+  // ---------------------------------------- projetos, atividades e avisos
   { caminho: '/projetos', titulo: 'Projetos', papeis: TODOS,
-    pagina: telasDaDuplaB },
+    pagina: telasDeProjetos },
   { caminho: '/projetos/:id', titulo: 'Página do projeto', papeis: TODOS, menu: '/projetos',
-    pagina: telasDaDuplaB },
+    pagina: telasDeProjetos },
   { caminho: '/meus-projetos', titulo: 'Meus projetos', papeis: ['ESTUDANTE', 'COORDENADOR'],
-    pagina: telasDaDuplaB },
-  { caminho: '/notificacoes', titulo: 'Notificações', papeis: TODOS,
-    pagina: telasDaDuplaB },
+    pagina: telasDeProjetos },
+  { caminho: '/incorporacoes', titulo: 'Solicitações de incorporação', papeis: ['ADMIN'],
+    pagina: telasDeProjetos },
 
   // -------------------------------------- frente C · perfil e administracao
   { caminho: '/perfil', titulo: 'Perfil', papeis: TODOS,
@@ -83,7 +82,6 @@ export const MENU = {
     { rotulo: 'Vagas abertas', caminho: '/vagas', icone: 'vagas' },
     { rotulo: 'Minhas candidaturas', caminho: '/candidaturas', icone: 'candidaturas' },
     { rotulo: 'Projetos', caminho: '/projetos', icone: 'projetos' },
-    { rotulo: 'Notificações', caminho: '/notificacoes', icone: 'sino' },
     { rotulo: 'Meus projetos', caminho: '/meus-projetos', icone: 'equipe' }
   ],
   COORDENADOR: [
@@ -91,7 +89,6 @@ export const MENU = {
     { rotulo: 'Candidaturas recebidas', caminho: '/candidaturas/recebidas', icone: 'candidaturas' },
     { rotulo: 'Meus projetos', caminho: '/meus-projetos', icone: 'equipe' },
     { rotulo: 'Projetos', caminho: '/projetos', icone: 'projetos' },
-    { rotulo: 'Notificações', caminho: '/notificacoes', icone: 'sino' },
     // Nos prototipos, "Ofertar nova vaga" abre a partir da Pagina do Projeto.
     // Fica no menu ate essa tela existir, para o C06 nao sumir do sistema.
     { rotulo: 'Ofertar nova vaga', caminho: '/vagas/nova', icone: 'mais' }
@@ -99,7 +96,7 @@ export const MENU = {
   ADMIN: [
     { rotulo: 'Vagas abertas', caminho: '/vagas', icone: 'vagas' },
     { rotulo: 'Projetos', caminho: '/projetos', icone: 'projetos' },
-    { rotulo: 'Notificações', caminho: '/notificacoes', icone: 'sino' },
+    { rotulo: 'Solicitações de incorporação', caminho: '/incorporacoes', icone: 'base' },
     { rotulo: 'BanList', caminho: '/banlist', icone: 'banlist' },
     { rotulo: 'Base de dados', caminho: '/base-institucional', icone: 'base' }
   ]

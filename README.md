@@ -115,6 +115,14 @@ seu-projeto/
 │   └── cliente-web.md         # Como encaixar uma tela; contrato do front com a API
 ├── public/                    # Subsistema Cliente Web
 │   ├── estilo.css
+│   ├── projetos/               # Aplicação React para projetos e atividades
+│   │   ├── index.html
+│   │   ├── vite.config.mjs
+│   │   └── src/
+│   │       ├── Aplicacao.jsx
+│   │       ├── servicos-api.js
+│   │       ├── componentes/    # Modal
+│   │       └── paginas/        # Lista, detalhes, meus projetos e feed
 │   └── js/
 │       ├── principal.js       # Entrada: sessão, estrutura comum e navegação
 │       ├── rotas.js           # Tabela de telas e menu lateral de cada papel

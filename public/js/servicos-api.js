@@ -142,9 +142,12 @@ export const api = {
   publicarVaga: (dados) =>
     pedir('/vagas', { method: 'POST', body: JSON.stringify(dados) }),
 
-  // ------------------------------------------------ dupla B · notificacoes
+  // ------------------------------------------------ notificacoes
+  notificacoes: () => pedir('/notificacoes'),
+
+  marcarNotificacoesLidas: () => pedir('/notificacoes/lidas', { method: 'POST' }),
+
   // Contador do sino: quantos avisos ainda nao foram lidos.
-  // GET /api/notificacoes devolve todos; o contador e quem tem `lida: false`.
   notificacoesNaoLidas: async () =>
     (await pedir('/notificacoes')).filter((n) => !n.lida).length,
 

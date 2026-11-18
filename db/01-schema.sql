@@ -4,12 +4,14 @@
 
 CREATE TYPE papel_usuario AS ENUM ('ESTUDANTE', 'COORDENADOR', 'ADMIN');
 
+-- Os seis estados do padrao State da Candidatura (diagrama de classes, pagina 3)
 CREATE TYPE status_candidatura AS ENUM (
     'EM_ANALISE',   -- recem submetida, aguardando o coordenador (C04)
     'ACEITA',       -- coordenador aprovou (C11)
     'RECUSADA',     -- coordenador recusou (C11)
     'CONFIRMADA',   -- estudante confirmou o ingresso (C07)
-    'CANCELADA'     -- estudante desistiu
+    'DECLINADA',    -- estudante declinou o ingresso (C07, fluxo 2.a)
+    'REMOVIDA'      -- estudante removeu a candidatura em analise (C18)
 );
 
 CREATE TABLE usuario (
@@ -36,6 +38,25 @@ CREATE TABLE projeto (
     -- vazio enquanto nenhum coordenador do sistema incorporou o projeto (C17)
     coordenador_id         INTEGER          REFERENCES usuario(id)
 );
+
+CREATE TYPE status_pedido_incorporacao AS ENUM ('PENDENTE', 'DEFERIDO', 'INDEFERIDO');
+
+CREATE TABLE pedido_incorporacao (
+    id             SERIAL PRIMARY KEY,
+    projeto_id     INTEGER                      NOT NULL REFERENCES projeto(id),
+    coordenador_id INTEGER                      NOT NULL REFERENCES usuario(id),
+    mensagem       TEXT                         CHECK (mensagem IS NULL OR length(mensagem) <= 1000),
+    status         status_pedido_incorporacao   NOT NULL DEFAULT 'PENDENTE',
+    solicitado_em  TIMESTAMPTZ                  NOT NULL DEFAULT now(),
+    avaliado_em    TIMESTAMPTZ,
+    CHECK ((status = 'PENDENTE' AND avaliado_em IS NULL) OR
+           (status <> 'PENDENTE' AND avaliado_em IS NOT NULL))
+);
+
+CREATE UNIQUE INDEX uq_pedido_incorporacao_pendente
+    ON pedido_incorporacao (coordenador_id, projeto_id) WHERE status = 'PENDENTE';
+CREATE INDEX idx_pedido_incorporacao_status
+    ON pedido_incorporacao (status, solicitado_em);
 
 CREATE TABLE vaga (
     id                SERIAL PRIMARY KEY,
@@ -65,16 +86,20 @@ CREATE TABLE vaga (
 );
 
 CREATE TABLE candidatura (
-    id           SERIAL PRIMARY KEY,
-    vaga_id      INTEGER            NOT NULL REFERENCES vaga(id),
-    estudante_id INTEGER            NOT NULL REFERENCES usuario(id),
-    status       status_candidatura NOT NULL DEFAULT 'EM_ANALISE',
-    mensagem     TEXT,
-    criada_em    TIMESTAMPTZ        NOT NULL DEFAULT now(),
-    -- torna impossivel um estudante se candidatar duas vezes a mesma vaga,
-    -- mesmo que a verificacao no servico falhe
-    UNIQUE (vaga_id, estudante_id)
+    id              SERIAL PRIMARY KEY,
+    vaga_id         INTEGER            NOT NULL REFERENCES vaga(id),
+    estudante_id    INTEGER            NOT NULL REFERENCES usuario(id),
+    status          status_candidatura NOT NULL DEFAULT 'EM_ANALISE',
+    mensagem        TEXT               CHECK (mensagem IS NULL OR length(mensagem) <= 500),
+    -- motivo opcional do declinio (C07, fluxo 2.a)
+    motivo_declinio TEXT               CHECK (motivo_declinio IS NULL OR length(motivo_declinio) <= 500),
+    criada_em       TIMESTAMPTZ        NOT NULL DEFAULT now()
 );
+
+-- Torna impossivel um estudante ter duas candidaturas vivas para a mesma vaga,
+-- mesmo que a verificacao no servico falhe. Remover (C18) libera uma nova.
+CREATE UNIQUE INDEX uq_candidatura_nao_removida
+    ON candidatura (vaga_id, estudante_id) WHERE status <> 'REMOVIDA';
 
 -- apoia a busca de vagas por area e a listagem de candidaturas do estudante
 CREATE INDEX idx_vaga_projeto      ON vaga (projeto_id);
@@ -146,3 +171,25 @@ CREATE TABLE notificacao (
 );
 
 CREATE INDEX idx_notificacao_destinatario ON notificacao (destinatario_id, criada_em DESC);
+
+-- ---------------------------------------------------------------------------
+-- Dupla A: candidaturas (Etapa 3)
+-- ---------------------------------------------------------------------------
+
+-- Linha do tempo de cada candidatura (C05). Toda candidatura tem pelo menos
+-- uma linha (EM_ANALISE, gravada junto com ela no C04); cada transicao do
+-- padrao State acrescenta outra. A observacao guarda o motivo do declinio.
+CREATE TABLE historico_status (
+    id             SERIAL PRIMARY KEY,
+    candidatura_id INTEGER            NOT NULL REFERENCES candidatura(id) ON DELETE CASCADE,
+    status         status_candidatura NOT NULL,
+    ocorrido_em    TIMESTAMPTZ        NOT NULL DEFAULT now(),
+    observacao     TEXT
+);
+
+CREATE INDEX idx_historico_candidatura ON historico_status (candidatura_id, ocorrido_em);
+
+-- Uma candidatura gera no maximo uma participacao (C07). As participacoes que
+-- nao vieram de candidatura (candidatura_id vazio) nao entram na regra.
+CREATE UNIQUE INDEX uq_participacao_candidatura
+    ON participacao (candidatura_id) WHERE candidatura_id IS NOT NULL;

@@ -19,6 +19,13 @@ export interface Participante {
 }
 
 export interface IParticipacaoRepository {
+  /**
+   * Grava a participacao nova (C07, dupla A) e a devolve com o id. O banco
+   * recusa uma segunda participacao ATIVA da mesma pessoa no mesmo projeto
+   * e uma segunda participacao vinda da mesma candidatura.
+   */
+  inserir(participacao: Participacao, tx: Transacao): Promise<Participacao>;
+
   buscarPorId(id: number, tx?: Transacao): Promise<Participacao | null>;
 
   /** Participacoes do usuario, as ativas primeiro. */

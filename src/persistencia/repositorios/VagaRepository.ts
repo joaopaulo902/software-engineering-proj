@@ -80,6 +80,13 @@ export class VagaRepository implements IVagaRepository {
     );
   }
 
+  async liberarUmaPosicao(id: number, tx: Transacao): Promise<void> {
+    await tx.query(
+      `UPDATE vaga SET vagas_restantes = vagas_restantes + 1 WHERE id = $1`,
+      [id]
+    );
+  }
+
   /**
    * A data vai como texto "AAAA-MM-DD". Mandar o objeto Date deixaria cada
    * driver converter do seu jeito, e o `pg` usa o fuso local: o dia 30 viraria

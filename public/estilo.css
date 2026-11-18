@@ -227,6 +227,32 @@ a.botao { display: inline-block; text-decoration: none; text-align: center; }
   display: none; place-items: center; width: 40px; height: 40px; margin-left: -8px;
   border: 0; border-radius: 8px; background: transparent; color: var(--tinta); cursor: pointer;
 }
+.cabecalho__notificacoes { position: relative; flex-shrink: 0; }
+.cabecalho__notificacoes [data-sino] { border: 0; background: transparent; cursor: pointer; }
+.cabecalho__notificacoes [data-sino]:hover { background: var(--fundo); }
+.cabecalho__notificacoes-menu {
+  position: absolute; z-index: 40; top: calc(100% + 8px); right: 0;
+  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  width: min(360px, calc(100vw - 32px)); max-height: min(440px, calc(100vh - 88px));
+  overflow: hidden; border: 1px solid var(--borda); border-radius: 12px;
+  background: #fff; box-shadow: 0 10px 25px rgba(15, 23, 42, .12);
+}
+.cabecalho__notificacoes-menu[hidden] { display: none; }
+.cabecalho__notificacoes-topo {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--borda);
+}
+.cabecalho__notificacoes-lista { overflow-y: auto; }
+.cabecalho__notificacoes-lista > .carregando,
+.cabecalho__notificacoes-lista > .aviso { margin: 12px; }
+.notificacao {
+  width: 100%; display: grid; gap: 5px; padding: 12px 16px;
+  border: 0; border-bottom: 1px solid var(--borda); background: #fff;
+  color: var(--tinta); text-align: left; cursor: pointer;
+}
+.notificacao:hover, .notificacao:focus-visible { background: var(--fundo); }
+.notificacao--nao-lida { background: var(--azul-claro); }
+.notificacao small { color: var(--suave); }
 .cabecalho__lado { display: flex; align-items: center; gap: 8px; }
 .cabecalho__icone {
   position: relative; display: grid; place-items: center; width: 40px; height: 40px;
