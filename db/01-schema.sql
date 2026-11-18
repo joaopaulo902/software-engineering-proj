@@ -4,12 +4,14 @@
 
 CREATE TYPE papel_usuario AS ENUM ('ESTUDANTE', 'COORDENADOR', 'ADMIN');
 
+-- Os seis estados do padrao State da Candidatura (diagrama de classes, pagina 3)
 CREATE TYPE status_candidatura AS ENUM (
     'EM_ANALISE',   -- recem submetida, aguardando o coordenador (C04)
     'ACEITA',       -- coordenador aprovou (C11)
     'RECUSADA',     -- coordenador recusou (C11)
     'CONFIRMADA',   -- estudante confirmou o ingresso (C07)
-    'CANCELADA'     -- estudante desistiu
+    'DECLINADA',    -- estudante declinou o ingresso (C07, fluxo 2.a)
+    'REMOVIDA'      -- estudante removeu a candidatura em analise (C18)
 );
 
 CREATE TABLE usuario (
@@ -65,16 +67,20 @@ CREATE TABLE vaga (
 );
 
 CREATE TABLE candidatura (
-    id           SERIAL PRIMARY KEY,
-    vaga_id      INTEGER            NOT NULL REFERENCES vaga(id),
-    estudante_id INTEGER            NOT NULL REFERENCES usuario(id),
-    status       status_candidatura NOT NULL DEFAULT 'EM_ANALISE',
-    mensagem     TEXT,
-    criada_em    TIMESTAMPTZ        NOT NULL DEFAULT now(),
-    -- torna impossivel um estudante se candidatar duas vezes a mesma vaga,
-    -- mesmo que a verificacao no servico falhe
-    UNIQUE (vaga_id, estudante_id)
+    id              SERIAL PRIMARY KEY,
+    vaga_id         INTEGER            NOT NULL REFERENCES vaga(id),
+    estudante_id    INTEGER            NOT NULL REFERENCES usuario(id),
+    status          status_candidatura NOT NULL DEFAULT 'EM_ANALISE',
+    mensagem        TEXT               CHECK (mensagem IS NULL OR length(mensagem) <= 500),
+    -- motivo opcional do declinio (C07, fluxo 2.a)
+    motivo_declinio TEXT               CHECK (motivo_declinio IS NULL OR length(motivo_declinio) <= 500),
+    criada_em       TIMESTAMPTZ        NOT NULL DEFAULT now()
 );
+
+-- Torna impossivel um estudante ter duas candidaturas vivas para a mesma vaga,
+-- mesmo que a verificacao no servico falhe. Remover (C18) libera uma nova.
+CREATE UNIQUE INDEX uq_candidatura_nao_removida
+    ON candidatura (vaga_id, estudante_id) WHERE status <> 'REMOVIDA';
 
 -- apoia a busca de vagas por area e a listagem de candidaturas do estudante
 CREATE INDEX idx_vaga_projeto      ON vaga (projeto_id);
