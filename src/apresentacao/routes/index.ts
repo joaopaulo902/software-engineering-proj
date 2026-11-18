@@ -36,6 +36,9 @@ export function criarRotas(c: Controllers): Router {
   // C01 - consultar e filtrar vagas
   rotas.get('/vagas', exigirLogin, c.vaga.listar);
 
+  // C03 - visualizar detalhes da vaga
+  rotas.get('/vagas/:id', exigirLogin, c.vaga.detalhar);
+
   // C06 - publicar vaga de projeto
   rotas.get('/projetos/meus', exigirLogin, c.vaga.listarProjetosParaPublicar);
   rotas.post('/vagas', exigirLogin, c.vaga.publicar);

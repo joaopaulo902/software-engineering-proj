@@ -5,7 +5,7 @@ import {
   FiltroDeVagas,
   VagaService
 } from '../../dominio/servicos/VagaService';
-import { lerLista, lerTexto } from '../parametros';
+import { lerId, lerLista, lerTexto } from '../parametros';
 import { DadosNovaVaga } from '../../dominio/entidades/Vaga';
 import { lerDia } from '../../dominio/calendario';
 import { apresentarVaga, apresentarVagaComProjeto } from '../apresentadores';
@@ -38,6 +38,30 @@ export class VagaController {
       const lista = await this.servico.listarAbertas(filtro);
 
       res.json(lista.map(apresentarVagaComProjeto));
+    } catch (erro) {
+      next(erro);
+    }
+  };
+
+  /**
+   * GET /api/vagas/:id - C03
+   * O card da vaga, mais `podeSeCandidatar` e `motivoDeInelegibilidade` para
+   * quem esta logado.
+   */
+  detalhar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const vagaId = lerId(req.params.id);
+      if (!vagaId) {
+        res.status(400).json({ erro: 'Vaga inválida.' });
+        return;
+      }
+
+      const detalhe = await this.servico.detalhar(vagaId, req.session.usuarioId as number);
+      res.json({
+        ...apresentarVagaComProjeto(detalhe.vaga),
+        podeSeCandidatar: detalhe.motivoDeInelegibilidade === null,
+        motivoDeInelegibilidade: detalhe.motivoDeInelegibilidade
+      });
     } catch (erro) {
       next(erro);
     }

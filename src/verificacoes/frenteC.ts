@@ -18,6 +18,7 @@ import { CandidaturaService } from '../dominio/servicos/CandidaturaService';
 import { DadosNovaVaga, Vaga } from '../dominio/entidades/Vaga';
 import { Usuario } from '../dominio/entidades/Usuario';
 import { hojeComoDia } from '../dominio/calendario';
+import { NaoEncontrado } from '../dominio/erros';
 
 /** O que o `verificar.ts` empresta: a contagem de resultados e a vaga padrao. */
 export interface FerramentasDeVerificacao {
@@ -58,6 +59,54 @@ export async function verificarFrenteC(
   );
   await verificarRegraDeCandidatura(vagas, usuarios, candidaturaService, ferramentas);
   await verificarFiltrosDoC01(vagaService, ferramentas);
+  await verificarDetalheDaVaga(vagaService, ferramentas);
+}
+
+/** C03: o detalhe da vaga e o motivo de quem esta vendo nao poder se candidatar. */
+async function verificarDetalheDaVaga(
+  vagaService: VagaService,
+  { conferir, esperaErro }: FerramentasDeVerificacao
+): Promise<void> {
+  console.log('\nFrente C - C03: detalhes da vaga\n');
+
+  const paraDiego = await vagaService.detalhar(COMUNICACAO, DIEGO);
+  conferir(
+    'traz a vaga com o projeto e o coordenador',
+    paraDiego.vaga.vaga.id === COMUNICACAO &&
+      paraDiego.vaga.projetoNome === 'Saúde Digital' &&
+      paraDiego.vaga.coordenadorNome === 'Prof. Rui Bastos',
+    `${paraDiego.vaga.vaga.titulo} · ${paraDiego.vaga.projetoNome} · ${paraDiego.vaga.coordenadorNome}`
+  );
+  conferir(
+    'estudante que atende tudo: sem motivo',
+    paraDiego.motivoDeInelegibilidade === null,
+    String(paraDiego.motivoDeInelegibilidade)
+  );
+
+  const paraCarlaDias = await vagaService.detalhar(OFICINA_DADOS, CARLA_DIAS);
+  conferir(
+    'curso fora da lista: o motivo vem da regra do C04',
+    (paraCarlaDias.motivoDeInelegibilidade ?? '').includes('só para'),
+    String(paraCarlaDias.motivoDeInelegibilidade)
+  );
+
+  const encerrada = await vagaService.detalhar(ELETRONICA, DIEGO);
+  conferir(
+    'vaga encerrada continua visivel, com o motivo do prazo',
+    encerrada.vaga.vaga.id === ELETRONICA && (encerrada.motivoDeInelegibilidade ?? '').includes('prazo'),
+    String(encerrada.motivoDeInelegibilidade)
+  );
+
+  const paraCoordenadora = await vagaService.detalhar(COMUNICACAO, COORDENADORA);
+  conferir(
+    'coordenador ve a vaga, mas nao se candidata',
+    (paraCoordenadora.motivoDeInelegibilidade ?? '').includes('Apenas estudantes'),
+    String(paraCoordenadora.motivoDeInelegibilidade)
+  );
+
+  await esperaErro('vaga inexistente', NaoEncontrado, 'vaga não encontrada', () =>
+    vagaService.detalhar(999, DIEGO)
+  );
 }
 
 /**

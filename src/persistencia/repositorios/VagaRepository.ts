@@ -52,6 +52,11 @@ export class VagaRepository implements IVagaRepository {
     return resultado.rows.map(montarComProjeto);
   }
 
+  async buscarComProjeto(id: number): Promise<VagaComProjeto | null> {
+    const resultado = await this.executor().query(`${SELECT_COM_PROJETO} WHERE v.id = $1`, [id]);
+    return resultado.rows.length ? montarComProjeto(resultado.rows[0]) : null;
+  }
+
   async buscarPorId(id: number, tx?: Transacao): Promise<Vaga | null> {
     const resultado = await this.executor(tx).query(`SELECT * FROM vaga WHERE id = $1`, [id]);
     return resultado.rows.length ? montarVaga(resultado.rows[0]) : null;

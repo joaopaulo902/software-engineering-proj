@@ -21,6 +21,9 @@ export interface IVagaRepository {
 
   buscarPorId(id: number, tx?: Transacao): Promise<Vaga | null>;
 
+  /** Uma vaga com os dados do projeto, aberta ou encerrada (C03). */
+  buscarComProjeto(id: number): Promise<VagaComProjeto | null>;
+
   /**
    * Busca a vaga TRAVANDO a linha no banco (SELECT ... FOR UPDATE).
    *

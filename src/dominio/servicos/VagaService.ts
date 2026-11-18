@@ -25,6 +25,16 @@ export interface FiltroDeVagas {
   ordenarPor?: CriterioDeOrdenacao;
 }
 
+/** O que a tela Detalhes da Vaga (C03) mostra. */
+export interface DetalheDaVaga {
+  vaga: VagaComProjeto;
+  /**
+   * Por que QUEM ESTA VENDO nao pode se candidatar, ou null se pode.
+   * A tela desabilita o botao "Candidatar-se" e mostra este texto.
+   */
+  motivoDeInelegibilidade: string | null;
+}
+
 /**
  * C01 - Consultar e Filtrar Vagas de Extensao.
  * C06 - Publicar Vaga de Projeto.
@@ -74,6 +84,23 @@ export class VagaService {
     });
 
     return ordenar(encontradas, filtro.ordenarPor ?? 'PRAZO');
+  }
+
+  /**
+   * C03 - Visualizar Detalhes da Vaga. Qualquer usuario logado ve qualquer
+   * vaga, aberta ou encerrada (a Minha Candidatura aponta para vagas antigas).
+   * O motivo vem da mesma regra que o C04 usa para recusar a candidatura.
+   */
+  async detalhar(vagaId: number, usuarioId: number, agora: Date = new Date()): Promise<DetalheDaVaga> {
+    const vaga = await this.vagas.buscarComProjeto(vagaId);
+    if (!vaga) {
+      throw new NaoEncontrado('Vaga não encontrada.');
+    }
+    const usuario = await this.usuarios.buscarPorId(usuarioId);
+    if (!usuario) {
+      throw new NaoEncontrado('Usuário não encontrado.');
+    }
+    return { vaga, motivoDeInelegibilidade: vaga.vaga.motivoDeInelegibilidade(usuario, agora) };
   }
 
   async buscarPorId(id: number): Promise<Vaga> {
