@@ -28,6 +28,7 @@ import { BancoEmMemoria } from './persistencia/infra/BancoEmMemoria';
 import { ParticipacaoRepository } from './persistencia/repositorios/ParticipacaoRepository';
 import { AtividadeRepository } from './persistencia/repositorios/AtividadeRepository';
 import { NotificacaoRepository } from './persistencia/repositorios/NotificacaoRepository';
+import { PedidoIncorporacaoRepository } from './persistencia/repositorios/PedidoIncorporacaoRepository';
 import { ProjetoService } from './dominio/servicos/ProjetoService';
 import { AtividadeService } from './dominio/servicos/AtividadeService';
 import { NotificacaoService } from './dominio/servicos/NotificacaoService';
@@ -36,6 +37,7 @@ import { NotificadorInApp } from './dominio/eventos/NotificadorInApp';
 import { evento } from './dominio/eventos/EventoDeDominio';
 import { TipoNotificacao } from './dominio/entidades/Notificacao';
 import { verificarFrenteC } from './verificacoes/frenteC';
+import { IncorporacaoService } from './dominio/servicos/IncorporacaoService';
 import { verificarFrenteA } from './verificacoes/frenteA';
 
 // ids vindos do seed
@@ -345,13 +347,21 @@ async function verificarFrenteB(
   const participacoes = new ParticipacaoRepository(banco.executor);
   const atividades = new AtividadeRepository(banco.executor);
   const notificacoes = new NotificacaoRepository(banco.executor);
+  const pedidosIncorporacao = new PedidoIncorporacaoRepository(banco.executor);
 
   const eventos = new PublicadorDeEventos();
   eventos.inscrever(
-    new NotificadorInApp(notificacoes, projetos, participacoes, atividades, usuarios)
+    new NotificadorInApp(notificacoes, projetos, participacoes, atividades, usuarios, pedidosIncorporacao)
   );
 
   const projetoService = new ProjetoService(banco.unidade, projetos, vagas, atividades, participacoes);
+  const incorporacaoService = new IncorporacaoService(
+    banco.unidade,
+    projetos,
+    pedidosIncorporacao,
+    usuarios,
+    eventos
+  );
   const atividadeService = new AtividadeService(
     banco.unidade,
     atividades,
@@ -476,23 +486,25 @@ async function verificarFrenteB(
   console.log('\nProjetos e C02 - Visualizar Detalhes do Projeto');
 
   const todos = await projetoService.listar();
-  conferir('lista todos os projetos', todos.length === 4, `${todos.length} projetos`);
-  const naoIncorporado = todos.find((p) => p.projeto.id === INCLUSAO_DIGITAL);
+  conferir('lista apenas os projetos incorporados', todos.length === 3, `${todos.length} projetos`);
+  const naoIncorporado = await projetos.buscarPorId(INCLUSAO_DIGITAL);
   conferir(
-    'projeto nao incorporado aparece sem coordenador no sistema',
-    !!naoIncorporado && naoIncorporado.coordenadorNome === null && !naoIncorporado.projeto.estaIncorporado()
+    'projeto nao incorporado fica fora da aba Projetos',
+    !!naoIncorporado &&
+      naoIncorporado.coordenadorId === null &&
+      !todos.some((item) => item.projeto.id === INCLUSAO_DIGITAL)
   );
   conferir(
     'projeto nao incorporado nao aceita vagas',
-    !!naoIncorporado && !naoIncorporado.projeto.aceitaVagas()
+    !!naoIncorporado && !naoIncorporado.aceitaVagas()
   );
   conferir(
     'busca ignora acento',
     (await projetoService.listar({ termo: 'robotica' })).map((p) => p.projeto.id).join() === `${ROBOTICA}`
   );
   conferir(
-    'busca pelo coordenador cadastrado',
-    (await projetoService.listar({ termo: 'marcos' })).map((p) => p.projeto.id).join() === `${INCLUSAO_DIGITAL}`
+    'busca nao revela projetos ainda nao incorporados',
+    (await projetoService.listar({ termo: 'marcos' })).length === 0
   );
   conferir(
     'filtro por area',
@@ -669,6 +681,131 @@ async function verificarFrenteB(
   );
   await esperaErro('nao remove duas vezes', RegraDeNegocio, 'não faz mais parte', () =>
     projetoService.removerParticipante(COORDENADORA, PARTICIPACAO_CARLA_DIAS)
+  );
+
+  console.log('\nC17 - Incorporar projeto');
+
+  const disponiveis = await incorporacaoService.listarProjetosDisponiveis(COORDENADORA);
+  conferir(
+    'coordenador lista projetos ativos ainda nao incorporados',
+    disponiveis.some((projeto) => projeto.id === INCLUSAO_DIGITAL) &&
+      !disponiveis.some((projeto) => projeto.id === ROBOTICA)
+  );
+  conferir(
+    'busca ignora acento nos projetos para incorporar',
+    (await incorporacaoService.listarProjetosDisponiveis(COORDENADORA, 'inclusao')).some(
+      (projeto) => projeto.id === INCLUSAO_DIGITAL
+    )
+  );
+  await esperaErro(
+    'estudante nao lista projetos para incorporar',
+    SemPermissao,
+    'apenas coordenadores',
+    () => incorporacaoService.listarProjetosDisponiveis(ANA)
+  );
+
+  const pedido = await incorporacaoService.solicitar(
+    COORDENADORA,
+    INCLUSAO_DIGITAL,
+    'Tenho interesse em coordenar este projeto.'
+  );
+  conferir('solicitacao nasce pendente', pedido.id > 0 && pedido.status === 'PENDENTE');
+  conferir(
+    'pedido novo notifica administradores',
+    (await avisos(ADMIN, 'PEDIDO_DE_INCORPORACAO')).some((aviso) => aviso.referenciaId === pedido.id)
+  );
+  await esperaErro(
+    'coordenador nao duplica pedido pendente',
+    RegraDeNegocio,
+    'pedido pendente',
+    () => incorporacaoService.solicitar(COORDENADORA, INCLUSAO_DIGITAL, null)
+  );
+  const pedidosDaCoordenadora = await incorporacaoService.listarPendentesDoCoordenador(COORDENADORA);
+  conferir(
+    'coordenadora consulta o status dos proprios pedidos',
+    pedidosDaCoordenadora.some(
+      (item) => item.pedido.id === pedido.id && item.pedido.status === 'PENDENTE'
+    )
+  );
+  await esperaErro(
+    'estudante nao consulta pedidos de incorporacao',
+    SemPermissao,
+    'apenas coordenadores',
+    () => incorporacaoService.listarPendentesDoCoordenador(ANA)
+  );
+  const pendentes = await incorporacaoService.listarPendentes(ADMIN);
+  conferir(
+    'administrador ve pedido, projeto e coordenador solicitante',
+    pendentes.some(
+      (item) =>
+        item.pedido.id === pedido.id &&
+        item.projeto.id === INCLUSAO_DIGITAL &&
+        item.coordenadorNome === 'Profa. Carla Menezes'
+    )
+  );
+  await esperaErro(
+    'coordenador nao acessa fila administrativa',
+    SemPermissao,
+    'apenas administradores',
+    () => incorporacaoService.listarPendentes(COORDENADORA)
+  );
+  await esperaErro(
+    'coordenador nao avalia pedidos',
+    SemPermissao,
+    'apenas administradores',
+    () => incorporacaoService.avaliar(COORDENADORA, pedido.id, 'DEFERIDO')
+  );
+
+  const deferido = await incorporacaoService.avaliar(ADMIN, pedido.id, 'DEFERIDO');
+  conferir('administrador defere e vincula coordenador', deferido.status === 'DEFERIDO');
+  conferir(
+    'projeto aprovado passa a ser coordenado',
+    (await projetos.buscarPorId(INCLUSAO_DIGITAL))?.coordenadorId === COORDENADORA
+  );
+  conferir(
+    'coordenador recebe resultado do pedido',
+    (await avisos(COORDENADORA, 'RESULTADO_DA_INCORPORACAO')).some(
+      (aviso) => aviso.referenciaId === pedido.id && aviso.texto.includes('aprovado')
+    )
+  );
+  conferir(
+    'projeto aprovado deixa a lista de disponiveis',
+    !(await incorporacaoService.listarProjetosDisponiveis(COORDENADORA)).some(
+      (projeto) => projeto.id === INCLUSAO_DIGITAL
+    )
+  );
+  conferir(
+    'pedido aprovado deixa a lista de pendencias do coordenador',
+    !(await incorporacaoService.listarPendentesDoCoordenador(COORDENADORA)).some(
+      (item) => item.pedido.id === pedido.id
+    )
+  );
+  await esperaErro(
+    'pedido avaliado nao pode ser avaliado de novo',
+    RegraDeNegocio,
+    'já foi avaliado',
+    () => incorporacaoService.avaliar(ADMIN, pedido.id, 'INDEFERIDO')
+  );
+
+  const inserido = await banco.executor.query(
+    `INSERT INTO projeto (nome, descricao, area, coordenador_cadastrado)
+     VALUES ('Projeto para indeferimento', 'Descrição de teste.', 'Educação', 'Coordenação institucional')
+     RETURNING id`
+  );
+  const projetoIndeferidoId = Number(inserido.rows[0].id);
+  const pedidoIndeferido = await incorporacaoService.solicitar(
+    COORDENADOR_RUI,
+    projetoIndeferidoId,
+    null
+  );
+  const indeferido = await incorporacaoService.avaliar(ADMIN, pedidoIndeferido.id, 'INDEFERIDO');
+  conferir('administrador pode indeferir pedido', indeferido.status === 'INDEFERIDO');
+  conferir(
+    'projeto indeferido permanece sem coordenador e disponivel',
+    (await projetos.buscarPorId(projetoIndeferidoId))?.coordenadorId === null &&
+      (await incorporacaoService.listarProjetosDisponiveis(COORDENADOR_RUI)).some(
+        (projeto) => projeto.id === projetoIndeferidoId
+      )
   );
 }
 

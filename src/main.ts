@@ -13,6 +13,7 @@ import { ProjetoRepository } from './persistencia/repositorios/ProjetoRepository
 import { ParticipacaoRepository } from './persistencia/repositorios/ParticipacaoRepository';
 import { AtividadeRepository } from './persistencia/repositorios/AtividadeRepository';
 import { NotificacaoRepository } from './persistencia/repositorios/NotificacaoRepository';
+import { PedidoIncorporacaoRepository } from './persistencia/repositorios/PedidoIncorporacaoRepository';
 
 // dominio
 import { CandidaturaService } from './dominio/servicos/CandidaturaService';
@@ -20,6 +21,7 @@ import { VagaService } from './dominio/servicos/VagaService';
 import { ProjetoService } from './dominio/servicos/ProjetoService';
 import { AtividadeService } from './dominio/servicos/AtividadeService';
 import { NotificacaoService } from './dominio/servicos/NotificacaoService';
+import { IncorporacaoService } from './dominio/servicos/IncorporacaoService';
 import { PublicadorDeEventos } from './dominio/eventos/PublicadorDeEventos';
 import { NotificadorInApp } from './dominio/eventos/NotificadorInApp';
 
@@ -30,6 +32,7 @@ import { SessaoController } from './apresentacao/controllers/SessaoController';
 import { ProjetoController } from './apresentacao/controllers/ProjetoController';
 import { AtividadeController } from './apresentacao/controllers/AtividadeController';
 import { NotificacaoController } from './apresentacao/controllers/NotificacaoController';
+import { IncorporacaoController } from './apresentacao/controllers/IncorporacaoController';
 import { criarRotas } from './apresentacao/routes';
 import { tratadorDeErros } from './apresentacao/middlewares/tratadorDeErros';
 
@@ -74,6 +77,7 @@ async function principal(): Promise<void> {
   const participacaoRepository = new ParticipacaoRepository(executor);
   const atividadeRepository = new AtividadeRepository(executor);
   const notificacaoRepository = new NotificacaoRepository(executor);
+  const pedidoIncorporacaoRepository = new PedidoIncorporacaoRepository(executor);
 
   // --- camada de dominio -------------------------------------------------
 
@@ -86,7 +90,8 @@ async function principal(): Promise<void> {
       projetoRepository,
       participacaoRepository,
       atividadeRepository,
-      usuarioRepository
+      usuarioRepository,
+      pedidoIncorporacaoRepository
     )
   );
 
@@ -119,6 +124,13 @@ async function principal(): Promise<void> {
     eventos
   );
   const notificacaoService = new NotificacaoService(notificacaoRepository);
+  const incorporacaoService = new IncorporacaoService(
+    unidadeDeTrabalho,
+    projetoRepository,
+    pedidoIncorporacaoRepository,
+    usuarioRepository,
+    eventos
+  );
 
   // --- camada de apresentacao -------------------------------------------
   const controllers = {
@@ -127,7 +139,8 @@ async function principal(): Promise<void> {
     candidatura: new CandidaturaController(candidaturaService),
     projeto: new ProjetoController(projetoService),
     atividade: new AtividadeController(atividadeService),
-    notificacao: new NotificacaoController(notificacaoService)
+    notificacao: new NotificacaoController(notificacaoService),
+    incorporacao: new IncorporacaoController(incorporacaoService)
   };
 
   const app = express();

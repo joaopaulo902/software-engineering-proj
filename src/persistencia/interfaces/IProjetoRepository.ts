@@ -36,5 +36,11 @@ export interface IProjetoRepository {
   /** Projetos que este usuario coordena, para o formulario do C06 e Meus Projetos. */
   listarDoCoordenador(coordenadorId: number): Promise<Projeto[]>;
 
+  /** Projetos ativos ainda sem coordenador cadastrado no sistema (C17). */
+  listarNaoIncorporados(termo?: string): Promise<Projeto[]>;
+
+  /** Vincula um coordenador se o projeto ainda estiver livre. */
+  definirCoordenador(projetoId: number, coordenadorId: number, tx: Transacao): Promise<boolean>;
+
   buscarContextoDaCandidatura(candidaturaId: number): Promise<ContextoDaCandidatura | null>;
 }

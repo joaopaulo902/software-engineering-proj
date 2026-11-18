@@ -7,7 +7,10 @@
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d",
-    "build": "tsc",
+    "build": "tsc && npm run build:projetos",
+    "build:projetos": "vite build --config public/projetos/vite.config.mjs",
+    "predev": "npm run build:projetos",
+    "predev:memoria": "npm run build:projetos",
     "dev": "tsc && node dist/main.js",
     "dev:memoria": "tsc && cross-env BANCO=memoria node dist/main.js",
     "verificar": "tsc && node dist/verificar.js",
@@ -16,7 +19,9 @@
   "dependencies": {
     "express": "^4.19.2",
     "express-session": "^1.18.0",
-    "pg": "^8.12.0"
+    "pg": "^8.12.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.2.12",
@@ -24,7 +29,9 @@
     "@types/express-session": "^1.18.0",
     "@types/node": "^20.14.10",
     "@types/pg": "^8.11.6",
+    "@vitejs/plugin-react": "^6.3.0",
     "cross-env": "^7.0.3",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vite": "^8.3.8"
   }
 }
