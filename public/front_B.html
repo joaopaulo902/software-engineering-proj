@@ -222,8 +222,27 @@
     let meusProjetosCache = [];
 
     document.addEventListener("DOMContentLoaded", async () => {
-      await alternarSessao(2);
-      carregarProjetosReal();
+      // Aberta pelo app (menu Projetos, Meus projetos, Notificacoes), usa quem ja
+      // esta logado. Aberta sozinha, sem sessao, entra como a Profa. Carla.
+      let idLogado = 2;
+      try {
+        const res = await fetch('/api/sessao');
+        if (res.ok) idLogado = (await res.json()).id ?? 2;
+      } catch (e) { /* sem sessao: fica a Profa. Carla */ }
+      const seletor = document.getElementById("userSelector");
+      if (seletor && [...seletor.options].some(o => Number(o.value) === idLogado)) seletor.value = String(idLogado);
+      await alternarSessao(idLogado);
+
+      // Qual tela abrir, pelo endereco: ?aba=meus-projetos | feed, ?projeto=<id>, ?notificacoes=1
+      const pedido = new URLSearchParams(location.search);
+      if (pedido.get("projeto")) {
+        abrirDetalhesProjeto(Number(pedido.get("projeto")));
+      } else if (pedido.get("aba") === "meus-projetos" || pedido.get("aba") === "feed") {
+        mudarAba(pedido.get("aba"));
+      } else {
+        carregarProjetosReal();
+      }
+      if (pedido.get("notificacoes")) abrirDropdownNotificacoes();
     });
 
     function mudarAba(aba) {
