@@ -88,7 +88,7 @@ O que já está pronto para usar:
 | Ir para outra tela | `navegar('/candidaturas/12')` de `navegacao.js`, ou um link `<a href="#/candidaturas/12">` |
 | Popup (Detalhes da Vaga, Ofertar nova vaga, Denunciar, Reverter banimento…) | `abrirPopup({ titulo, corpo, rotuloConfirmar, perigo, aoConfirmar })` de `componentes/popup.js` |
 | Retorno depois de uma ação ("Vaga publicada.") | `mensagemRapida(texto)` de `componentes/estrutura.js`; pode chamar antes de `navegar` ou `recarregar` |
-| Notificações | Sino no cabeçalho principal abre o dropdown; `componentes/estrutura.js` usa `api.notificacoes()` e `api.marcarNotificacoesLidas()` |
+| Notificações | Página completa em `#/notificacoes` (também no menu lateral) e dropdown no sino; `paginas/notificacoes.js` e `componentes/estrutura.js` compartilham `componentes/notificacoes.js`, além de `api.notificacoes()` e `api.marcarNotificacoesLidas()` |
 | Trocar o título do cabeçalho | `contexto.definirTitulo('Robótica na Escola')` |
 | Redesenhar a tela depois de uma ação | `contexto.recarregar()` |
 | Item novo no menu lateral | `MENU` em `rotas.js`; ícone novo em `ICONES` de `componentes/estrutura.js` |

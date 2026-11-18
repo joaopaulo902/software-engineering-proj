@@ -2,8 +2,9 @@
 // A estrutura comum das telas: menu lateral, cabecalho com sino e perfil, e a
 // area onde cada tela desenha. Todas as telas depois da entrada vivem aqui.
 
-import { escapar, iniciais, dataHoraBr } from './base.js';
+import { escapar, iniciais } from './base.js';
 import { api } from '../servicos-api.js';
+import { abrirNotificacao, renderizarNotificacao } from './notificacoes.js';
 
 const ROTULO_PAPEL = {
   ESTUDANTE: 'Estudante',
@@ -122,6 +123,10 @@ export function montarEstrutura(app, { usuario, itens, aoSair }) {
                      aria-live="polite">
                   <p class="carregando">Abra o sino para carregar notificações.</p>
                 </div>
+                <footer class="cabecalho__notificacoes-rodape">
+                  <a class="botao botao--texto" href="#/notificacoes"
+                     data-ver-todas-notificacoes>Ver todas as notificações</a>
+                </footer>
               </section>
             </div>
             <a class="cabecalho__perfil" href="#/perfil" title="Perfil">
@@ -185,6 +190,7 @@ function configurarNotificacoes(estrutura) {
   const menu = area.querySelector('[data-menu-notificacoes]');
   const lista = area.querySelector('[data-lista-notificacoes]');
   const marcarLidas = area.querySelector('[data-marcar-notificacoes-lidas]');
+  const verTodas = area.querySelector('[data-ver-todas-notificacoes]');
 
   function fechar() {
     menu.hidden = true;
@@ -196,20 +202,7 @@ function configurarNotificacoes(estrutura) {
     try {
       const notificacoes = await api.notificacoes();
       lista.innerHTML = notificacoes.length
-        ? notificacoes.map((notificacao) => {
-            const texto = notificacao.texto || notificacao.mensagem || notificacao.conteudo ||
-              `Aviso do tipo: ${notificacao.tipo || 'Geral'} (Ref: #${notificacao.referenciaId})`;
-            const data = notificacao.criadaEm ? dataHoraBr(notificacao.criadaEm) : '';
-            return `
-              <button type="button"
-                      class="notificacao ${notificacao.lida ? '' : 'notificacao--nao-lida'}"
-                      data-notificacao data-tipo="${escapar(notificacao.tipo)}"
-                      data-referencia="${escapar(notificacao.referenciaId)}">
-                <span class="etiqueta">${escapar(notificacao.tipo || 'Geral')}</span>
-                <span>${escapar(texto)}</span>
-                ${data ? `<small>${escapar(data)}</small>` : ''}
-              </button>`;
-          }).join('')
+        ? notificacoes.map(renderizarNotificacao).join('')
         : '<p class="carregando">Sem notificações</p>';
       definirContadorDoSino(notificacoes.filter((notificacao) => !notificacao.lida).length);
     } catch (erro) {
@@ -237,26 +230,13 @@ function configurarNotificacoes(estrutura) {
     }
   });
 
+  verTodas.addEventListener('click', fechar);
+
   lista.addEventListener('click', (evento) => {
     const item = evento.target.closest('[data-notificacao]');
     if (!item) return;
     fechar();
-
-    const referencia = Number(item.dataset.referencia);
-    if (!Number.isInteger(referencia) || referencia <= 0) return;
-    if (item.dataset.tipo === 'NOVA_ATIVIDADE') {
-      location.hash = `#/projetos/${referencia}`;
-    } else if (['NOVA_CANDIDATURA', 'CONFIRMACAO_DE_INGRESSO', 'DECLINIO_DE_INGRESSO'].includes(item.dataset.tipo)) {
-      // Avisos do coordenador: abrem a candidatura recebida.
-      location.hash = `#/candidaturas/recebidas/${referencia}`;
-    } else if (item.dataset.tipo === 'RESULTADO_DA_AVALIACAO') {
-      // Aviso do estudante: abre a candidatura dele.
-      location.hash = `#/candidaturas/${referencia}`;
-    } else if (item.dataset.tipo === 'PEDIDO_DE_INCORPORACAO') {
-      location.hash = '#/incorporacoes';
-    } else if (item.dataset.tipo === 'RESULTADO_DA_INCORPORACAO') {
-      location.hash = '#/meus-projetos';
-    }
+    abrirNotificacao({ tipo: item.dataset.tipo, referenciaId: item.dataset.referencia });
   });
 
   estrutura.addEventListener('click', (evento) => {

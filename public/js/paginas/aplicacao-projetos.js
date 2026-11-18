@@ -25,7 +25,24 @@ function enderecoDaTela(rota, params, consulta) {
 
 export async function mostrar(conteudo, { rota, params, consulta }) {
   conteudo.innerHTML = `
-    <iframe src="${enderecoDaTela(rota, params, consulta)}" title="${rota.titulo}"
-            style="width: 100%; height: calc(100vh - 140px); min-height: 520px; border: 0;
-                   border-radius: 12px; background: #fff;"></iframe>`;
+    <iframe class="iframe-projetos" src="${enderecoDaTela(rota, params, consulta)}"
+            title="${rota.titulo}"></iframe>`;
+
+  const iframe = conteudo.querySelector('.iframe-projetos');
+  iframe.addEventListener('load', () => {
+    const documento = iframe.contentDocument;
+    if (!documento) return;
+
+    const ajustarAltura = () => {
+      const altura = Math.ceil(
+        Math.max(documento.documentElement.scrollHeight, documento.body.scrollHeight, 520)
+      );
+      if (iframe.offsetHeight !== altura) iframe.style.height = `${altura}px`;
+    };
+
+    ajustarAltura();
+    const observador = new ResizeObserver(ajustarAltura);
+    observador.observe(documento.documentElement);
+    observador.observe(documento.body);
+  });
 }

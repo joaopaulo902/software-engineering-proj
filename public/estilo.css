@@ -232,7 +232,7 @@ a.botao { display: inline-block; text-decoration: none; text-align: center; }
 .cabecalho__notificacoes [data-sino]:hover { background: var(--fundo); }
 .cabecalho__notificacoes-menu {
   position: absolute; z-index: 40; top: calc(100% + 8px); right: 0;
-  display: grid; grid-template-rows: auto minmax(0, 1fr);
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
   width: min(360px, calc(100vw - 32px)); max-height: min(440px, calc(100vh - 88px));
   overflow: hidden; border: 1px solid var(--borda); border-radius: 12px;
   background: #fff; box-shadow: 0 10px 25px rgba(15, 23, 42, .12);
@@ -245,6 +245,11 @@ a.botao { display: inline-block; text-decoration: none; text-align: center; }
 .cabecalho__notificacoes-lista { overflow-y: auto; }
 .cabecalho__notificacoes-lista > .carregando,
 .cabecalho__notificacoes-lista > .aviso { margin: 12px; }
+.cabecalho__notificacoes-rodape {
+  display: flex; justify-content: flex-end; padding: 4px 8px;
+  border-top: 1px solid var(--borda);
+}
+.cabecalho__notificacoes-rodape .botao { padding: 6px 8px; font-size: 13px; }
 .notificacao {
   width: 100%; display: grid; gap: 5px; padding: 12px 16px;
   border: 0; border-bottom: 1px solid var(--borda); background: #fff;
@@ -253,6 +258,15 @@ a.botao { display: inline-block; text-decoration: none; text-align: center; }
 .notificacao:hover, .notificacao:focus-visible { background: var(--fundo); }
 .notificacao--nao-lida { background: var(--azul-claro); }
 .notificacao small { color: var(--suave); }
+.pagina-notificacoes { padding: 0; overflow: hidden; }
+.pagina-notificacoes__topo {
+  display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
+  padding: 16px 20px; border-bottom: 1px solid var(--borda);
+}
+.pagina-notificacoes__topo h2 { margin: 0; font-size: 18px; }
+.pagina-notificacoes__lista > .carregando,
+.pagina-notificacoes__lista > .aviso { margin: 16px 20px; }
+.pagina-notificacoes__lista .notificacao:last-child { border-bottom: 0; }
 .cabecalho__lado { display: flex; align-items: center; gap: 8px; }
 .cabecalho__icone {
   position: relative; display: grid; place-items: center; width: 40px; height: 40px;
@@ -283,6 +297,10 @@ a.botao { display: inline-block; text-decoration: none; text-align: center; }
 .conteudo {
   width: 100%; max-width: 880px; margin: 0 auto; padding: 24px 28px 64px;
   display: grid; gap: 16px; align-content: start;
+}
+.iframe-projetos {
+  display: block; width: 100%; height: 520px; min-height: 520px;
+  border: 0; border-radius: 12px; background: #fff;
 }
 .conteudo:focus { outline: none; }
 .conteudo > .busca, .conteudo > .filtro { margin-bottom: 0; }
