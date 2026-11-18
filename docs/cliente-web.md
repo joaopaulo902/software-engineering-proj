@@ -5,78 +5,87 @@ e com o back da dupla A. Vale junto com a página 7 do diagrama de classes.
 
 ## 1. Como o front está organizado
 
+O Cliente Web é **uma aplicação React só** (React 19 + Vite). O código fica em
+`public/src/`; `npm run build:cliente` compila para `public/dist/`, que é a pasta
+que o Express serve. `npm run dev` e `npm run dev:memoria` compilam antes de subir
+o servidor.
+
 ```
 public/
-├── index.html                 # só o <div id="app"> e o script de entrada
-├── estilo.css                 # estilos de todas as telas
-├── projetos/                  # aplicação React para projetos e atividades
-│   ├── index.html
-│   └── src/
-│       ├── Aplicacao.jsx
-│       ├── servicos-api.js
-│       ├── componentes/
-│       │   └── Modal.jsx
-│       └── paginas/
-│           ├── ListaDeProjetos.jsx
-│           ├── DetalhesDoProjeto.jsx
-│           ├── MeusProjetos.jsx
-│           └── FeedDeAtividades.jsx
-└── js/
-    ├── principal.js           # entrada: sessão, estrutura comum, entrega o endereço à tela
+├── index.html                 # só o <div id="app"> e o script de entrada (src/main.jsx)
+├── vite.config.mjs            # build em public/dist; dev server com /api apontando para :3000
+└── src/
+    ├── main.jsx               # monta a <Aplicacao> e importa os estilos
+    ├── Aplicacao.jsx          # sessão, estrutura comum e a tela de cada endereço
     ├── rotas.js               # TABELA DE TELAS e menu lateral de cada papel
-    ├── navegacao.js           # navegar('/caminho'), leitura do endereço depois do "#"
-    ├── sessao.js              # usuarioAtual(), entrar(), sair()
+    ├── navegacao.js           # navegar('/caminho'), useEndereco(), acharRota()
+    ├── contexto.js            # useAplicacao() e useDados() (ver seção 2)
     ├── servicos-api.js        # único lugar que conhece os endereços da API
+    ├── formatos.js            # datas, normalizar, iniciais, listaEmPortugues
+    ├── vagas.js               # turnos, modalidades e sugestões das telas de vaga
+    ├── estilos/
+    │   ├── estilo.css         # estilos de todas as telas
+    │   └── projetos.css       # estilos das telas de projetos e vagas
     ├── componentes/
-    │   ├── base.js            # escapar, datas, aviso, carregando
-    │   ├── estrutura.js       # menu lateral, cabeçalho, sino, mensagem rápida
-    │   ├── popup.js           # abrirPopup(...): o popup dos protótipos
-    │   ├── candidatura.js     # etiqueta de status, cards, linha do tempo, barra de filtro
+    │   ├── Estrutura.jsx      # menu lateral, cabeçalho, sino, mensagem rápida
+    │   ├── Popup.jsx          # <Popup>: o popup dos protótipos
+    │   ├── Avisos.jsx         # <Aviso>, <Carregando>, <ErroDaTela>
+    │   ├── Icones.jsx         # ícones do menu
+    │   ├── Notificacao.jsx    # item de notificação e para onde o clique leva
+    │   ├── Candidatura.jsx    # etiqueta de status, cards, linha do tempo, barra de filtro
+    │   ├── CardDeVaga.jsx     # card de vaga (C01)
+    │   └── AbasDeProjetos.jsx # abas Projetos / Meus projetos / Feed
     ├── paginas/               # UM ARQUIVO POR TELA
-    │   ├── entrada.js
-    │   ├── minhas-candidaturas.js     # C05
-    │   ├── minha-candidatura.js       # C05, C07, C18
-    │   ├── candidaturas-recebidas.js  # C15
-    │   ├── candidatura-recebida.js    # C15, C11
-    │   └── em-construcao.js           # provisória, para as rotas ainda não encaixadas
+    │   ├── Entrada.jsx
+    │   ├── VagasAbertas.jsx, DetalhesDaVaga.jsx, OfertarVaga.jsx           # frente C
+    │   ├── MinhasCandidaturas.jsx, MinhaCandidatura.jsx                    # C05, C07, C18
+    │   ├── CandidaturasRecebidas.jsx, CandidaturaRecebida.jsx              # C15, C11
+    │   ├── ListaDeProjetos.jsx, DetalhesDoProjeto.jsx, MeusProjetos.jsx,
+    │   │   FeedDeAtividades.jsx                                            # dupla B
+    │   ├── SolicitarIncorporacao.jsx, AvaliarIncorporacoes.jsx             # C17
+    │   ├── Notificacoes.jsx
+    │   └── EmConstrucao.jsx   # provisória, para as rotas ainda não encaixadas
     └── exemplo/
         └── candidaturas.js    # PROVISÓRIO: dados de exemplo (seção 4)
 ```
 
-O `paginas.js` e o `componentes.js` antigos não existem mais. As telas que já
-funcionavam (entrada, vagas abertas, publicar vaga) foram só movidas.
+Até a Etapa 3 havia duas aplicações: a casca e as telas de candidatura em
+JavaScript puro (`public/js/`) e as telas de projetos e vagas num app React à
+parte (`public/projetos/`), aberto dentro de um iframe. Agora tudo é a mesma
+aplicação: as telas de projetos e vagas abrem direto na área de conteúdo, usam o
+mesmo popup, a mesma mensagem rápida e a mesma sessão, e o Voltar do navegador
+funciona entre elas. Os endereços (`#/vagas`, `#/projetos/1`...) não mudaram.
 
-As telas de projetos ficam em `public/projetos/src/paginas/`, separadas por
-função. `public/js/paginas/aplicacao-projetos.js` liga as rotas do app principal
-à aplicação React compilada em `public/projetos/dist/`. `npm run build` compila
-as duas aplicações; os comandos `npm run dev` e `npm run dev:memoria` também
-geram o build React antes de iniciar o servidor.
-
-> **Telas de vaga (frente C):** Vagas abertas (C01), Detalhes da Vaga (C03) e Ofertar nova vaga (C06) ficam no app React, em `public/projetos/src/paginas/` (`VagasAbertas.jsx`, `DetalhesDaVaga.jsx`, `OfertarVaga.jsx`), e as rotas `#/vagas`, `#/vagas/:id` e `#/vagas/nova` as abrem por `paginas/aplicacao-projetos.js`, como as telas de projetos.
+Para trabalhar no front com recarga automática, suba o servidor
+(`npm run dev:memoria`) e, em outro terminal, `npm run dev:cliente`; abra
+`http://localhost:5173`.
 
 ## 2. Como encaixar uma tela (duplas B e C)
 
-1. Crie `public/js/paginas/minha-tela.js`:
+1. Crie `public/src/paginas/MinhaTela.jsx`:
 
-   ```js
-   import { api } from '../servicos-api.js';
+   ```jsx
+   import { api } from '../servicos-api';
+   import { useDados } from '../contexto';
+   import { Carregando, ErroDaTela } from '../componentes/Avisos';
 
-   export async function mostrar(conteudo, contexto) {
-     // conteudo: o elemento onde a tela desenha
-     // contexto: { usuario, params, consulta, definirTitulo, recarregar }
-     const dados = await api.algumaCoisa(contexto.params.id);
-     conteudo.innerHTML = `...`;
+   export function MinhaTela({ usuario, params, consulta, definirTitulo, recarregar }) {
+     const { carregando, dados, erro } = useDados(() => api.algumaCoisa(params.id));
+     if (carregando) return <Carregando />;
+     if (erro) return <ErroDaTela erro={erro} />;
+     return <section className="card">…</section>;
    }
    ```
 
-   Se `mostrar` lançar um erro (a API respondeu 404, por exemplo), a estrutura
-   mostra a mensagem no lugar da tela. Não precisa de `try/catch` para isso.
+   Cada visita a um endereço monta a tela do zero; uma resposta que chega depois
+   de o usuário sair da tela é descartada. Se o servidor responder 401 (sessão
+   expirada), a aplicação volta sozinha para a entrada.
 
-2. Em `public/js/rotas.js`, aponte a rota para o arquivo e apague o `dono`:
+2. Em `public/src/rotas.js`, aponte a rota para o arquivo e apague o `dono`:
 
    ```js
-   { caminho: '/projetos/:id', titulo: 'Página do projeto', papeis: TODOS, menu: '/projetos',
-     pagina: () => import('./paginas/pagina-do-projeto.js') },
+   { caminho: '/banlist', titulo: 'BanList', papeis: ['ADMIN'],
+     pagina: tela(() => import('./paginas/BanList.jsx'), 'BanList') },
    ```
 
 3. Acrescente as chamadas da sua frente em `servicos-api.js`, na seção dela.
@@ -86,15 +95,16 @@ O que já está pronto para usar:
 | Precisa de | Use |
 |---|---|
 | Ir para outra tela | `navegar('/candidaturas/12')` de `navegacao.js`, ou um link `<a href="#/candidaturas/12">` |
-| Popup (Detalhes da Vaga, Ofertar nova vaga, Denunciar, Reverter banimento…) | `abrirPopup({ titulo, corpo, rotuloConfirmar, perigo, aoConfirmar })` de `componentes/popup.js` |
-| Retorno depois de uma ação ("Vaga publicada.") | `mensagemRapida(texto)` de `componentes/estrutura.js`; pode chamar antes de `navegar` ou `recarregar` |
-| Notificações | Página completa em `#/notificacoes` (também no menu lateral) e dropdown no sino; `paginas/notificacoes.js` e `componentes/estrutura.js` compartilham `componentes/notificacoes.js`, além de `api.notificacoes()` e `api.marcarNotificacoesLidas()` |
-| Trocar o título do cabeçalho | `contexto.definirTitulo('Robótica na Escola')` |
-| Redesenhar a tela depois de uma ação | `contexto.recarregar()` |
-| Item novo no menu lateral | `MENU` em `rotas.js`; ícone novo em `ICONES` de `componentes/estrutura.js` |
+| Popup (Denunciar, Reverter banimento…) | `<Popup aberto aoFechar titulo rotuloConfirmar perigo aoConfirmar>` de `componentes/Popup.jsx`. Se `aoConfirmar` lançar erro, a mensagem aparece dentro do popup, que continua aberto |
+| Retorno depois de uma ação ("Vaga publicada.") | `mensagemRapida(texto)` de `useAplicacao()`; pode chamar antes de `navegar` ou `recarregar` |
+| Notificações | Página completa em `#/notificacoes` e dropdown no sino; os dois usam `componentes/Notificacao.jsx`. Para atualizar o sino: `definirContadorDoSino(n)` de `useAplicacao()` |
+| Trocar o título do cabeçalho | `definirTitulo('Robótica na Escola')` (prop da tela) |
+| Desenhar a tela de novo depois de uma ação | `recarregar()` (prop da tela) |
+| Quem está logado | `usuario` (prop da tela) ou `useAplicacao().usuario` |
+| Item novo no menu lateral | `MENU` em `rotas.js`; ícone novo em `componentes/Icones.jsx` |
 
 Endereços que as telas de candidatura já usam e que apontam para telas de
-outras frentes (hoje caem na tela provisória):
+outras frentes (os de perfil ainda caem na tela provisória):
 
 | Endereço | Quem abre | Dono |
 |---|---|---|
@@ -111,7 +121,7 @@ E os endereços das telas de candidatura, para os links das notificações (dupl
 | Nova candidatura, para o coordenador ("Ver candidatura") | `#/candidaturas/recebidas/<id da candidatura>` |
 | Candidaturas de uma vaga, a partir da Página do Projeto | `#/candidaturas/recebidas?vagaId=<id da vaga>` |
 
-O botão "Denunciar" (C13, frente C) entra em `paginas/candidatura-recebida.js`,
+O botão "Denunciar" (C13, frente C) entra em `paginas/CandidaturaRecebida.jsx`,
 entre "Recusar" e "Aprovar"; o lugar está marcado com um comentário.
 
 ## 3. O que o front espera da API de candidaturas (back da dupla A)
@@ -194,9 +204,9 @@ se candidata à Monitoria de Algoritmos e, depois de aprovada, não consegue
 confirmar.
 
 **Para remover** quando o back estiver na main: apagar a pasta
-`public/js/exemplo/`, o bloco "DADOS DE EXEMPLO" de `servicos-api.js` (e as
-chamadas a `exemplo` e `ouExemplo`), e a faixa `data-exemplo` de
-`componentes/estrutura.js`.
+`public/src/exemplo/`, o bloco "DADOS DE EXEMPLO" de `servicos-api.js` (e as
+chamadas a `exemplo` e `ouExemplo`), e a faixa "Dados de exemplo" de
+`componentes/Estrutura.jsx` (com `useExemploEmUso`, em `contexto.js`).
 
 ## 5. C17 — Incorporar projeto
 

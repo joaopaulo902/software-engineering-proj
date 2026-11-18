@@ -155,7 +155,8 @@ async function principal(): Promise<void> {
   );
 
   app.use('/api', criarRotas(controllers));
-  app.use(express.static(path.join(__dirname, '..', 'public')));
+  // Cliente Web: a aplicacao React compilada por `npm run build:cliente`.
+  app.use(express.static(path.join(__dirname, '..', 'public', 'dist')));
   app.use(tratadorDeErros);
 
   const porta = Number(process.env.PORT ?? 3000);
