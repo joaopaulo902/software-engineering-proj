@@ -19,6 +19,7 @@ import { CandidaturaService } from '../dominio/servicos/CandidaturaService';
 import { NotificacaoService } from '../dominio/servicos/NotificacaoService';
 import { PublicadorDeEventos } from '../dominio/eventos/PublicadorDeEventos';
 import { NotificadorInApp } from '../dominio/eventos/NotificadorInApp';
+import { PedidoIncorporacaoRepository } from '../persistencia/repositorios/PedidoIncorporacaoRepository';
 import {
   Candidatura,
   StatusCandidatura,
@@ -84,7 +85,8 @@ export async function verificarFrenteA(
       projetos,
       participacoes,
       new AtividadeRepository(banco.executor),
-      usuarios
+      usuarios,
+      new PedidoIncorporacaoRepository(banco.executor)
     )
   );
   const servico = new CandidaturaService(
