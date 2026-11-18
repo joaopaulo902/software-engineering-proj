@@ -114,7 +114,8 @@ export class VagaService {
   /** C06, passo 2: os projetos em que este coordenador pode publicar vagas. */
   async projetosParaPublicar(usuarioId: number): Promise<Projeto[]> {
     const coordenador = await this.exigirCoordenador(usuarioId);
-    return this.projetos.listarDoCoordenador(coordenador.id);
+    // So os projetos ativos: num projeto inativo a publicacao seria recusada.
+    return (await this.projetos.listarDoCoordenador(coordenador.id)).filter((p) => p.aceitaVagas());
   }
 
   /**
@@ -139,6 +140,10 @@ export class VagaService {
       }
       if (!projeto.ehCoordenadoPor(coordenador)) {
         throw new SemPermissao('Você só pode publicar vagas nos projetos que coordena.');
+      }
+      // Projeto ativo e com coordenador (Projeto.aceitaVagas, pagina 1 do diagrama).
+      if (!projeto.aceitaVagas()) {
+        throw new RegraDeNegocio('Este projeto está inativo e não aceita novas vagas.');
       }
 
       // 3. Pos-condicao: a vaga precisa nascer aberta a candidaturas. Quem

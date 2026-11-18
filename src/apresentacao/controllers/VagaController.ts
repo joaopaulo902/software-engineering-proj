@@ -5,7 +5,7 @@ import {
   FiltroDeVagas,
   VagaService
 } from '../../dominio/servicos/VagaService';
-import { lerId, lerLista, lerTexto } from '../parametros';
+import { MAIOR_ID, lerId, lerLista, lerTexto } from '../parametros';
 import { DadosNovaVaga } from '../../dominio/entidades/Vaga';
 import { lerDia } from '../../dominio/calendario';
 import { apresentarVaga, apresentarVagaComProjeto } from '../apresentadores';
@@ -148,8 +148,14 @@ function lerFiltroDeVagas(query: Request['query']): FiltroDeVagas | string {
 
 /** Le o corpo do pedido. Devolve os dados prontos, ou o texto do primeiro problema. */
 function lerNovaVaga(corpo: any): DadosNovaVaga | string {
+  // O PostgreSQL nao grava o caractere NUL em texto: recusaria com erro 500.
+  // (o JSON.stringify escreve esse caractere como o texto \u0000)
+  if (JSON.stringify(corpo).includes('\\u0000')) {
+    return 'O texto tem um caractere inválido.';
+  }
+
   const projetoId = Number(corpo.projetoId);
-  if (!inteiroEntre(projetoId, 1, Number.MAX_SAFE_INTEGER)) {
+  if (!inteiroEntre(projetoId, 1, MAIOR_ID)) {
     return 'Escolha o projeto da vaga.';
   }
 

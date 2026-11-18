@@ -33,6 +33,7 @@ export class VagaRepository implements IVagaRepository {
     const resultado = await this.executor().query(
       `${SELECT_COM_PROJETO}
         WHERE v.data_encerramento >= $1::date
+          AND v.vagas_restantes > 0
         ORDER BY v.data_encerramento, v.titulo`,
       [hoje]
     );

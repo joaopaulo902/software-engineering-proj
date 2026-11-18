@@ -18,7 +18,10 @@ import { CandidaturaService } from '../dominio/servicos/CandidaturaService';
 import { DadosNovaVaga, Vaga } from '../dominio/entidades/Vaga';
 import { Usuario } from '../dominio/entidades/Usuario';
 import { hojeComoDia } from '../dominio/calendario';
-import { NaoEncontrado } from '../dominio/erros';
+import { NaoEncontrado, RegraDeNegocio } from '../dominio/erros';
+import { ParticipacaoRepository } from '../persistencia/repositorios/ParticipacaoRepository';
+import { PublicadorDeEventos } from '../dominio/eventos/PublicadorDeEventos';
+import { MAIOR_ID, lerId } from '../apresentacao/parametros';
 
 /** O que o `verificar.ts` empresta: a contagem de resultados e a vaga padrao. */
 export interface FerramentasDeVerificacao {
@@ -34,7 +37,8 @@ export interface FerramentasDeVerificacao {
 }
 
 // ids vindos do seed
-const COORDENADORA = 2;
+const COORDENADORA = 2, COORDENADOR_RUI = 3;
+const ROBOTICA = 1, SAUDE_DIGITAL = 2, DADOS_PARA_TODOS = 3;
 const ANA = 4, BRUNO = 5, CARLA_DIAS = 6, DIEGO = 7;
 const MONITORIA = 1, DEV_WEB = 2, OFICINA_DADOS = 3, ELETRONICA = 4, COMUNICACAO = 5;
 
@@ -55,11 +59,69 @@ export async function verificarFrenteC(
     banco.unidade,
     new CandidaturaRepository(banco.executor),
     vagas,
-    usuarios
+    usuarios,
+    new ParticipacaoRepository(banco.executor),
+    new PublicadorDeEventos()
   );
   await verificarRegraDeCandidatura(vagas, usuarios, candidaturaService, ferramentas);
   await verificarFiltrosDoC01(vagaService, ferramentas);
   await verificarDetalheDaVaga(vagaService, ferramentas);
+  await verificarProjetoInativoEVagaEsgotada(banco, vagaService, candidaturaService, ferramentas);
+}
+
+/**
+ * C06 so publica em projeto que aceita vagas; o C01 so lista vaga com prazo
+ * E posicao livre; ids acima do limite do banco sao recusados na entrada.
+ */
+async function verificarProjetoInativoEVagaEsgotada(
+  banco: BancoEmMemoria,
+  vagaService: VagaService,
+  candidaturaService: CandidaturaService,
+  { conferir, esperaErro, novaVaga }: FerramentasDeVerificacao
+): Promise<void> {
+  console.log('\nFrente C - Projeto inativo, vaga esgotada e ids\n');
+
+  console.log('C06 em projeto inativo');
+  await banco.executor.query(`UPDATE projeto SET situacao = 'INATIVO' WHERE id = $1`, [DADOS_PARA_TODOS]);
+  try {
+    const projetos = (await vagaService.projetosParaPublicar(COORDENADORA)).map((p) => p.id);
+    conferir(
+      'o formulario so oferece os projetos ativos',
+      projetos.includes(ROBOTICA) && !projetos.includes(DADOS_PARA_TODOS),
+      projetos.join(', ')
+    );
+    await esperaErro('publicar em projeto inativo e recusado', RegraDeNegocio, 'inativo', () =>
+      vagaService.publicar(COORDENADORA, novaVaga({ projetoId: DADOS_PARA_TODOS }))
+    );
+  } finally {
+    await banco.executor.query(`UPDATE projeto SET situacao = 'ATIVO' WHERE id = $1`, [DADOS_PARA_TODOS]);
+  }
+
+  console.log('\nVaga esgotada sai do C01');
+  const unica = await vagaService.publicar(
+    COORDENADORA,
+    novaVaga({ titulo: 'Vaga de uma posição', vagasTotais: 1 })
+  );
+  conferir(
+    'com posicao livre, aparece na busca',
+    (await vagaService.listarAbertas()).some((i) => i.vaga.id === unica.id)
+  );
+  await candidaturaService.candidatar(ANA, unica.id, null);
+  conferir(
+    'depois de ocupada a ultima posicao, sai da busca',
+    !(await vagaService.listarAbertas()).some((i) => i.vaga.id === unica.id)
+  );
+  const detalhe = await vagaService.detalhar(unica.id, DIEGO);
+  conferir(
+    'mas o detalhe continua abrindo, com o motivo',
+    (detalhe.motivoDeInelegibilidade ?? '').includes('posições'),
+    String(detalhe.motivoDeInelegibilidade)
+  );
+
+  console.log('\nIds no limite do banco (INTEGER)');
+  conferir('o maior id do banco e aceito', lerId(String(MAIOR_ID)) === MAIOR_ID);
+  conferir('um acima do limite e recusado', lerId(String(MAIOR_ID + 1)) === null);
+  conferir('notacao cientifica enorme e recusada', lerId('1e21') === null);
 }
 
 /** C03: o detalhe da vaga e o motivo de quem esta vendo nao poder se candidatar. */
@@ -114,16 +176,18 @@ async function verificarDetalheDaVaga(
  * do seed pelo id e conferem que TODO resultado obedece ao filtro, porque
  * outras verificacoes publicam vagas novas antes desta.
  *
- * Vagas abertas do seed:
+ * Vagas abertas usadas:
  *   1 Monitoria de Algoritmos   Tarde  Presencial  8h  Educacao
- *   2 Desenvolvimento Web       Manha  Remoto     12h  Saude, Tecnologia   coord. Rui
  *   3 Oficina de Dados          Noite  Hibrido    10h  Dados
  *   5 Comunicacao e Divulgacao  Manha  Remoto      6h  Saude, Comunicacao  coord. Rui
+ *   e "Desenvolvimento Mobile", publicada aqui com os dados da vaga 2 do seed
+ *   (Manha, Remoto, 12h, Saude e Tecnologia, coord. Rui). A vaga 2 tem uma
+ *   posicao so, que o teste do C04 ocupa, e por isso sai da busca.
  * A 4 (Apoio em Eletronica) ja encerrou.
  */
 async function verificarFiltrosDoC01(
   vagaService: VagaService,
-  { conferir }: FerramentasDeVerificacao
+  { conferir, novaVaga }: FerramentasDeVerificacao
 ): Promise<void> {
   console.log('\nFrente C - C01: filtros e ordenacao\n');
 
@@ -131,6 +195,22 @@ async function verificarFiltrosDoC01(
   const tem = (lista: { vaga: Vaga }[], id: number) => ids(lista).includes(id);
   const descrever = (lista: { vaga: Vaga }[]) =>
     lista.map((item) => `${item.vaga.id}:${item.vaga.titulo}`).join(', ');
+
+  const MOBILE = (
+    await vagaService.publicar(
+      COORDENADOR_RUI,
+      novaVaga({
+        projetoId: SAUDE_DIGITAL,
+        titulo: 'Desenvolvimento Mobile',
+        descricao: 'Criar o aplicativo de agendamento dos postos de saúde.',
+        areasTematicas: ['Saúde', 'Tecnologia'],
+        turno: 'Manhã',
+        modalidade: 'Remoto',
+        cargaHoraria: 12,
+        vagasTotais: 3
+      })
+    )
+  ).id;
 
   console.log('Filtros');
   const todas = await vagaService.listarAbertas();
@@ -145,31 +225,31 @@ async function verificarFiltrosDoC01(
   const manhaOuNoite = await vagaService.listarAbertas({ turnos: ['Manhã', 'Noite'] });
   conferir(
     'dois turnos: vale qualquer um deles',
-    tem(manhaOuNoite, DEV_WEB) && tem(manhaOuNoite, OFICINA_DADOS) && !tem(manhaOuNoite, MONITORIA),
+    tem(manhaOuNoite, MOBILE) && tem(manhaOuNoite, OFICINA_DADOS) && !tem(manhaOuNoite, MONITORIA),
     descrever(manhaOuNoite)
   );
   const remotas = await vagaService.listarAbertas({ modalidades: ['Remoto'] });
   conferir(
     'modalidade: so as remotas',
-    tem(remotas, DEV_WEB) && tem(remotas, COMUNICACAO) && remotas.every((i) => i.vaga.modalidade === 'Remoto'),
+    tem(remotas, MOBILE) && tem(remotas, COMUNICACAO) && remotas.every((i) => i.vaga.modalidade === 'Remoto'),
     descrever(remotas)
   );
   const tecnologia = await vagaService.listarAbertas({ areas: ['Tecnologia'] });
   conferir(
     'area tematica da vaga, mesmo diferente da do projeto',
-    tem(tecnologia, DEV_WEB) && !tem(tecnologia, MONITORIA),
+    tem(tecnologia, MOBILE) && !tem(tecnologia, MONITORIA),
     descrever(tecnologia)
   );
   const saude = await vagaService.listarAbertas({ areas: ['saude'] });
   conferir(
     'area sem acento e em minusculas',
-    tem(saude, DEV_WEB) && tem(saude, COMUNICACAO) && !tem(saude, OFICINA_DADOS),
+    tem(saude, MOBILE) && tem(saude, COMUNICACAO) && !tem(saude, OFICINA_DADOS),
     descrever(saude)
   );
   const ate8 = await vagaService.listarAbertas({ cargaHorariaMaxima: 8 });
   conferir(
     'carga horaria maxima: inclui o limite e corta o resto',
-    tem(ate8, MONITORIA) && !tem(ate8, DEV_WEB) && ate8.every((i) => i.vaga.cargaHoraria <= 8),
+    tem(ate8, MONITORIA) && !tem(ate8, MOBILE) && ate8.every((i) => i.vaga.cargaHoraria <= 8),
     descrever(ate8)
   );
   const combinados = await vagaService.listarAbertas({
@@ -179,15 +259,15 @@ async function verificarFiltrosDoC01(
   });
   conferir(
     'filtros combinados: precisa passar em todos',
-    tem(combinados, COMUNICACAO) && !tem(combinados, DEV_WEB),
+    tem(combinados, COMUNICACAO) && !tem(combinados, MOBILE),
     descrever(combinados)
   );
   const pelaDescricao = await vagaService.listarAbertas({ termo: 'agendamento' });
-  conferir('texto encontra pela descricao', tem(pelaDescricao, DEV_WEB), descrever(pelaDescricao));
+  conferir('texto encontra pela descricao', tem(pelaDescricao, MOBILE), descrever(pelaDescricao));
   const peloCoordenador = await vagaService.listarAbertas({ termo: 'rui' });
   conferir(
     'texto encontra pelo coordenador',
-    tem(peloCoordenador, DEV_WEB) && tem(peloCoordenador, COMUNICACAO) && !tem(peloCoordenador, MONITORIA),
+    tem(peloCoordenador, MOBILE) && tem(peloCoordenador, COMUNICACAO) && !tem(peloCoordenador, MONITORIA),
     descrever(peloCoordenador)
   );
 
@@ -374,9 +454,9 @@ async function verificarCamposNovosDaVaga(
     `${seed.beneficio}, ${seed.duracaoEmMeses} meses, ${seed.cursosAceitos.join(', ')}`
   );
   const feed = await vagaService.listarAbertas();
-  const card = feed.find((item) => item.vaga.id === DEV_WEB);
+  const card = feed.find((item) => item.vaga.id === COMUNICACAO);
   conferir(
     'o feed traz os campos novos',
-    !!card && card.vaga.areasTematicas.includes('Tecnologia') && card.vaga.descricao.length > 0
+    !!card && card.vaga.areasTematicas.includes('Comunicação') && card.vaga.descricao.length > 0
   );
 }
