@@ -64,6 +64,9 @@ export const ROTAS = [
   { caminho: '/incorporacoes', titulo: 'Solicitações de incorporação', papeis: ['ADMIN'],
     pagina: telasDeProjetos },
 
+  { caminho: '/notificacoes', titulo: 'Notificações', papeis: TODOS,
+    pagina: () => import('./paginas/notificacoes.js') },
+
   // -------------------------------------- frente C · perfil e administracao
   { caminho: '/perfil', titulo: 'Perfil', papeis: TODOS,
     pagina: emConstrucao, dono: 'frente C (C16)' },
@@ -84,7 +87,8 @@ export const MENU = {
     { rotulo: 'Vagas abertas', caminho: '/vagas', icone: 'vagas' },
     { rotulo: 'Minhas candidaturas', caminho: '/candidaturas', icone: 'candidaturas' },
     { rotulo: 'Projetos', caminho: '/projetos', icone: 'projetos' },
-    { rotulo: 'Meus projetos', caminho: '/meus-projetos', icone: 'equipe' }
+    { rotulo: 'Meus projetos', caminho: '/meus-projetos', icone: 'equipe' },
+    { rotulo: 'Notificações', caminho: '/notificacoes', icone: 'sino' }
   ],
   COORDENADOR: [
     { rotulo: 'Vagas abertas', caminho: '/vagas', icone: 'vagas' },
@@ -93,14 +97,16 @@ export const MENU = {
     { rotulo: 'Projetos', caminho: '/projetos', icone: 'projetos' },
     // Nos prototipos, "Ofertar nova vaga" abre a partir da Pagina do Projeto.
     // Fica no menu ate essa tela existir, para o C06 nao sumir do sistema.
-    { rotulo: 'Ofertar nova vaga', caminho: '/vagas/nova', icone: 'mais' }
+    { rotulo: 'Ofertar nova vaga', caminho: '/vagas/nova', icone: 'mais' },
+    { rotulo: 'Notificações', caminho: '/notificacoes', icone: 'sino' }
   ],
   ADMIN: [
     { rotulo: 'Vagas abertas', caminho: '/vagas', icone: 'vagas' },
     { rotulo: 'Projetos', caminho: '/projetos', icone: 'projetos' },
     { rotulo: 'Solicitações de incorporação', caminho: '/incorporacoes', icone: 'base' },
     { rotulo: 'BanList', caminho: '/banlist', icone: 'banlist' },
-    { rotulo: 'Base de dados', caminho: '/base-institucional', icone: 'base' }
+    { rotulo: 'Base de dados', caminho: '/base-institucional', icone: 'base' },
+    { rotulo: 'Notificações', caminho: '/notificacoes', icone: 'sino' }
   ]
 };
 

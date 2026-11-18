@@ -5,9 +5,19 @@
   margin: 0 auto;
   padding: 24px 28px 64px;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
   align-content: start;
 }
+
+.pagina-projetos > * { min-width: 0; }
+.pagina-projetos .abas { flex-wrap: wrap; }
+.pagina-projetos .aba { flex: 0 0 auto; }
+.pagina-projetos .card__topo { flex-wrap: wrap; }
+.pagina-projetos .card__topo > div { min-width: 0; }
+.pagina-projetos .contador { display: inline-flex; align-items: center; line-height: 1; }
+.pagina-projetos .card__rodape { flex-wrap: wrap; align-items: center; }
+.pagina-projetos .detalhe-secao__topo { flex-wrap: wrap; }
 
 .card--hover { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
 .card--hover:hover, .card--hover:focus-visible {
