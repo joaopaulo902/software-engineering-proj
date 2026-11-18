@@ -28,27 +28,15 @@ export default function Aplicacao() {
     }
   }
 
-  async function selecionarSessao(id) {
-    setErro('');
-    try {
-      const dados = await api.entrar(id);
-      setUsuario(dados);
-      await atualizarParticipacoes(dados.papel);
-    } catch (falha) {
-      setErro(falha.message);
-    }
-  }
-
   useEffect(() => {
     async function iniciar() {
-      let id = 2;
       try {
         const sessao = await api.sessao();
-        if (sessao?.id) id = sessao.id;
-      } catch {
-        // Sem sessão ativa, inicia com a usuária padrão de demonstração.
+        setUsuario(sessao);
+        await atualizarParticipacoes(sessao.papel);
+      } catch (falha) {
+        setErro(falha.message);
       }
-      await selecionarSessao(id);
 
       const pedido = new URLSearchParams(location.search);
       if (pedido.get('projeto')) {
@@ -72,29 +60,6 @@ export default function Aplicacao() {
 
   return (
     <main className="pagina pagina-projetos">
-      <header className="barra">
-        <div>
-          <h1 className="titulo">Extensão INF</h1>
-          <span className="papel">
-            {usuario ? `${usuario.nome} · ${usuario.papel}` : 'Projetos de Extensão'}
-          </span>
-        </div>
-        <div className="barra__acoes">
-          <select
-            className="seletor-sessao"
-            aria-label="Selecionar sessão"
-            value={usuario?.id || 2}
-            onChange={(evento) => selecionarSessao(Number(evento.target.value))}
-          >
-            <option value="1">1 - Comissão de Extensão (Admin)</option>
-            <option value="2">2 - Profa. Carla (Coord. Robótica)</option>
-            <option value="3">3 - Prof. Rui (Coord. Saúde)</option>
-            <option value="6">6 - Carla Dias (Monitora)</option>
-          </select>
-          <button className="botao" type="button" title="Perfil">Perfil</button>
-        </div>
-      </header>
-
       {erro && <p className="aviso aviso--erro">{erro}</p>}
 
       {!['detalhe', 'incorporar-projeto', 'avaliar-incorporacoes'].includes(aba) && (

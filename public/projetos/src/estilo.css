@@ -9,21 +9,6 @@
   align-content: start;
 }
 
-.barra {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: -24px -28px 8px;
-  padding: 12px 28px;
-  background: #fff;
-  border-bottom: 1px solid var(--borda);
-}
-.barra .titulo { font-size: 20px; }
-.papel { color: var(--suave); font-size: 13px; }
-.barra__acoes { display: flex; align-items: center; gap: 8px; }
-.seletor-sessao { width: auto; min-width: 210px; }
-
 .card--hover { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
 .card--hover:hover, .card--hover:focus-visible {
   border-color: #93c5fd;
@@ -132,8 +117,6 @@
 
 @media (max-width: 820px) {
   .pagina-projetos { padding: 16px; }
-  .barra { margin: -16px -16px 8px; padding: 10px 16px; }
-  .seletor-sessao { min-width: 150px; }
   .filtros { grid-template-columns: 1fr; }
   .detalhe-cabecalho, .participacao-card { flex-direction: column; align-items: flex-start; }
 }

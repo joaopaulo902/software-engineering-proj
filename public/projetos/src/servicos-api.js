@@ -12,10 +12,6 @@ async function request(url, options = {}) {
 
 export const api = {
   sessao: () => request('/api/sessao'),
-  entrar: (usuarioId) => request('/api/sessao', {
-    method: 'POST',
-    body: JSON.stringify({ usuarioId })
-  }),
   projetos: (filtros) => {
     const parametros = new URLSearchParams();
     if (filtros.termo) parametros.set('termo', filtros.termo);
