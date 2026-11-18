@@ -99,7 +99,9 @@ async function principal(): Promise<void> {
     unidadeDeTrabalho,
     candidaturaRepository,
     vagaRepository,
-    usuarioRepository
+    usuarioRepository,
+    participacaoRepository,
+    eventos
   );
   const vagaService = new VagaService(
     unidadeDeTrabalho,

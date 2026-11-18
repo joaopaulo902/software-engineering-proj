@@ -135,3 +135,41 @@ UPDATE vaga SET
   areas_tematicas = ARRAY['Saúde', 'Comunicação'],
   publicada_em = now() - interval '3 hours'
 WHERE id = 5;
+
+-- ---------------------------------------------------------------------------
+-- Dupla A: candidaturas (Etapa 3)
+-- ---------------------------------------------------------------------------
+
+-- Toda candidatura tem pelo menos uma linha de historico (diagrama 1, 1..*):
+-- a candidatura da Ana ja existia, entao a linha EM_ANALISE e criada aqui.
+INSERT INTO historico_status (candidatura_id, status, ocorrido_em)
+  SELECT id, status, criada_em FROM candidatura;
+
+-- Uma candidatura ja aceita, para demonstrar o C07 sem passar pelo C11:
+-- Bruno Lima (2o sem.) foi aprovado pelo Prof. Rui em Comunicacao e Divulgacao
+-- (vaga sem semestre minimo) e pode confirmar ou declinar o ingresso.
+-- As horas vem depois da publicacao da vaga (3 horas atras, no bloco da
+-- frente C acima).
+INSERT INTO candidatura (vaga_id, estudante_id, status, mensagem, criada_em) VALUES
+  (5, 5, 'ACEITA',
+   'Tenho experiência com edição de vídeo e redação para redes sociais.',
+   now() - interval '2 hours');
+
+-- Uma linha por comando: o historico e listado na ordem em que foi gravado.
+INSERT INTO historico_status (candidatura_id, status, ocorrido_em)
+  SELECT id, 'EM_ANALISE', now() - interval '2 hours'
+    FROM candidatura WHERE vaga_id = 5 AND estudante_id = 5;
+INSERT INTO historico_status (candidatura_id, status, ocorrido_em)
+  SELECT id, 'ACEITA', now() - interval '1 hour'
+    FROM candidatura WHERE vaga_id = 5 AND estudante_id = 5;
+
+-- A posicao fica reservada enquanto a candidatura esta aceita.
+UPDATE vaga SET vagas_restantes = vagas_restantes - 1 WHERE id = 5;
+
+-- O aviso que o Bruno teria recebido no C11 (sino comeca com 1).
+INSERT INTO notificacao (destinatario_id, tipo, texto, referencia_id, lida, criada_em)
+  SELECT 5, 'RESULTADO_DA_AVALIACAO',
+         'Sua candidatura à vaga "Comunicação e Divulgação" foi aceita. Confirme ou decline o ingresso no projeto Saúde Digital.',
+         c.id, false, now() - interval '1 hour'
+    FROM candidatura c
+   WHERE c.vaga_id = 5 AND c.estudante_id = 5;

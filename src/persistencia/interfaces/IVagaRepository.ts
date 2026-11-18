@@ -33,6 +33,12 @@ export interface IVagaRepository {
   /** Desconta uma posicao da vaga. So faz sentido dentro de uma transacao. */
   reservarUmaPosicao(id: number, tx: Transacao): Promise<void>;
 
+  /**
+   * Devolve uma posicao a vaga: candidatura recusada (C11), declinada (C07)
+   * ou removida (C18). O banco recusa passar de `vagas_totais`.
+   */
+  liberarUmaPosicao(id: number, tx: Transacao): Promise<void>;
+
   /** Grava uma vaga nova com todas as posicoes livres (C06). */
   inserir(dados: DadosNovaVaga, tx: Transacao): Promise<Vaga>;
 }

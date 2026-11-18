@@ -4,6 +4,8 @@
  *   C05 - Acompanhar Status das Candidaturas
  *   C06 - Publicar Vaga de Projeto
  *   Frente B: Observer e notificacoes, C02, Meus Projetos, participantes, C10
+ *   Frente C: campos novos da vaga e regra de candidatura (verificacoes/frenteC.ts)
+ *   Dupla A: State da Candidatura, C05, C07, C11, C15, C18 (verificacoes/frenteA.ts)
  *
  * Roda os servicos de verdade contra um PostgreSQL em memoria e confere
  * cada regra de negocio e cada fluxo alternativo. Nenhum servidor
@@ -36,6 +38,7 @@ import { evento } from './dominio/eventos/EventoDeDominio';
 import { TipoNotificacao } from './dominio/entidades/Notificacao';
 import { verificarFrenteC } from './verificacoes/frenteC';
 import { IncorporacaoService } from './dominio/servicos/IncorporacaoService';
+import { verificarFrenteA } from './verificacoes/frenteA';
 
 // ids vindos do seed
 const ADMIN = 1, COORDENADORA = 2, COORDENADOR_RUI = 3;
@@ -186,7 +189,7 @@ async function principal(): Promise<void> {
     antesOficina === depoisOficina,
     `antes ${antesOficina}, depois ${depoisOficina}`
   );
-  const semCandidatura = !(await candidaturas.existe(BRUNO, OFICINA_DADOS));
+  const semCandidatura = !(await candidaturas.existeNaoRemovida(BRUNO, OFICINA_DADOS));
   conferir('candidatura recusada nao fica gravada', semCandidatura);
 
   console.log('\nC05 - Acompanhar status');
@@ -315,6 +318,7 @@ async function principal(): Promise<void> {
 
   await verificarFrenteB(banco, candidatura.id, publicada.id);
   await verificarFrenteC(banco, { conferir, esperaErro, novaVaga });
+  await verificarFrenteA(banco, { conferir, esperaErro });
 
   await banco.encerrar();
 
