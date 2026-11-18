@@ -6,14 +6,32 @@ import { IUnidadeDeTrabalho, Transacao } from '../../persistencia/interfaces/IUn
 import { IVagaRepository, VagaComProjeto } from '../../persistencia/interfaces/IVagaRepository';
 import { IProjetoRepository } from '../../persistencia/interfaces/IProjetoRepository';
 import { IUsuarioRepository } from '../../persistencia/interfaces/IUsuarioRepository';
+import { combinaComLista, combinaComTermo } from '../busca';
+
+/** Como ordenar o resultado do C01. */
+export type CriterioDeOrdenacao = 'PRAZO' | 'PUBLICACAO' | 'CARGA_HORARIA';
+export const CRITERIOS_DE_ORDENACAO: readonly CriterioDeOrdenacao[] = ['PRAZO', 'PUBLICACAO', 'CARGA_HORARIA'];
+
+/** Os filtros do C01 (FiltroDeVagas no diagrama). Tudo opcional. */
+export interface FiltroDeVagas {
+  /** Procura no titulo, descricao, requisitos, projeto, coordenador e areas. */
+  termo?: string;
+  areas?: string[];
+  turnos?: string[];
+  modalidades?: string[];
+  /** Horas por semana; vagas com carga maior ficam de fora. */
+  cargaHorariaMaxima?: number;
+  /** Padrao: PRAZO (encerra antes, aparece antes). */
+  ordenarPor?: CriterioDeOrdenacao;
+}
 
 /**
  * C01 - Consultar e Filtrar Vagas de Extensao.
  * C06 - Publicar Vaga de Projeto.
  *
- * O C01 esta implementado parcialmente: busca textual e filtro por area sobre
- * as vagas abertas. O C06 alimenta o C01: a vaga que o coordenador publica e
- * a que o estudante passa a encontrar na busca.
+ * O C01 filtra as vagas abertas por texto, areas, turnos, modalidades e carga
+ * horaria maxima, e ordena. O C06 alimenta o C01: a vaga que o coordenador
+ * publica e a que o estudante passa a encontrar na busca.
  */
 export class VagaService {
   constructor(
@@ -23,23 +41,39 @@ export class VagaService {
     private readonly usuarios: IUsuarioRepository
   ) {}
 
-  async listarAbertas(termo?: string, area?: string): Promise<VagaComProjeto[]> {
+  /**
+   * C01: as vagas abertas que passam em todos os filtros informados.
+   * Filtro vazio (ou lista vazia) nao restringe nada. Dentro de uma mesma
+   * lista vale qualquer um dos valores: areas ['Saude', 'Educacao'] traz as
+   * vagas de Saude OU de Educacao.
+   */
+  async listarAbertas(filtro: FiltroDeVagas = {}): Promise<VagaComProjeto[]> {
     const abertas = await this.vagas.listarAbertas();
 
-    const termoNormalizado = normalizar(termo);
-    const areaNormalizada = normalizar(area);
+    const encontradas = abertas.filter(({ vaga, projetoNome, projetoArea, coordenadorNome }) => {
+      const combinaTermo = combinaComTermo(filtro.termo, [
+        vaga.titulo,
+        vaga.descricao,
+        vaga.requisitos,
+        projetoNome,
+        coordenadorNome,
+        ...vaga.areasTematicas
+      ]);
+      // A area da vaga sao as areas tematicas dela; a do projeto vale junto,
+      // para vagas antigas que so tinham a area do projeto.
+      const areas = filtro.areas ?? [];
+      const combinaArea =
+        areas.length === 0 ||
+        [...vaga.areasTematicas, projetoArea].some((area) => combinaComLista(area, areas));
+      const combinaTurno = combinaComLista(vaga.turno, filtro.turnos);
+      const combinaModalidade = combinaComLista(vaga.modalidade, filtro.modalidades);
+      const combinaCarga =
+        filtro.cargaHorariaMaxima === undefined || vaga.cargaHoraria <= filtro.cargaHorariaMaxima;
 
-    return abertas.filter((item) => {
-      const combinaArea = !areaNormalizada || normalizar(item.projetoArea) === areaNormalizada;
-
-      const combinaTermo =
-        !termoNormalizado ||
-        normalizar(item.vaga.titulo).includes(termoNormalizado) ||
-        normalizar(item.vaga.requisitos).includes(termoNormalizado) ||
-        normalizar(item.projetoNome).includes(termoNormalizado);
-
-      return combinaArea && combinaTermo;
+      return combinaTermo && combinaArea && combinaTurno && combinaModalidade && combinaCarga;
     });
+
+    return ordenar(encontradas, filtro.ordenarPor ?? 'PRAZO');
   }
 
   async buscarPorId(id: number): Promise<Vaga> {
@@ -111,12 +145,22 @@ export class VagaService {
   }
 }
 
-/** Minusculas e sem acento, para a busca achar "extensao" quando o titulo tem "extensão". */
-function normalizar(texto?: string | null): string {
-  if (!texto) return '';
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim();
+/**
+ * PRAZO: encerra antes primeiro. PUBLICACAO: mais nova primeiro.
+ * CARGA_HORARIA: menos horas por semana primeiro. Empate: titulo.
+ */
+function ordenar(itens: VagaComProjeto[], criterio: CriterioDeOrdenacao): VagaComProjeto[] {
+  const chave = (item: VagaComProjeto): number => {
+    switch (criterio) {
+      case 'PUBLICACAO':
+        return -item.vaga.publicadaEm.getTime();
+      case 'CARGA_HORARIA':
+        return item.vaga.cargaHoraria;
+      default:
+        return item.vaga.dataEncerramento.getTime();
+    }
+  };
+  return [...itens].sort(
+    (a, b) => chave(a) - chave(b) || a.vaga.titulo.localeCompare(b.vaga.titulo, 'pt-BR')
+  );
 }

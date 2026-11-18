@@ -35,7 +35,7 @@ export interface FerramentasDeVerificacao {
 // ids vindos do seed
 const COORDENADORA = 2;
 const ANA = 4, BRUNO = 5, CARLA_DIAS = 6, DIEGO = 7;
-const DEV_WEB = 2, OFICINA_DADOS = 3;
+const MONITORIA = 1, DEV_WEB = 2, OFICINA_DADOS = 3, ELETRONICA = 4, COMUNICACAO = 5;
 
 const UM_DIA = 24 * 60 * 60 * 1000;
 
@@ -57,6 +57,110 @@ export async function verificarFrenteC(
     usuarios
   );
   await verificarRegraDeCandidatura(vagas, usuarios, candidaturaService, ferramentas);
+  await verificarFiltrosDoC01(vagaService, ferramentas);
+}
+
+/**
+ * C01: filtros e ordenacao da busca de vagas. As verificacoes olham as vagas
+ * do seed pelo id e conferem que TODO resultado obedece ao filtro, porque
+ * outras verificacoes publicam vagas novas antes desta.
+ *
+ * Vagas abertas do seed:
+ *   1 Monitoria de Algoritmos   Tarde  Presencial  8h  Educacao
+ *   2 Desenvolvimento Web       Manha  Remoto     12h  Saude, Tecnologia   coord. Rui
+ *   3 Oficina de Dados          Noite  Hibrido    10h  Dados
+ *   5 Comunicacao e Divulgacao  Manha  Remoto      6h  Saude, Comunicacao  coord. Rui
+ * A 4 (Apoio em Eletronica) ja encerrou.
+ */
+async function verificarFiltrosDoC01(
+  vagaService: VagaService,
+  { conferir }: FerramentasDeVerificacao
+): Promise<void> {
+  console.log('\nFrente C - C01: filtros e ordenacao\n');
+
+  const ids = (lista: { vaga: Vaga }[]) => lista.map((item) => item.vaga.id);
+  const tem = (lista: { vaga: Vaga }[], id: number) => ids(lista).includes(id);
+  const descrever = (lista: { vaga: Vaga }[]) =>
+    lista.map((item) => `${item.vaga.id}:${item.vaga.titulo}`).join(', ');
+
+  console.log('Filtros');
+  const todas = await vagaService.listarAbertas();
+  conferir('sem filtro, nenhuma vaga encerrada', !tem(todas, ELETRONICA), descrever(todas));
+
+  const noite = await vagaService.listarAbertas({ turnos: ['Noite'] });
+  conferir(
+    'turno: so as da noite',
+    tem(noite, OFICINA_DADOS) && noite.every((i) => i.vaga.turno === 'Noite'),
+    descrever(noite)
+  );
+  const manhaOuNoite = await vagaService.listarAbertas({ turnos: ['Manhã', 'Noite'] });
+  conferir(
+    'dois turnos: vale qualquer um deles',
+    tem(manhaOuNoite, DEV_WEB) && tem(manhaOuNoite, OFICINA_DADOS) && !tem(manhaOuNoite, MONITORIA),
+    descrever(manhaOuNoite)
+  );
+  const remotas = await vagaService.listarAbertas({ modalidades: ['Remoto'] });
+  conferir(
+    'modalidade: so as remotas',
+    tem(remotas, DEV_WEB) && tem(remotas, COMUNICACAO) && remotas.every((i) => i.vaga.modalidade === 'Remoto'),
+    descrever(remotas)
+  );
+  const tecnologia = await vagaService.listarAbertas({ areas: ['Tecnologia'] });
+  conferir(
+    'area tematica da vaga, mesmo diferente da do projeto',
+    tem(tecnologia, DEV_WEB) && !tem(tecnologia, MONITORIA),
+    descrever(tecnologia)
+  );
+  const saude = await vagaService.listarAbertas({ areas: ['saude'] });
+  conferir(
+    'area sem acento e em minusculas',
+    tem(saude, DEV_WEB) && tem(saude, COMUNICACAO) && !tem(saude, OFICINA_DADOS),
+    descrever(saude)
+  );
+  const ate8 = await vagaService.listarAbertas({ cargaHorariaMaxima: 8 });
+  conferir(
+    'carga horaria maxima: inclui o limite e corta o resto',
+    tem(ate8, MONITORIA) && !tem(ate8, DEV_WEB) && ate8.every((i) => i.vaga.cargaHoraria <= 8),
+    descrever(ate8)
+  );
+  const combinados = await vagaService.listarAbertas({
+    turnos: ['Manhã'],
+    modalidades: ['Remoto'],
+    cargaHorariaMaxima: 8
+  });
+  conferir(
+    'filtros combinados: precisa passar em todos',
+    tem(combinados, COMUNICACAO) && !tem(combinados, DEV_WEB),
+    descrever(combinados)
+  );
+  const pelaDescricao = await vagaService.listarAbertas({ termo: 'agendamento' });
+  conferir('texto encontra pela descricao', tem(pelaDescricao, DEV_WEB), descrever(pelaDescricao));
+  const peloCoordenador = await vagaService.listarAbertas({ termo: 'rui' });
+  conferir(
+    'texto encontra pelo coordenador',
+    tem(peloCoordenador, DEV_WEB) && tem(peloCoordenador, COMUNICACAO) && !tem(peloCoordenador, MONITORIA),
+    descrever(peloCoordenador)
+  );
+
+  console.log('\nOrdenacao');
+  const emOrdem = (lista: { vaga: Vaga }[], valor: (v: Vaga) => number) =>
+    lista.every((item, i) => i === 0 || valor(lista[i - 1].vaga) <= valor(item.vaga));
+  conferir(
+    'padrao: encerra antes, aparece antes',
+    emOrdem(todas, (v) => v.dataEncerramento.getTime())
+  );
+  const recentes = await vagaService.listarAbertas({ ordenarPor: 'PUBLICACAO' });
+  conferir(
+    'por publicacao: mais nova primeiro',
+    emOrdem(recentes, (v) => -v.publicadaEm.getTime()),
+    descrever(recentes)
+  );
+  const porCarga = await vagaService.listarAbertas({ ordenarPor: 'CARGA_HORARIA' });
+  conferir(
+    'por carga horaria: menos horas primeiro',
+    emOrdem(porCarga, (v) => v.cargaHoraria),
+    porCarga.map((i) => `${i.vaga.cargaHoraria}h`).join(', ')
+  );
 }
 
 /**
