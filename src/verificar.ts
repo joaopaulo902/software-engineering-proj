@@ -184,7 +184,7 @@ async function principal(): Promise<void> {
     antesOficina === depoisOficina,
     `antes ${antesOficina}, depois ${depoisOficina}`
   );
-  const semCandidatura = !(await candidaturas.existe(BRUNO, OFICINA_DADOS));
+  const semCandidatura = !(await candidaturas.existeNaoRemovida(BRUNO, OFICINA_DADOS));
   conferir('candidatura recusada nao fica gravada', semCandidatura);
 
   console.log('\nC05 - Acompanhar status');

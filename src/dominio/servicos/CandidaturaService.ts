@@ -58,7 +58,7 @@ export class CandidaturaService {
       //    "a vaga esgotou" — e foi ele mesmo quem ocupou a ultima posicao.
       //    O banco tambem recusa pelo UNIQUE (vaga_id, estudante_id); esta
       //    verificacao existe para devolver uma mensagem legivel.
-      if (await this.candidaturas.existe(estudanteId, vagaId, tx)) {
+      if (await this.candidaturas.existeNaoRemovida(estudanteId, vagaId, tx)) {
         throw new RegraDeNegocio('Você já se candidatou a esta vaga.');
       }
 
