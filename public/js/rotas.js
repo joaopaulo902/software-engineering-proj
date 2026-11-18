@@ -16,10 +16,9 @@
 
 const emConstrucao = () => import('./paginas/em-construcao.js');
 
-// PROVISORIO: as telas da dupla B ainda estao na pagina separada front_B.html;
-// este arquivo so a abre dentro do app. Troque pelos arquivos de cada tela
-// quando eles existirem em `paginas/`.
-const telasDaDuplaB = () => import('./paginas/frente-b.js');
+// As telas de projetos sao servidas por uma aplicacao React compilada em
+// `public/projetos/dist`.
+const telasDeProjetos = () => import('./paginas/aplicacao-projetos.js');
 
 const TODOS = ['ESTUDANTE', 'COORDENADOR', 'ADMIN'];
 
@@ -53,15 +52,15 @@ export const ROTAS = [
     menu: '/candidaturas/recebidas',
     pagina: () => import('./paginas/candidatura-recebida.js') },
 
-  // ------------------------------------------- dupla B · projetos e avisos
+  // ---------------------------------------- projetos, atividades e avisos
   { caminho: '/projetos', titulo: 'Projetos', papeis: TODOS,
-    pagina: telasDaDuplaB },
+    pagina: telasDeProjetos },
   { caminho: '/projetos/:id', titulo: 'Página do projeto', papeis: TODOS, menu: '/projetos',
-    pagina: telasDaDuplaB },
+    pagina: telasDeProjetos },
   { caminho: '/meus-projetos', titulo: 'Meus projetos', papeis: ['ESTUDANTE', 'COORDENADOR'],
-    pagina: telasDaDuplaB },
+    pagina: telasDeProjetos },
   { caminho: '/notificacoes', titulo: 'Notificações', papeis: TODOS,
-    pagina: telasDaDuplaB },
+    pagina: telasDeProjetos },
 
   // -------------------------------------- frente C · perfil e administracao
   { caminho: '/perfil', titulo: 'Perfil', papeis: TODOS,

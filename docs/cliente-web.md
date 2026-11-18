@@ -9,6 +9,19 @@ e com o back da dupla A. Vale junto com a página 7 do diagrama de classes.
 public/
 ├── index.html                 # só o <div id="app"> e o script de entrada
 ├── estilo.css                 # estilos de todas as telas
+├── projetos/                  # aplicação React para projetos e atividades
+│   ├── index.html
+│   └── src/
+│       ├── Aplicacao.jsx
+│       ├── servicos-api.js
+│       ├── componentes/
+│       │   ├── Modal.jsx
+│       │   └── Notificacoes.jsx
+│       └── paginas/
+│           ├── ListaDeProjetos.jsx
+│           ├── DetalhesDoProjeto.jsx
+│           ├── MeusProjetos.jsx
+│           └── FeedDeAtividades.jsx
 └── js/
     ├── principal.js           # entrada: sessão, estrutura comum, entrega o endereço à tela
     ├── rotas.js               # TABELA DE TELAS e menu lateral de cada papel
@@ -36,6 +49,12 @@ public/
 
 O `paginas.js` e o `componentes.js` antigos não existem mais. As telas que já
 funcionavam (entrada, vagas abertas, publicar vaga) foram só movidas.
+
+As telas de projetos ficam em `public/projetos/src/paginas/`, separadas por
+função. `public/js/paginas/aplicacao-projetos.js` liga as rotas do app principal
+à aplicação React compilada em `public/projetos/dist/`. `npm run build` compila
+as duas aplicações; os comandos `npm run dev` e `npm run dev:memoria` também
+geram o build React antes de iniciar o servidor.
 
 ## 2. Como encaixar uma tela (duplas B e C)
 
@@ -71,7 +90,7 @@ O que já está pronto para usar:
 | Ir para outra tela | `navegar('/candidaturas/12')` de `navegacao.js`, ou um link `<a href="#/candidaturas/12">` |
 | Popup (Detalhes da Vaga, Ofertar nova vaga, Denunciar, Reverter banimento…) | `abrirPopup({ titulo, corpo, rotuloConfirmar, perigo, aoConfirmar })` de `componentes/popup.js` |
 | Retorno depois de uma ação ("Vaga publicada.") | `mensagemRapida(texto)` de `componentes/estrutura.js`; pode chamar antes de `navegar` ou `recarregar` |
-| Contador no sino | Já funciona: `principal.js` lê `GET /api/notificacoes` a cada troca de tela. A tela de Notificações (dupla B) chama `definirContadorDoSino(0)` depois de marcar como lidas |
+| Notificações | `projetos/src/componentes/Notificacoes.jsx` carrega e marca notificações como lidas |
 | Trocar o título do cabeçalho | `contexto.definirTitulo('Robótica na Escola')` |
 | Redesenhar a tela depois de uma ação | `contexto.recarregar()` |
 | Item novo no menu lateral | `MENU` em `rotas.js`; ícone novo em `ICONES` de `componentes/estrutura.js` |
