@@ -221,7 +221,7 @@ async function principal(): Promise<void> {
   console.log('\nPos-condicoes: publicada no feed e aberta a candidaturas');
   const feed = await vagaService.listarAbertas();
   conferir('aparece no feed do C01', feed.some((item) => item.vaga.id === publicada.id));
-  const busca = await vagaService.listarAbertas('tutoria');
+  const busca = await vagaService.listarAbertas({ termo: 'tutoria' });
   conferir('a busca do C01 encontra pelo titulo', busca.some((item) => item.vaga.id === publicada.id));
   const primeiraCandidatura = await servico.candidatar(BRUNO, publicada.id, null);
   conferir('estudante consegue se candidatar (C04)', primeiraCandidatura.id > 0);

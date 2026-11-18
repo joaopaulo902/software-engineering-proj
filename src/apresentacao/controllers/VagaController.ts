@@ -1,5 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { VagaService } from '../../dominio/servicos/VagaService';
+import {
+  CRITERIOS_DE_ORDENACAO,
+  CriterioDeOrdenacao,
+  FiltroDeVagas,
+  VagaService
+} from '../../dominio/servicos/VagaService';
+import { MAIOR_ID, lerId, lerLista, lerTexto } from '../parametros';
 import { DadosNovaVaga } from '../../dominio/entidades/Vaga';
 import { lerDia } from '../../dominio/calendario';
 import { apresentarVaga, apresentarVagaComProjeto } from '../apresentadores';
@@ -12,15 +18,50 @@ const BENEFICIOS = ['Horas de extensão', 'Bolsa'];
 export class VagaController {
   constructor(private readonly servico: VagaService) {}
 
-  /** GET /api/vagas?termo=...&area=... - C01 */
+  /**
+   * GET /api/vagas - C01
+   *   ?termo=robotica
+   *   &areas=Saude,Educacao          (tambem ?areas=Saude&areas=Educacao; ?area= continua valendo)
+   *   &turnos=Manhã,Tarde
+   *   &modalidades=Remoto
+   *   &cargaHorariaMaxima=10
+   *   &ordenarPor=PRAZO | PUBLICACAO | CARGA_HORARIA
+   */
   listar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const termo = typeof req.query.termo === 'string' ? req.query.termo : undefined;
-      const area = typeof req.query.area === 'string' ? req.query.area : undefined;
+      const filtro = lerFiltroDeVagas(req.query);
+      if (typeof filtro === 'string') {
+        res.status(400).json({ erro: filtro });
+        return;
+      }
 
-      const lista = await this.servico.listarAbertas(termo, area);
+      const lista = await this.servico.listarAbertas(filtro);
 
       res.json(lista.map(apresentarVagaComProjeto));
+    } catch (erro) {
+      next(erro);
+    }
+  };
+
+  /**
+   * GET /api/vagas/:id - C03
+   * O card da vaga, mais `podeSeCandidatar` e `motivoDeInelegibilidade` para
+   * quem esta logado.
+   */
+  detalhar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const vagaId = lerId(req.params.id);
+      if (!vagaId) {
+        res.status(400).json({ erro: 'Vaga inválida.' });
+        return;
+      }
+
+      const detalhe = await this.servico.detalhar(vagaId, req.session.usuarioId as number);
+      res.json({
+        ...apresentarVagaComProjeto(detalhe.vaga),
+        podeSeCandidatar: detalhe.motivoDeInelegibilidade === null,
+        motivoDeInelegibilidade: detalhe.motivoDeInelegibilidade
+      });
     } catch (erro) {
       next(erro);
     }
@@ -66,10 +107,55 @@ export class VagaController {
   };
 }
 
+/** Le os filtros do C01. Devolve o filtro pronto, ou o texto do primeiro problema. */
+function lerFiltroDeVagas(query: Request['query']): FiltroDeVagas | string {
+  const turnos = lerLista(query.turnos);
+  const turnoInvalido = turnos.find((t) => !TURNOS.includes(t));
+  if (turnoInvalido) {
+    return `Turno desconhecido: ${turnoInvalido}. Use Manhã, Tarde ou Noite.`;
+  }
+
+  const modalidades = lerLista(query.modalidades);
+  const modalidadeInvalida = modalidades.find((m) => !MODALIDADES.includes(m));
+  if (modalidadeInvalida) {
+    return `Modalidade desconhecida: ${modalidadeInvalida}. Use Presencial, Remoto ou Híbrido.`;
+  }
+
+  let cargaHorariaMaxima: number | undefined;
+  const carga = lerTexto(query.cargaHorariaMaxima);
+  if (carga !== undefined) {
+    cargaHorariaMaxima = Number(carga);
+    if (!inteiroEntre(cargaHorariaMaxima, 1, 40)) {
+      return 'A carga horária máxima deve ser de 1 a 40 horas semanais.';
+    }
+  }
+
+  const ordenarPor = lerTexto(query.ordenarPor);
+  if (ordenarPor !== undefined && !CRITERIOS_DE_ORDENACAO.includes(ordenarPor as CriterioDeOrdenacao)) {
+    return 'Ordene por PRAZO, PUBLICACAO ou CARGA_HORARIA.';
+  }
+
+  return {
+    termo: lerTexto(query.termo),
+    // `area` (uma so) e o que a tela de Vagas abertas manda hoje.
+    areas: [...lerLista(query.areas), ...lerLista(query.area)],
+    turnos,
+    modalidades,
+    cargaHorariaMaxima,
+    ordenarPor: ordenarPor as CriterioDeOrdenacao | undefined
+  };
+}
+
 /** Le o corpo do pedido. Devolve os dados prontos, ou o texto do primeiro problema. */
 function lerNovaVaga(corpo: any): DadosNovaVaga | string {
+  // O PostgreSQL nao grava o caractere NUL em texto: recusaria com erro 500.
+  // (o JSON.stringify escreve esse caractere como o texto \u0000)
+  if (JSON.stringify(corpo).includes('\\u0000')) {
+    return 'O texto tem um caractere inválido.';
+  }
+
   const projetoId = Number(corpo.projetoId);
-  if (!inteiroEntre(projetoId, 1, Number.MAX_SAFE_INTEGER)) {
+  if (!inteiroEntre(projetoId, 1, MAIOR_ID)) {
     return 'Escolha o projeto da vaga.';
   }
 

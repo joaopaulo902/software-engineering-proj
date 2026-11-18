@@ -24,8 +24,14 @@ export function lerLista(valor: unknown): string[] {
     .filter((p) => p.length > 0);
 }
 
-/** Id inteiro positivo (ex.: `:id` da rota); `null` se nao for. */
+/** Maior valor de uma coluna INTEGER do PostgreSQL (os ids sao SERIAL). */
+export const MAIOR_ID = 2147483647;
+
+/**
+ * Id inteiro positivo (ex.: `:id` da rota); `null` se nao for. Acima do
+ * limite do banco tambem e `null`: o banco recusaria com erro 500.
+ */
 export function lerId(valor: unknown): number | null {
   const id = Number(valor);
-  return Number.isInteger(id) && id > 0 ? id : null;
+  return Number.isInteger(id) && id > 0 && id <= MAIOR_ID ? id : null;
 }

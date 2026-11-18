@@ -10,7 +10,10 @@ export interface VagaComProjeto {
 }
 
 export interface IVagaRepository {
-  /** Vagas com prazo aberto, para a tela de busca (C01). */
+  /**
+   * Vagas abertas para a tela de busca (C01): prazo aberto E posicao livre.
+   * E a mesma definicao que a contagem de vagas abertas do projeto usa.
+   */
   listarAbertas(): Promise<VagaComProjeto[]>;
 
   /**
@@ -20,6 +23,9 @@ export interface IVagaRepository {
   listarDoProjeto(projetoId: number): Promise<VagaComProjeto[]>;
 
   buscarPorId(id: number, tx?: Transacao): Promise<Vaga | null>;
+
+  /** Uma vaga com os dados do projeto, aberta ou encerrada (C03). */
+  buscarComProjeto(id: number): Promise<VagaComProjeto | null>;
 
   /**
    * Busca a vaga TRAVANDO a linha no banco (SELECT ... FOR UPDATE).

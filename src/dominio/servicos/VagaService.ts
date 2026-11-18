@@ -6,14 +6,42 @@ import { IUnidadeDeTrabalho, Transacao } from '../../persistencia/interfaces/IUn
 import { IVagaRepository, VagaComProjeto } from '../../persistencia/interfaces/IVagaRepository';
 import { IProjetoRepository } from '../../persistencia/interfaces/IProjetoRepository';
 import { IUsuarioRepository } from '../../persistencia/interfaces/IUsuarioRepository';
+import { combinaComLista, combinaComTermo } from '../busca';
+
+/** Como ordenar o resultado do C01. */
+export type CriterioDeOrdenacao = 'PRAZO' | 'PUBLICACAO' | 'CARGA_HORARIA';
+export const CRITERIOS_DE_ORDENACAO: readonly CriterioDeOrdenacao[] = ['PRAZO', 'PUBLICACAO', 'CARGA_HORARIA'];
+
+/** Os filtros do C01 (FiltroDeVagas no diagrama). Tudo opcional. */
+export interface FiltroDeVagas {
+  /** Procura no titulo, descricao, requisitos, projeto, coordenador e areas. */
+  termo?: string;
+  areas?: string[];
+  turnos?: string[];
+  modalidades?: string[];
+  /** Horas por semana; vagas com carga maior ficam de fora. */
+  cargaHorariaMaxima?: number;
+  /** Padrao: PRAZO (encerra antes, aparece antes). */
+  ordenarPor?: CriterioDeOrdenacao;
+}
+
+/** O que a tela Detalhes da Vaga (C03) mostra. */
+export interface DetalheDaVaga {
+  vaga: VagaComProjeto;
+  /**
+   * Por que QUEM ESTA VENDO nao pode se candidatar, ou null se pode.
+   * A tela desabilita o botao "Candidatar-se" e mostra este texto.
+   */
+  motivoDeInelegibilidade: string | null;
+}
 
 /**
  * C01 - Consultar e Filtrar Vagas de Extensao.
  * C06 - Publicar Vaga de Projeto.
  *
- * O C01 esta implementado parcialmente: busca textual e filtro por area sobre
- * as vagas abertas. O C06 alimenta o C01: a vaga que o coordenador publica e
- * a que o estudante passa a encontrar na busca.
+ * O C01 filtra as vagas abertas por texto, areas, turnos, modalidades e carga
+ * horaria maxima, e ordena. O C06 alimenta o C01: a vaga que o coordenador
+ * publica e a que o estudante passa a encontrar na busca.
  */
 export class VagaService {
   constructor(
@@ -23,23 +51,56 @@ export class VagaService {
     private readonly usuarios: IUsuarioRepository
   ) {}
 
-  async listarAbertas(termo?: string, area?: string): Promise<VagaComProjeto[]> {
+  /**
+   * C01: as vagas abertas que passam em todos os filtros informados.
+   * Filtro vazio (ou lista vazia) nao restringe nada. Dentro de uma mesma
+   * lista vale qualquer um dos valores: areas ['Saude', 'Educacao'] traz as
+   * vagas de Saude OU de Educacao.
+   */
+  async listarAbertas(filtro: FiltroDeVagas = {}): Promise<VagaComProjeto[]> {
     const abertas = await this.vagas.listarAbertas();
 
-    const termoNormalizado = normalizar(termo);
-    const areaNormalizada = normalizar(area);
+    const encontradas = abertas.filter(({ vaga, projetoNome, projetoArea, coordenadorNome }) => {
+      const combinaTermo = combinaComTermo(filtro.termo, [
+        vaga.titulo,
+        vaga.descricao,
+        vaga.requisitos,
+        projetoNome,
+        coordenadorNome,
+        ...vaga.areasTematicas
+      ]);
+      // A area da vaga sao as areas tematicas dela; a do projeto vale junto,
+      // para vagas antigas que so tinham a area do projeto.
+      const areas = filtro.areas ?? [];
+      const combinaArea =
+        areas.length === 0 ||
+        [...vaga.areasTematicas, projetoArea].some((area) => combinaComLista(area, areas));
+      const combinaTurno = combinaComLista(vaga.turno, filtro.turnos);
+      const combinaModalidade = combinaComLista(vaga.modalidade, filtro.modalidades);
+      const combinaCarga =
+        filtro.cargaHorariaMaxima === undefined || vaga.cargaHoraria <= filtro.cargaHorariaMaxima;
 
-    return abertas.filter((item) => {
-      const combinaArea = !areaNormalizada || normalizar(item.projetoArea) === areaNormalizada;
-
-      const combinaTermo =
-        !termoNormalizado ||
-        normalizar(item.vaga.titulo).includes(termoNormalizado) ||
-        normalizar(item.vaga.requisitos).includes(termoNormalizado) ||
-        normalizar(item.projetoNome).includes(termoNormalizado);
-
-      return combinaArea && combinaTermo;
+      return combinaTermo && combinaArea && combinaTurno && combinaModalidade && combinaCarga;
     });
+
+    return ordenar(encontradas, filtro.ordenarPor ?? 'PRAZO');
+  }
+
+  /**
+   * C03 - Visualizar Detalhes da Vaga. Qualquer usuario logado ve qualquer
+   * vaga, aberta ou encerrada (a Minha Candidatura aponta para vagas antigas).
+   * O motivo vem da mesma regra que o C04 usa para recusar a candidatura.
+   */
+  async detalhar(vagaId: number, usuarioId: number, agora: Date = new Date()): Promise<DetalheDaVaga> {
+    const vaga = await this.vagas.buscarComProjeto(vagaId);
+    if (!vaga) {
+      throw new NaoEncontrado('Vaga não encontrada.');
+    }
+    const usuario = await this.usuarios.buscarPorId(usuarioId);
+    if (!usuario) {
+      throw new NaoEncontrado('Usuário não encontrado.');
+    }
+    return { vaga, motivoDeInelegibilidade: vaga.vaga.motivoDeInelegibilidade(usuario, agora) };
   }
 
   async buscarPorId(id: number): Promise<Vaga> {
@@ -53,7 +114,8 @@ export class VagaService {
   /** C06, passo 2: os projetos em que este coordenador pode publicar vagas. */
   async projetosParaPublicar(usuarioId: number): Promise<Projeto[]> {
     const coordenador = await this.exigirCoordenador(usuarioId);
-    return this.projetos.listarDoCoordenador(coordenador.id);
+    // So os projetos ativos: num projeto inativo a publicacao seria recusada.
+    return (await this.projetos.listarDoCoordenador(coordenador.id)).filter((p) => p.aceitaVagas());
   }
 
   /**
@@ -78,6 +140,10 @@ export class VagaService {
       }
       if (!projeto.ehCoordenadoPor(coordenador)) {
         throw new SemPermissao('Você só pode publicar vagas nos projetos que coordena.');
+      }
+      // Projeto ativo e com coordenador (Projeto.aceitaVagas, pagina 1 do diagrama).
+      if (!projeto.aceitaVagas()) {
+        throw new RegraDeNegocio('Este projeto está inativo e não aceita novas vagas.');
       }
 
       // 3. Pos-condicao: a vaga precisa nascer aberta a candidaturas. Quem
@@ -111,12 +177,22 @@ export class VagaService {
   }
 }
 
-/** Minusculas e sem acento, para a busca achar "extensao" quando o titulo tem "extensão". */
-function normalizar(texto?: string | null): string {
-  if (!texto) return '';
-  return texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim();
+/**
+ * PRAZO: encerra antes primeiro. PUBLICACAO: mais nova primeiro.
+ * CARGA_HORARIA: menos horas por semana primeiro. Empate: titulo.
+ */
+function ordenar(itens: VagaComProjeto[], criterio: CriterioDeOrdenacao): VagaComProjeto[] {
+  const chave = (item: VagaComProjeto): number => {
+    switch (criterio) {
+      case 'PUBLICACAO':
+        return -item.vaga.publicadaEm.getTime();
+      case 'CARGA_HORARIA':
+        return item.vaga.cargaHoraria;
+      default:
+        return item.vaga.dataEncerramento.getTime();
+    }
+  };
+  return [...itens].sort(
+    (a, b) => chave(a) - chave(b) || a.vaga.titulo.localeCompare(b.vaga.titulo, 'pt-BR')
+  );
 }

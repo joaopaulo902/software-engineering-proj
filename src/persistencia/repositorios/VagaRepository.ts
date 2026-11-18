@@ -33,6 +33,7 @@ export class VagaRepository implements IVagaRepository {
     const resultado = await this.executor().query(
       `${SELECT_COM_PROJETO}
         WHERE v.data_encerramento >= $1::date
+          AND v.vagas_restantes > 0
         ORDER BY v.data_encerramento, v.titulo`,
       [hoje]
     );
@@ -50,6 +51,11 @@ export class VagaRepository implements IVagaRepository {
       [projetoId, hoje]
     );
     return resultado.rows.map(montarComProjeto);
+  }
+
+  async buscarComProjeto(id: number): Promise<VagaComProjeto | null> {
+    const resultado = await this.executor().query(`${SELECT_COM_PROJETO} WHERE v.id = $1`, [id]);
+    return resultado.rows.length ? montarComProjeto(resultado.rows[0]) : null;
   }
 
   async buscarPorId(id: number, tx?: Transacao): Promise<Vaga | null> {
