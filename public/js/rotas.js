@@ -16,6 +16,11 @@
 
 const emConstrucao = () => import('./paginas/em-construcao.js');
 
+// PROVISORIO: as telas da dupla B ainda estao na pagina separada front_B.html;
+// este arquivo so a abre dentro do app. Troque pelos arquivos de cada tela
+// quando eles existirem em `paginas/`.
+const telasDaDuplaB = () => import('./paginas/frente-b.js');
+
 const TODOS = ['ESTUDANTE', 'COORDENADOR', 'ADMIN'];
 
 /**
@@ -50,13 +55,13 @@ export const ROTAS = [
 
   // ------------------------------------------- dupla B · projetos e avisos
   { caminho: '/projetos', titulo: 'Projetos', papeis: TODOS,
-    pagina: emConstrucao, dono: 'dupla B (C02)' },
+    pagina: telasDaDuplaB },
   { caminho: '/projetos/:id', titulo: 'Página do projeto', papeis: TODOS, menu: '/projetos',
-    pagina: emConstrucao, dono: 'dupla B (C02 e C10)' },
+    pagina: telasDaDuplaB },
   { caminho: '/meus-projetos', titulo: 'Meus projetos', papeis: ['ESTUDANTE', 'COORDENADOR'],
-    pagina: emConstrucao, dono: 'dupla B' },
+    pagina: telasDaDuplaB },
   { caminho: '/notificacoes', titulo: 'Notificações', papeis: TODOS,
-    pagina: emConstrucao, dono: 'dupla B' },
+    pagina: telasDaDuplaB },
 
   // -------------------------------------- frente C · perfil e administracao
   { caminho: '/perfil', titulo: 'Perfil', papeis: TODOS,
