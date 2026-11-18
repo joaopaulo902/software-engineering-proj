@@ -32,11 +32,8 @@ public/
     │   ├── estrutura.js       # menu lateral, cabeçalho, sino, mensagem rápida
     │   ├── popup.js           # abrirPopup(...): o popup dos protótipos
     │   ├── candidatura.js     # etiqueta de status, cards, linha do tempo, barra de filtro
-    │   └── vaga.js            # card e formulário de vaga (vieram do componentes.js)
     ├── paginas/               # UM ARQUIVO POR TELA
     │   ├── entrada.js
-    │   ├── vagas-abertas.js           # C01 + botão do C04 (veio do paginas.js)
-    │   ├── publicar-vaga.js           # C06 (veio do paginas.js)
     │   ├── minhas-candidaturas.js     # C05
     │   ├── minha-candidatura.js       # C05, C07, C18
     │   ├── candidaturas-recebidas.js  # C15
@@ -54,6 +51,8 @@ função. `public/js/paginas/aplicacao-projetos.js` liga as rotas do app princip
 à aplicação React compilada em `public/projetos/dist/`. `npm run build` compila
 as duas aplicações; os comandos `npm run dev` e `npm run dev:memoria` também
 geram o build React antes de iniciar o servidor.
+
+> **Telas de vaga (frente C):** Vagas abertas (C01), Detalhes da Vaga (C03) e Ofertar nova vaga (C06) ficam no app React, em `public/projetos/src/paginas/` (`VagasAbertas.jsx`, `DetalhesDaVaga.jsx`, `OfertarVaga.jsx`), e as rotas `#/vagas`, `#/vagas/:id` e `#/vagas/nova` as abrem por `paginas/aplicacao-projetos.js`, como as telas de projetos.
 
 ## 2. Como encaixar uma tela (duplas B e C)
 

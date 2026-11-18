@@ -33,12 +33,14 @@ const TODOS = ['ESTUDANTE', 'COORDENADOR', 'ADMIN'];
  */
 export const ROTAS = [
   // ---------------------------------------------------------- frente C · vagas
+  // As tres telas sao do app React (public/projetos/src/paginas: VagasAbertas,
+  // OfertarVaga e DetalhesDaVaga), abertas por paginas/aplicacao-projetos.js.
   { caminho: '/vagas', titulo: 'Vagas abertas', papeis: TODOS,
-    pagina: () => import('./paginas/vagas-abertas.js') },
+    pagina: telasDeProjetos },
   { caminho: '/vagas/nova', titulo: 'Ofertar nova vaga', papeis: ['COORDENADOR'],
-    pagina: () => import('./paginas/publicar-vaga.js') },
+    menu: '/vagas/nova', pagina: telasDeProjetos },
   { caminho: '/vagas/:id', titulo: 'Detalhes da vaga', papeis: TODOS, menu: '/vagas',
-    pagina: emConstrucao, dono: 'frente C (C03)' },
+    pagina: telasDeProjetos },
 
   // ------------------------------------------------ dupla A · candidaturas
   { caminho: '/candidaturas', titulo: 'Minhas candidaturas', papeis: ['ESTUDANTE'],
