@@ -1,10 +1,23 @@
-export function MeusProjetos({ participacoes, aoAbrirProjeto }) {
+export function MeusProjetos({
+  participacoes,
+  pedidosPendentes = [],
+  aoAbrirProjeto,
+  ehCoordenador,
+  aoIncorporar
+}) {
   const ativos = participacoes.filter((participacao) => participacao.ativa !== false);
   const encerrados = participacoes.filter((participacao) => participacao.ativa === false);
 
   return (
     <>
-      <h2>Meus Projetos & Participações</h2>
+      <header className="detalhe-secao__topo">
+        <h2>Meus Projetos & Participações</h2>
+        {ehCoordenador && (
+          <button className="botao botao--primario" type="button" onClick={aoIncorporar}>
+            <span aria-hidden="true">+</span> Incorporar projeto
+          </button>
+        )}
+      </header>
       <div className="lista">
         {ativos.length === 0 ? (
           <p className="aviso aviso--info">Sem projetos ou coordenações ativas no momento.</p>
@@ -35,6 +48,28 @@ export function MeusProjetos({ participacoes, aoAbrirProjeto }) {
           );
         })}
       </div>
+      {ehCoordenador && pedidosPendentes.length > 0 && (
+        <section className="pedidos-projeto">
+          <h3>Solicitações de incorporação</h3>
+          <div className="lista">
+            {pedidosPendentes.map((item) => (
+              <article className="card" key={item.id}>
+                <div>
+                  <h3>{item.projeto?.nome || `Projeto #${item.projetoId}`}</h3>
+                  <div className="participacao-card__tags">
+                    {item.projeto?.area && <span className="etiqueta">{item.projeto.area}</span>}
+                    <span className="etiqueta etiqueta--cancelada">Não incorporado</span>
+                    <span className="etiqueta etiqueta--em_analise">Aguardando aprovação</span>
+                  </div>
+                  <p className="discreto">
+                    Solicitado em {new Date(item.solicitadoEm).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
       {encerrados.length > 0 && (
         <details className="historico-participacoes">
           <summary>Histórico de Participações Encerradas ({encerrados.length})</summary>

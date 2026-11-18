@@ -65,6 +65,32 @@ export class ProjetoRepository implements IProjetoRepository {
     return resultado.rows.map(montarProjeto);
   }
 
+  async listarNaoIncorporados(termo?: string): Promise<Projeto[]> {
+    const consulta = termo?.trim();
+    const resultado = await this.executor().query(
+      `SELECT * FROM projeto
+        WHERE coordenador_id IS NULL
+          AND situacao = 'ATIVO'
+          AND ($1::text IS NULL OR nome ILIKE $2 OR descricao ILIKE $2 OR area ILIKE $2)
+        ORDER BY nome`,
+      [consulta || null, consulta ? `%${consulta}%` : null]
+    );
+    return resultado.rows.map(montarProjeto);
+  }
+
+  async definirCoordenador(
+    projetoId: number,
+    coordenadorId: number,
+    tx: Transacao
+  ): Promise<boolean> {
+    const resultado = await tx.query(
+      `UPDATE projeto SET coordenador_id = $2
+        WHERE id = $1 AND coordenador_id IS NULL AND situacao = 'ATIVO'`,
+      [projetoId, coordenadorId]
+    );
+    return resultado.rowCount === 1;
+  }
+
   async buscarContextoDaCandidatura(candidaturaId: number): Promise<ContextoDaCandidatura | null> {
     const resultado = await this.executor().query(
       `SELECT p.*,

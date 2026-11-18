@@ -121,7 +121,7 @@ seu-projeto/
 │   │   └── src/
 │   │       ├── Aplicacao.jsx
 │   │       ├── servicos-api.js
-│   │       ├── componentes/    # Modal e notificações
+│   │       ├── componentes/    # Modal
 │   │       └── paginas/        # Lista, detalhes, meus projetos e feed
 │   └── js/
 │       ├── principal.js       # Entrada: sessão, estrutura comum e navegação

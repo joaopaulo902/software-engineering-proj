@@ -6,6 +6,7 @@ import { SessaoController } from '../controllers/SessaoController';
 import { ProjetoController } from '../controllers/ProjetoController';
 import { AtividadeController } from '../controllers/AtividadeController';
 import { NotificacaoController } from '../controllers/NotificacaoController';
+import { IncorporacaoController } from '../controllers/IncorporacaoController';
 
 /** Todos os controllers, montados no main.ts. Cada frente acrescenta o seu aqui. */
 export interface Controllers {
@@ -15,6 +16,7 @@ export interface Controllers {
   projeto: ProjetoController;
   atividade: AtividadeController;
   notificacao: NotificacaoController;
+  incorporacao: IncorporacaoController;
 }
 
 /**
@@ -61,6 +63,13 @@ export function criarRotas(c: Controllers): Router {
   // Notificacoes e contador do sino
   rotas.get('/notificacoes', exigirLogin, c.notificacao.listar);
   rotas.post('/notificacoes/lidas', exigirLogin, c.notificacao.marcarLidas);
+
+  // C17 - solicitar incorporação (coordenador) e avaliar (administrador).
+  rotas.get('/base-institucional/projetos', exigirLogin, c.incorporacao.listarProjetosDisponiveis);
+  rotas.post('/incorporacoes', exigirLogin, c.incorporacao.solicitar);
+  rotas.get('/incorporacoes/minhas', exigirLogin, c.incorporacao.listarMinhasPendentes);
+  rotas.get('/incorporacoes/pendentes', exigirLogin, c.incorporacao.listarPendentes);
+  rotas.post('/incorporacoes/:id/avaliacao', exigirLogin, c.incorporacao.avaliar);
 
   return rotas;
 }

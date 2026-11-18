@@ -2,7 +2,8 @@
 // A estrutura comum das telas: menu lateral, cabecalho com sino e perfil, e a
 // area onde cada tela desenha. Todas as telas depois da entrada vivem aqui.
 
-import { escapar, iniciais } from './base.js';
+import { escapar, iniciais, dataHoraBr } from './base.js';
+import { api } from '../servicos-api.js';
 
 const ROTULO_PAPEL = {
   ESTUDANTE: 'Estudante',
@@ -103,10 +104,26 @@ export function montarEstrutura(app, { usuario, itens, aoSair }) {
           <h1 class="cabecalho__titulo" data-titulo></h1>
 
           <div class="cabecalho__lado">
-            <a class="cabecalho__icone" href="#/notificacoes" data-sino aria-label="Notificações">
-              ${ICONES.sino}
-              <span class="sino__contador" data-contador hidden></span>
-            </a>
+            <div class="cabecalho__notificacoes" data-notificacoes>
+              <button type="button" class="cabecalho__icone" data-sino
+                      aria-label="Notificações" aria-controls="menuNotificacoes"
+                      aria-expanded="false" title="Notificações">
+                ${ICONES.sino}
+                <span class="sino__contador" data-contador hidden></span>
+              </button>
+              <section class="cabecalho__notificacoes-menu" id="menuNotificacoes"
+                       data-menu-notificacoes aria-label="Notificações" hidden>
+                <header class="cabecalho__notificacoes-topo">
+                  <strong>Notificações</strong>
+                  <button type="button" class="botao botao--texto"
+                          data-marcar-notificacoes-lidas>Marcar lidas</button>
+                </header>
+                <div class="cabecalho__notificacoes-lista" data-lista-notificacoes
+                     aria-live="polite">
+                  <p class="carregando">Abra o sino para carregar notificações.</p>
+                </div>
+              </section>
+            </div>
             <a class="cabecalho__perfil" href="#/perfil" title="Perfil">
               <span class="avatar" aria-hidden="true">${escapar(iniciais(usuario.nome))}</span>
               <span class="cabecalho__quem">
@@ -157,7 +174,92 @@ export function montarEstrutura(app, { usuario, itens, aoSair }) {
     raiz.querySelector('.conteudo').focus();
   });
 
+  configurarNotificacoes(raiz);
+
   if (exemploEmUso) raiz.querySelector('[data-exemplo]').hidden = false;
+}
+
+function configurarNotificacoes(estrutura) {
+  const area = estrutura.querySelector('[data-notificacoes]');
+  const botao = area.querySelector('[data-sino]');
+  const menu = area.querySelector('[data-menu-notificacoes]');
+  const lista = area.querySelector('[data-lista-notificacoes]');
+  const marcarLidas = area.querySelector('[data-marcar-notificacoes-lidas]');
+
+  function fechar() {
+    menu.hidden = true;
+    botao.setAttribute('aria-expanded', 'false');
+  }
+
+  async function carregar() {
+    lista.innerHTML = '<p class="carregando">Carregando notificações…</p>';
+    try {
+      const notificacoes = await api.notificacoes();
+      lista.innerHTML = notificacoes.length
+        ? notificacoes.map((notificacao) => {
+            const texto = notificacao.texto || notificacao.mensagem || notificacao.conteudo ||
+              `Aviso do tipo: ${notificacao.tipo || 'Geral'} (Ref: #${notificacao.referenciaId})`;
+            const data = notificacao.criadaEm ? dataHoraBr(notificacao.criadaEm) : '';
+            return `
+              <button type="button"
+                      class="notificacao ${notificacao.lida ? '' : 'notificacao--nao-lida'}"
+                      data-notificacao data-tipo="${escapar(notificacao.tipo)}"
+                      data-referencia="${escapar(notificacao.referenciaId)}">
+                <span class="etiqueta">${escapar(notificacao.tipo || 'Geral')}</span>
+                <span>${escapar(texto)}</span>
+                ${data ? `<small>${escapar(data)}</small>` : ''}
+              </button>`;
+          }).join('')
+        : '<p class="carregando">Sem notificações</p>';
+      definirContadorDoSino(notificacoes.filter((notificacao) => !notificacao.lida).length);
+    } catch (erro) {
+      lista.innerHTML = `<p class="aviso aviso--erro">${escapar(erro.message || 'Não foi possível carregar notificações.')}</p>`;
+    }
+  }
+
+  botao.addEventListener('click', () => {
+    const abrir = menu.hidden;
+    menu.hidden = !abrir;
+    botao.setAttribute('aria-expanded', String(abrir));
+    if (abrir) carregar();
+  });
+
+  marcarLidas.addEventListener('click', async () => {
+    marcarLidas.disabled = true;
+    try {
+      await api.marcarNotificacoesLidas();
+      definirContadorDoSino(0);
+      await carregar();
+    } catch (erro) {
+      lista.innerHTML = `<p class="aviso aviso--erro">${escapar(erro.message || 'Não foi possível marcar as notificações como lidas.')}</p>`;
+    } finally {
+      marcarLidas.disabled = false;
+    }
+  });
+
+  lista.addEventListener('click', (evento) => {
+    const item = evento.target.closest('[data-notificacao]');
+    if (!item) return;
+    fechar();
+
+    const referencia = Number(item.dataset.referencia);
+    if (!Number.isInteger(referencia) || referencia <= 0) return;
+    if (item.dataset.tipo === 'NOVA_ATIVIDADE') {
+      location.hash = `#/projetos/${referencia}`;
+    } else if (item.dataset.tipo === 'NOVA_CANDIDATURA') {
+      location.hash = `#/candidaturas/recebidas/${referencia}`;
+    } else if (['RESULTADO_DA_AVALIACAO', 'CONFIRMACAO_DE_INGRESSO', 'DECLINIO_DE_INGRESSO'].includes(item.dataset.tipo)) {
+      location.hash = `#/candidaturas/${referencia}`;
+    } else if (item.dataset.tipo === 'PEDIDO_DE_INCORPORACAO') {
+      location.hash = '#/incorporacoes';
+    } else if (item.dataset.tipo === 'RESULTADO_DA_INCORPORACAO') {
+      location.hash = '#/meus-projetos';
+    }
+  });
+
+  estrutura.addEventListener('click', (evento) => {
+    if (!area.contains(evento.target)) fechar();
+  });
 }
 
 /**
@@ -217,9 +319,8 @@ function limparMensagem() {
 
 /**
  * Numero no sino do cabecalho; 0 esconde o contador.
- * O principal.js ja chama a cada troca de tela, com GET /api/notificacoes.
- * A tela de Notificacoes (dupla B) chama com 0 depois de marcar como lidas,
- * para o numero sumir sem esperar a proxima troca de tela.
+ * O principal.js chama a cada troca de tela; o dropdown tambem atualiza o
+ * contador depois de carregar ou marcar notificacoes como lidas.
  */
 export function definirContadorDoSino(quantidade) {
   if (!raiz) return;

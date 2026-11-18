@@ -37,6 +37,25 @@ CREATE TABLE projeto (
     coordenador_id         INTEGER          REFERENCES usuario(id)
 );
 
+CREATE TYPE status_pedido_incorporacao AS ENUM ('PENDENTE', 'DEFERIDO', 'INDEFERIDO');
+
+CREATE TABLE pedido_incorporacao (
+    id             SERIAL PRIMARY KEY,
+    projeto_id     INTEGER                      NOT NULL REFERENCES projeto(id),
+    coordenador_id INTEGER                      NOT NULL REFERENCES usuario(id),
+    mensagem       TEXT                         CHECK (mensagem IS NULL OR length(mensagem) <= 1000),
+    status         status_pedido_incorporacao   NOT NULL DEFAULT 'PENDENTE',
+    solicitado_em  TIMESTAMPTZ                  NOT NULL DEFAULT now(),
+    avaliado_em    TIMESTAMPTZ,
+    CHECK ((status = 'PENDENTE' AND avaliado_em IS NULL) OR
+           (status <> 'PENDENTE' AND avaliado_em IS NOT NULL))
+);
+
+CREATE UNIQUE INDEX uq_pedido_incorporacao_pendente
+    ON pedido_incorporacao (coordenador_id, projeto_id) WHERE status = 'PENDENTE';
+CREATE INDEX idx_pedido_incorporacao_status
+    ON pedido_incorporacao (status, solicitado_em);
+
 CREATE TABLE vaga (
     id                SERIAL PRIMARY KEY,
     projeto_id        INTEGER NOT NULL REFERENCES projeto(id),

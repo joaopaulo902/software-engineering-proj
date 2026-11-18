@@ -15,8 +15,7 @@ public/
 │       ├── Aplicacao.jsx
 │       ├── servicos-api.js
 │       ├── componentes/
-│       │   ├── Modal.jsx
-│       │   └── Notificacoes.jsx
+│       │   └── Modal.jsx
 │       └── paginas/
 │           ├── ListaDeProjetos.jsx
 │           ├── DetalhesDoProjeto.jsx
@@ -90,7 +89,7 @@ O que já está pronto para usar:
 | Ir para outra tela | `navegar('/candidaturas/12')` de `navegacao.js`, ou um link `<a href="#/candidaturas/12">` |
 | Popup (Detalhes da Vaga, Ofertar nova vaga, Denunciar, Reverter banimento…) | `abrirPopup({ titulo, corpo, rotuloConfirmar, perigo, aoConfirmar })` de `componentes/popup.js` |
 | Retorno depois de uma ação ("Vaga publicada.") | `mensagemRapida(texto)` de `componentes/estrutura.js`; pode chamar antes de `navegar` ou `recarregar` |
-| Notificações | `projetos/src/componentes/Notificacoes.jsx` carrega e marca notificações como lidas |
+| Notificações | Sino no cabeçalho principal abre o dropdown; `componentes/estrutura.js` usa `api.notificacoes()` e `api.marcarNotificacoesLidas()` |
 | Trocar o título do cabeçalho | `contexto.definirTitulo('Robótica na Escola')` |
 | Redesenhar a tela depois de uma ação | `contexto.recarregar()` |
 | Item novo no menu lateral | `MENU` em `rotas.js`; ícone novo em `ICONES` de `componentes/estrutura.js` |
@@ -103,7 +102,6 @@ outras frentes (hoje caem na tela provisória):
 | `#/vagas/:id` | botão "Ver vaga" de Minha candidatura | frente C (Detalhes da Vaga, C03) |
 | `#/usuarios/:id` | botão "Ver perfil" da Candidatura do coordenador | frente C (C16) |
 | `#/meus-projetos` | Minha candidatura, depois de confirmar o ingresso | dupla B |
-| `#/notificacoes` | sino do cabeçalho | dupla B |
 | `#/perfil` | avatar do cabeçalho e rodapé do menu | frente C (C16) |
 
 E os endereços das telas de candidatura, para os links das notificações (dupla B):
@@ -201,7 +199,29 @@ confirmar.
 chamadas a `exemplo` e `ouExemplo`), e a faixa `data-exemplo` de
 `componentes/estrutura.js`.
 
-## 5. Diferenças em relação aos protótipos
+## 5. C17 — Incorporar projeto
+
+Em **Meus projetos**, coordenadores podem solicitar a incorporação de um
+projeto ativo ainda sem coordenador no sistema. O pedido pode incluir uma
+mensagem e fica pendente até a decisão administrativa. Administradores acessam
+**Solicitações de incorporação** pelo menu lateral; ao deferir, o sistema vincula
+o projeto ao coordenador solicitante, e ao indeferir ele continua disponível.
+Projetos não incorporados ficam fora da aba **Projetos**; os pedidos pendentes
+do coordenador aparecem em **Meus projetos** com o status de aprovação.
+
+- `GET /api/base-institucional/projetos?termo=` lista projetos disponíveis
+  (somente coordenadores).
+- `POST /api/incorporacoes` recebe `{ "projetoId": 4, "mensagem": "..." }`.
+- `GET /api/incorporacoes/minhas` lista os pedidos pendentes do coordenador atual.
+- `GET /api/incorporacoes/pendentes` lista a fila (somente administradores).
+- `POST /api/incorporacoes/:id/avaliacao` recebe
+  `{ "decisao": "DEFERIDO" | "INDEFERIDO" }`.
+
+O esquema da tabela `pedido_incorporacao` está em `db/01-schema.sql`. Para
+atualizar um banco já inicializado, recrie o banco de desenvolvimento com
+`npm run db:reset`; o banco em memória carrega o esquema atualizado ao iniciar.
+
+## 6. Diferenças em relação aos protótipos
 
 - **Nomes do menu**: "Vagas abertas" no lugar de "Main Page" e "Projetos" no
   lugar de "Buscar", seguindo os nomes das telas na divisão do trabalho.

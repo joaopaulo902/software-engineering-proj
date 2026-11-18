@@ -56,51 +56,6 @@
 }
 .filtro-checkbox input { width: auto; }
 
-.notificacoes { position: relative; }
-.notificacoes__botao {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  padding: 8px;
-}
-.notificacoes__menu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 8px);
-  z-index: 40;
-  width: 360px;
-  max-width: calc(100vw - 32px);
-  background: #fff;
-  border: 1px solid var(--borda);
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(15, 23, 42, .12);
-  overflow: hidden;
-}
-.notificacoes__topo {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--borda);
-}
-.notificacoes__lista { max-height: 360px; overflow-y: auto; }
-.notificacao {
-  width: 100%;
-  display: grid;
-  gap: 5px;
-  padding: 12px 16px;
-  border: 0;
-  border-bottom: 1px solid var(--borda);
-  background: #fff;
-  color: var(--tinta);
-  text-align: left;
-  cursor: pointer;
-}
-.notificacao--nao-lida { background: var(--azul-claro); }
-.notificacao small { color: var(--suave); }
-
 .voltar { justify-self: start; }
 .detalhe-cabecalho {
   display: flex;
@@ -163,6 +118,15 @@
 .participacao-card__tags { display: flex; flex-wrap: wrap; gap: 8px; }
 .historico-participacoes { margin-top: 20px; color: var(--suave); }
 .historico-participacoes summary { cursor: pointer; margin-bottom: 12px; }
+.pedidos-projeto { display: grid; gap: 12px; }
+.pedidos-projeto > h3 { margin: 0; font-size: 18px; }
+
+.pagina-incorporacao { display: grid; gap: 16px; }
+.pagina-incorporacao h2 { margin: 0 0 6px; font-size: 22px; }
+.campo-busca { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+.formulario-incorporacao { display: grid; gap: 12px; margin-top: 16px; }
+.formulario-incorporacao label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+.acoes-incorporacao { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 
 .popup { inset: 0; margin: auto; }
 
@@ -172,5 +136,4 @@
   .seletor-sessao { min-width: 150px; }
   .filtros { grid-template-columns: 1fr; }
   .detalhe-cabecalho, .participacao-card { flex-direction: column; align-items: flex-start; }
-  .notificacoes__menu { right: -56px; }
 }

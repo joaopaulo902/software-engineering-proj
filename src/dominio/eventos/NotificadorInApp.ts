@@ -6,6 +6,7 @@ import { IProjetoRepository } from '../../persistencia/interfaces/IProjetoReposi
 import { IParticipacaoRepository } from '../../persistencia/interfaces/IParticipacaoRepository';
 import { IAtividadeRepository } from '../../persistencia/interfaces/IAtividadeRepository';
 import { IUsuarioRepository } from '../../persistencia/interfaces/IUsuarioRepository';
+import { IPedidoIncorporacaoRepository } from '../../persistencia/interfaces/IPedidoIncorporacaoRepository';
 
 /** Que tipo de aviso cada evento gera. */
 const TIPO_DO_AVISO: Record<TipoEvento, TipoNotificacao> = {
@@ -31,7 +32,7 @@ interface Aviso {
 
 /**
  * Observador concreto: transforma cada evento do dominio em avisos in-app,
- * um por destinatario, que aparecem na tela de Notificacoes e no sino.
+ * um por destinatario, que aparecem no sino.
  *
  * E o unico lugar que sabe QUEM deve ser avisado de cada caso de uso. Os
  * servicos so dizem O QUE aconteceu. O autor do evento nunca e avisado do
@@ -43,7 +44,8 @@ export class NotificadorInApp implements ObservadorDeEventos {
     private readonly projetos: IProjetoRepository,
     private readonly participacoes: IParticipacaoRepository,
     private readonly atividades: IAtividadeRepository,
-    private readonly usuarios: IUsuarioRepository
+    private readonly usuarios: IUsuarioRepository,
+    private readonly pedidos: IPedidoIncorporacaoRepository
   ) {}
 
   async notificar(evento: EventoDeDominio): Promise<void> {
@@ -89,13 +91,11 @@ export class NotificadorInApp implements ObservadorDeEventos {
           referenciaId: evento.origemId
         };
 
-      // Dependem de repositorios que as outras frentes ainda vao criar
-      // (avaliacao, denuncia, pedido de incorporacao). Quem implementar o caso
-      // de uso acrescenta aqui a busca do destinatario.
       case 'AVALIACAO_REGISTRADA':
-      case 'INCORPORACAO_AVALIADA':
       case 'DENUNCIA_JULGADA':
         return null;
+      case 'INCORPORACAO_AVALIADA':
+        return this.avisoDeIncorporacao(evento);
     }
   }
 
@@ -180,5 +180,21 @@ export class NotificadorInApp implements ObservadorDeEventos {
   private async administradores(): Promise<number[]> {
     const todos = await this.usuarios.listarTodos();
     return todos.filter((u) => u.ehAdministrador()).map((u) => u.id);
+  }
+
+  private async avisoDeIncorporacao(evento: EventoDeDominio): Promise<Aviso | null> {
+    const pedido = await this.pedidos.buscarPorId(evento.origemId);
+    if (!pedido) return null;
+    const projeto = await this.projetos.buscarPorId(pedido.projetoId);
+    if (!projeto) return null;
+
+    return {
+      destinatarios: [pedido.coordenadorId],
+      texto:
+        pedido.status === 'DEFERIDO'
+          ? `Seu pedido de incorporação do projeto ${projeto.nome} foi aprovado.`
+          : `Seu pedido de incorporação do projeto ${projeto.nome} não foi aprovado.`,
+      referenciaId: pedido.id
+    };
   }
 }

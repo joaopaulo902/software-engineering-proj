@@ -6,8 +6,8 @@ function enderecoDaTela(rota, params) {
       return `/projetos/dist/index.html?projeto=${encodeURIComponent(params.id)}`;
     case '/meus-projetos':
       return '/projetos/dist/index.html?aba=meus-projetos';
-    case '/notificacoes':
-      return '/projetos/dist/index.html?aba=projetos&notificacoes=1';
+    case '/incorporacoes':
+      return '/projetos/dist/index.html?aba=avaliar-incorporacoes';
     default:
       return '/projetos/dist/index.html';
   }

@@ -52,6 +52,7 @@ export class ProjetoService {
     const todos = await this.projetos.listarComCoordenador();
     return todos.filter(
       (item) =>
+        item.projeto.estaIncorporado() &&
         combinaComTermo(filtro.termo, [
           item.projeto.nome,
           item.projeto.descricao,

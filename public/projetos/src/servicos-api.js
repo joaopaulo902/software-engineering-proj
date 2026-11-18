@@ -25,6 +25,22 @@ export const api = {
     return request(`/api/projetos${consulta ? `?${consulta}` : ''}`);
   },
   projeto: (id) => request(`/api/projetos/${id}`),
+  projetosParaIncorporar: (termo = '') => {
+    const parametros = new URLSearchParams();
+    if (termo.trim()) parametros.set('termo', termo.trim());
+    const consulta = parametros.toString();
+    return request(`/api/base-institucional/projetos${consulta ? `?${consulta}` : ''}`);
+  },
+  solicitarIncorporacao: (projetoId, mensagem) => request('/api/incorporacoes', {
+    method: 'POST',
+    body: JSON.stringify({ projetoId, mensagem })
+  }),
+  minhasIncorporacoesPendentes: () => request('/api/incorporacoes/minhas'),
+  incorporacoesPendentes: () => request('/api/incorporacoes/pendentes'),
+  avaliarIncorporacao: (pedidoId, decisao) => request(`/api/incorporacoes/${pedidoId}/avaliacao`, {
+    method: 'POST',
+    body: JSON.stringify({ decisao })
+  }),
   participantes: (id) => request(`/api/projetos/${id}/participantes`),
   meusProjetos: () => request('/api/participacoes/minhas'),
   atividades: () => request('/api/atividades'),
@@ -39,6 +55,4 @@ export const api = {
   removerParticipante: (participacaoId) => request(`/api/participacoes/${participacaoId}`, {
     method: 'DELETE'
   }),
-  notificacoes: () => request('/api/notificacoes'),
-  marcarNotificacoesLidas: () => request('/api/notificacoes/lidas', { method: 'POST' })
 };
