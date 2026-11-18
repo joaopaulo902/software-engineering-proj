@@ -107,7 +107,7 @@ porque a regra de negócio não conhece HTTP nem SQL.
 ## Estrutura do projeto
 
 ```
-seu-projeto/
+connext/
 ├── db/
 │   ├── 01-schema.sql          # Tabelas e restrições
 │   └── 02-seed.sql            # Dados da demonstração
