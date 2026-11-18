@@ -92,3 +92,46 @@ INSERT INTO notificacao (destinatario_id, tipo, texto, referencia_id, lida, cria
   (4, 'NOVA_ATIVIDADE',
       'Nova atividade em Saúde Digital: Piloto no posto da Vila Jardim.',
       2, true,  '2026-11-03 14:00:00-03');
+
+-- ---------------------------------------------------------------------------
+-- Frente C: campos novos das vagas (Etapa 3)
+-- ---------------------------------------------------------------------------
+
+-- Toda vaga ja existente ganha a area do seu projeto como area tematica.
+UPDATE vaga v SET areas_tematicas = ARRAY[p.area] FROM projeto p WHERE p.id = v.projeto_id;
+
+-- Descricoes, beneficio e duracao para os cards e a tela Detalhes da Vaga (C03).
+-- As datas de publicacao sao relativas a hoje, para a ordem do feed fazer sentido.
+UPDATE vaga SET
+  descricao = 'Apoiar os alunos das escolas parceiras nas oficinas de lógica e programação em Python.',
+  duracao_em_meses = 6,
+  publicada_em = now() - interval '2 days'
+WHERE id = 1;
+
+UPDATE vaga SET
+  descricao = 'Desenvolver as telas do sistema de agendamento usado pelos postos de saúde.',
+  areas_tematicas = ARRAY['Saúde', 'Tecnologia'],
+  cursos_aceitos = ARRAY['Ciência da Computação', 'Engenharia da Computação'],
+  beneficio = 'Bolsa',
+  duracao_em_meses = 12,
+  publicada_em = now() - interval '1 day'
+WHERE id = 2;
+
+-- curso restrito: Carla Dias (Engenharia da Computação, 7º) atende o semestre,
+-- mas e barrada pelo curso; Ana (5º) e barrada pelo semestre
+UPDATE vaga SET
+  descricao = 'Preparar e conduzir oficinas de leitura de dados com associações de bairro.',
+  cursos_aceitos = ARRAY['Ciência da Computação', 'Estatística'],
+  publicada_em = now() - interval '5 days'
+WHERE id = 3;
+
+UPDATE vaga SET
+  descricao = 'Montar e testar os kits de eletrônica usados nas oficinas de robótica.',
+  publicada_em = now() - interval '40 days'
+WHERE id = 4;
+
+UPDATE vaga SET
+  descricao = 'Produzir conteúdo para as redes sociais e materiais de divulgação do projeto.',
+  areas_tematicas = ARRAY['Saúde', 'Comunicação'],
+  publicada_em = now() - interval '3 hours'
+WHERE id = 5;

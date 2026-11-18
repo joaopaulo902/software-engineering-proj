@@ -93,7 +93,9 @@ export class VagaService {
       }
 
       // 4. Grava. A partir daqui a vaga aparece no C01 e aceita o C04.
-      return this.vagas.inserir(dados, tx);
+      //    Sem area tematica informada, vale a area do projeto.
+      const areasTematicas = dados.areasTematicas.length ? dados.areasTematicas : [projeto.area];
+      return this.vagas.inserir({ ...dados, areasTematicas }, tx);
     });
   }
 
