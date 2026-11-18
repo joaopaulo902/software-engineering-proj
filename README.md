@@ -112,10 +112,33 @@ seu-projeto/
 │   ├── 01-schema.sql          # Tabelas e restrições
 │   └── 02-seed.sql            # Dados da demonstração
 ├── public/                    # Subsistema Cliente Web
+<<<<<<< Updated upstream
 │   └── js/
 │       ├── componentes.js     # Pedaços de interface reutilizados
 │       ├── paginas.js         # As telas
 │       └── servicos-api.js    # Único lugar que conhece os endereços da API
+=======
+│   ├── estilo.css
+│   ├── projetos/               # Aplicação React para projetos e atividades
+│   │   ├── index.html
+│   │   ├── vite.config.mjs
+│   │   └── src/
+│   │       ├── Aplicacao.jsx
+│   │       ├── servicos-api.js
+│   │       ├── componentes/    # Modal e notificações
+│   │       └── paginas/        # Lista, detalhes, meus projetos e feed
+│   └── js/
+│       ├── principal.js       # Entrada: sessão, estrutura comum e navegação
+│       ├── rotas.js           # Tabela de telas e menu lateral de cada papel
+│       ├── navegacao.js       # Navegação pelo endereço depois do "#"
+│       ├── sessao.js          # Usuário logado
+│       ├── servicos-api.js    # Único lugar que conhece os endereços da API
+│       ├── componentes/       # Pedaços de interface reutilizados (estrutura, popup, cards)
+│       ├── paginas/           # As telas, um arquivo por tela
+│       └── exemplo/           # Provisório: dados de exemplo das rotas ainda sem back
+│
+├── package.json               # npm run build compila servidor e aplicação React
+>>>>>>> Stashed changes
 └── src/
     ├── apresentacao/          # Camada de Apresentação
     │   ├── controllers/       # Traduz HTTP <-> domínio
