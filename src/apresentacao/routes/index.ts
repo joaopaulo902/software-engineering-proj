@@ -40,9 +40,21 @@ export function criarRotas(c: Controllers): Router {
   rotas.get('/projetos/meus', exigirLogin, c.vaga.listarProjetosParaPublicar);
   rotas.post('/vagas', exigirLogin, c.vaga.publicar);
 
+  // Candidaturas (dupla A). As rotas fixas /minhas e /recebidas vem antes de /:id.
   // C04 - candidatar-se / C05 - acompanhar
   rotas.post('/candidaturas', exigirLogin, c.candidatura.criar);
   rotas.get('/candidaturas/minhas', exigirLogin, c.candidatura.listarMinhas);
+  // C15 - visualizar candidaturas dos aplicantes
+  rotas.get('/candidaturas/recebidas', exigirLogin, c.candidatura.listarRecebidas);
+  rotas.get('/candidaturas/recebidas/:id', exigirLogin, c.candidatura.detalharRecebida);
+  // C05 - minha candidatura / C18 - remover
+  rotas.get('/candidaturas/:id', exigirLogin, c.candidatura.detalhar);
+  rotas.delete('/candidaturas/:id', exigirLogin, c.candidatura.remover);
+  // C07 - confirmar ou declinar o ingresso
+  rotas.post('/candidaturas/:id/confirmacao', exigirLogin, c.candidatura.confirmar);
+  rotas.post('/candidaturas/:id/declinio', exigirLogin, c.candidatura.declinar);
+  // C11 - avaliar candidatura
+  rotas.post('/candidaturas/:id/avaliacao', exigirLogin, c.candidatura.avaliar);
 
   // Projetos, C02 - visualizar detalhes do projeto, participantes
   rotas.get('/projetos', exigirLogin, c.projeto.listar);

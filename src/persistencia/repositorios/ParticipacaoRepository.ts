@@ -1,4 +1,6 @@
 import { Participacao } from '../../dominio/entidades/Participacao';
+import { formatarDia } from '../../dominio/calendario';
+import { RegraDeNegocio } from '../../dominio/erros';
 import {
   IParticipacaoRepository,
   ParticipacaoComProjeto,
@@ -11,6 +13,42 @@ export class ParticipacaoRepository implements IParticipacaoRepository {
 
   private executor(tx?: Transacao): Transacao {
     return tx ?? this.db;
+  }
+
+  /**
+   * C07 (dupla A). As datas vao como texto: o inicio em ISO (UTC) e o
+   * previsto_ate como dia de calendario "AAAA-MM-DD" (ver calendario.ts).
+   *
+   * O servico confere a equipe antes de inserir, mas duas confirmacoes
+   * simultaneas do mesmo estudante no mesmo projeto passam as duas pela
+   * conferencia; o indice uq_participacao_ativa barra a segunda. Sem a
+   * traducao abaixo, o tratadorDeErros mostraria "Voce ja se candidatou a
+   * esta vaga.", que e outra coisa.
+   */
+  async inserir(participacao: Participacao, tx: Transacao): Promise<Participacao> {
+    try {
+      const resultado = await tx.query(
+        `INSERT INTO participacao
+           (projeto_id, usuario_id, candidatura_id, cargo, inicio, previsto_ate)
+         VALUES ($1, $2, $3, $4, $5, $6::date)
+         RETURNING *`,
+        [
+          participacao.projetoId,
+          participacao.usuarioId,
+          participacao.candidaturaId,
+          participacao.cargo,
+          participacao.inicio.toISOString(),
+          participacao.previstoAte ? formatarDia(participacao.previstoAte) : null
+        ]
+      );
+      return montarParticipacao(resultado.rows[0]);
+    } catch (erro) {
+      const { code, constraint } = erro as { code?: string; constraint?: string };
+      if (code === '23505' && constraint === 'uq_participacao_ativa') {
+        throw new RegraDeNegocio('Você já faz parte da equipe deste projeto.');
+      }
+      throw erro;
+    }
   }
 
   async buscarPorId(id: number, tx?: Transacao): Promise<Participacao | null> {
