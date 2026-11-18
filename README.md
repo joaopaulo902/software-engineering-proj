@@ -10,7 +10,7 @@ Implementação dos casos de uso **C04 — Candidatar-se à Vaga de Extensão** 
 Arquitetura do projeto segue o padrão Cliente-Servidor/Camadas, com o seguinte diagrama de pacotes:
 > **Diagrama de pacotes** · Conexão entre projetos de extensão e alunos do INF · Etapa 2
 
-![Descrição do Diagrama](./diagrams/package.svg)
+![Descrição do Diagrama](./diagrams/pacotes/package.svg)
 
 ### 1.2 Sobre os pacotes
 #### 1.2.1 Cliente Web
