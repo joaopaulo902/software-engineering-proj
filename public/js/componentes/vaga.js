@@ -1,31 +1,7 @@
 // Pacote `componentes` do subsistema Cliente Web.
-// Pedacos de interface reutilizados por mais de uma tela.
+// Componentes das telas de vaga (C01, C04 e C06).
 
-export function escapar(texto) {
-  return String(texto ?? '').replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  })[c]);
-}
-
-export function dataBr(valor) {
-  if (!valor) return '';
-  const d = new Date(valor);
-  return d.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-}
-
-const ROTULO_STATUS = {
-  EM_ANALISE: 'Em análise',
-  ACEITA: 'Aceita',
-  RECUSADA: 'Recusada',
-  CONFIRMADA: 'Confirmada',
-  CANCELADA: 'Cancelada'
-};
-
-export function etiquetaStatus(status) {
-  return `<span class="etiqueta etiqueta--${status.toLowerCase()}">${
-    ROTULO_STATUS[status] ?? status
-  }</span>`;
-}
+import { escapar, dataBr } from './base.js';
 
 export function cardDeVaga(vaga) {
   const esgotada = vaga.vagasRestantes === 0;
@@ -63,25 +39,6 @@ export function cardDeVaga(vaga) {
 
       <p class="retorno" data-retorno="${vaga.id}"></p>
     </article>`;
-}
-
-export function linhaDeCandidatura(item) {
-  return `
-    <article class="card card--compacto">
-      <header class="card__topo">
-        <div>
-          <h3>${escapar(item.vagaTitulo)}</h3>
-          <p class="card__projeto">${escapar(item.projetoNome)}</p>
-        </div>
-        ${etiquetaStatus(item.status)}
-      </header>
-      ${item.mensagem ? `<p class="card__requisitos">“${escapar(item.mensagem)}”</p>` : ''}
-      <p class="card__coordenador">Enviada em ${dataBr(item.criadaEm)}</p>
-    </article>`;
-}
-
-export function aviso(texto, tipo = 'info') {
-  return `<p class="aviso aviso--${tipo}">${escapar(texto)}</p>`;
 }
 
 /** Hoje no formato do campo de data ("AAAA-MM-DD"), pelo relogio do navegador. */
