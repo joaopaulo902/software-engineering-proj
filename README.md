@@ -111,11 +111,19 @@ seu-projeto/
 ├── db/
 │   ├── 01-schema.sql          # Tabelas e restrições
 │   └── 02-seed.sql            # Dados da demonstração
+├── docs/
+│   └── cliente-web.md         # Como encaixar uma tela; contrato do front com a API
 ├── public/                    # Subsistema Cliente Web
+│   ├── estilo.css
 │   └── js/
-│       ├── componentes.js     # Pedaços de interface reutilizados
-│       ├── paginas.js         # As telas
-│       └── servicos-api.js    # Único lugar que conhece os endereços da API
+│       ├── principal.js       # Entrada: sessão, estrutura comum e navegação
+│       ├── rotas.js           # Tabela de telas e menu lateral de cada papel
+│       ├── navegacao.js       # Navegação pelo endereço depois do "#"
+│       ├── sessao.js          # Usuário logado
+│       ├── servicos-api.js    # Único lugar que conhece os endereços da API
+│       ├── componentes/       # Pedaços de interface reutilizados (estrutura, popup, cards)
+│       ├── paginas/           # As telas, um arquivo por tela
+│       └── exemplo/           # Provisório: dados de exemplo das rotas ainda sem back
 └── src/
     ├── apresentacao/          # Camada de Apresentação
     │   ├── controllers/       # Traduz HTTP <-> domínio
