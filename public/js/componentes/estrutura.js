@@ -246,9 +246,11 @@ function configurarNotificacoes(estrutura) {
     if (!Number.isInteger(referencia) || referencia <= 0) return;
     if (item.dataset.tipo === 'NOVA_ATIVIDADE') {
       location.hash = `#/projetos/${referencia}`;
-    } else if (item.dataset.tipo === 'NOVA_CANDIDATURA') {
+    } else if (['NOVA_CANDIDATURA', 'CONFIRMACAO_DE_INGRESSO', 'DECLINIO_DE_INGRESSO'].includes(item.dataset.tipo)) {
+      // Avisos do coordenador: abrem a candidatura recebida.
       location.hash = `#/candidaturas/recebidas/${referencia}`;
-    } else if (['RESULTADO_DA_AVALIACAO', 'CONFIRMACAO_DE_INGRESSO', 'DECLINIO_DE_INGRESSO'].includes(item.dataset.tipo)) {
+    } else if (item.dataset.tipo === 'RESULTADO_DA_AVALIACAO') {
+      // Aviso do estudante: abre a candidatura dele.
       location.hash = `#/candidaturas/${referencia}`;
     } else if (item.dataset.tipo === 'PEDIDO_DE_INCORPORACAO') {
       location.hash = '#/incorporacoes';
