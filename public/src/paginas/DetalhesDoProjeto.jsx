@@ -3,6 +3,7 @@ import { api } from '../servicos-api';
 import { navegar } from '../navegacao';
 import { dataBr as dataBrasileira } from '../formatos';
 import { Popup } from '../componentes/Popup';
+import { PopupDeCandidatura } from '../componentes/PopupDeCandidatura';
 
 /** C02 - Visualizar Detalhes do Projeto: vagas, equipe e atividades (C10). */
 export function DetalhesDoProjeto({ params, usuario }) {
@@ -22,6 +23,7 @@ export function DetalhesDoProjeto({ params, usuario }) {
   const [atividade, setAtividade] = useState({ titulo: '', descricao: '', foto: '' });
   const [cargo, setCargo] = useState('');
   const [salvando, setSalvando] = useState(false);
+  const [vagaDaCandidatura, setVagaDaCandidatura] = useState(null);
 
   async function carregar() {
     setCarregando(true);
@@ -96,6 +98,13 @@ export function DetalhesDoProjeto({ params, usuario }) {
     participacao.ativa !== false
   );
   const podePublicarAtividade = coordenador || participaAtivamente;
+  // Estudante: a vaga abre o popup de candidatura (prototipo da Pagina do Projeto).
+  // Coordenador e admin vao para Detalhes da Vaga, onde ficam as acoes deles.
+  const ehEstudante = usuario?.papel === 'ESTUDANTE';
+  const abrirVaga = (vaga) => {
+    if (ehEstudante) setVagaDaCandidatura(vaga);
+    else navegar(`/vagas/${vaga.id}`);
+  };
   const vagas = [...(Array.isArray(projeto.vagas) ? projeto.vagas : [])].sort((a, b) =>
     a.aberta === b.aberta ? 0 : (a.aberta ? -1 : 1)
   );
@@ -139,8 +148,22 @@ export function DetalhesDoProjeto({ params, usuario }) {
               const abertas = Boolean(vaga.aberta);
               const restantes = Number(vaga.vagasRestantes ?? 0);
               const totais = Number(vaga.vagasTotais ?? 0);
+              const abrir = () => abrirVaga(vaga);
               return (
-                <article className="card vaga-card" key={vaga.id}>
+                <article
+                  className="card card--hover vaga-card"
+                  key={vaga.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${ehEstudante ? 'Candidatar-se a' : 'Ver'} ${vaga.titulo || vaga.nome}`}
+                  onClick={abrir}
+                  onKeyDown={(evento) => {
+                    if (evento.key === 'Enter' || evento.key === ' ') {
+                      evento.preventDefault();
+                      abrir();
+                    }
+                  }}
+                >
                   <div className="vaga-card__topo">
                     <h4>{vaga.titulo || vaga.nome}</h4>
                     <span className={`contador ${abertas && restantes > 0 ? '' : 'contador--zero'}`}>
@@ -155,6 +178,11 @@ export function DetalhesDoProjeto({ params, usuario }) {
                     {vaga.semestreMinimo && <li>{vaga.semestreMinimo}º sem+</li>}
                     {vaga.dataEncerramento && <li>Até {dataBrasileira(vaga.dataEncerramento)}</li>}
                   </ul>
+                  <div className="card__rodape vaga-card__rodape">
+                    <span className="link">
+                      {ehEstudante && abertas && restantes > 0 ? 'Candidatar-se ao projeto →' : 'Ver vaga →'}
+                    </span>
+                  </div>
                 </article>
               );
             })}
@@ -246,6 +274,12 @@ export function DetalhesDoProjeto({ params, usuario }) {
           </div>
         )}
       </section>
+
+      <PopupDeCandidatura
+        vaga={vagaDaCandidatura}
+        usuarioId={usuarioId}
+        aoFechar={() => setVagaDaCandidatura(null)}
+      />
 
       <Popup
         titulo="Remover participante"
