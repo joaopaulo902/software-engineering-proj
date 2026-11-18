@@ -152,3 +152,25 @@ CREATE TABLE notificacao (
 );
 
 CREATE INDEX idx_notificacao_destinatario ON notificacao (destinatario_id, criada_em DESC);
+
+-- ---------------------------------------------------------------------------
+-- Dupla A: candidaturas (Etapa 3)
+-- ---------------------------------------------------------------------------
+
+-- Linha do tempo de cada candidatura (C05). Toda candidatura tem pelo menos
+-- uma linha (EM_ANALISE, gravada junto com ela no C04); cada transicao do
+-- padrao State acrescenta outra. A observacao guarda o motivo do declinio.
+CREATE TABLE historico_status (
+    id             SERIAL PRIMARY KEY,
+    candidatura_id INTEGER            NOT NULL REFERENCES candidatura(id) ON DELETE CASCADE,
+    status         status_candidatura NOT NULL,
+    ocorrido_em    TIMESTAMPTZ        NOT NULL DEFAULT now(),
+    observacao     TEXT
+);
+
+CREATE INDEX idx_historico_candidatura ON historico_status (candidatura_id, ocorrido_em);
+
+-- Uma candidatura gera no maximo uma participacao (C07). As participacoes que
+-- nao vieram de candidatura (candidatura_id vazio) nao entram na regra.
+CREATE UNIQUE INDEX uq_participacao_candidatura
+    ON participacao (candidatura_id) WHERE candidatura_id IS NOT NULL;
