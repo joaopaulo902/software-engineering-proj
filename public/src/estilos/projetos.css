@@ -11,7 +11,7 @@
 .pagina-projetos > * { min-width: 0; }
 .pagina-projetos .abas { flex-wrap: wrap; }
 .pagina-projetos .aba { flex: 0 0 auto; }
-.pagina-projetos .card__topo { flex-wrap: wrap; }
+.pagina-projetos .card__topo { flex-wrap: nowrap; }
 .pagina-projetos .card__topo > div { min-width: 0; }
 .pagina-projetos .contador { display: inline-flex; align-items: center; line-height: 1; }
 .pagina-projetos .card__rodape { flex-wrap: wrap; align-items: center; }
