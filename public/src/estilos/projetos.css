@@ -19,8 +19,8 @@
 
 .card--hover { cursor: pointer; transition: border-color .15s, box-shadow .15s; }
 .card--hover:hover, .card--hover:focus-visible {
-  border-color: #93c5fd;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, .06);
+  border-color: #c99a9a;
+  box-shadow: 0 2px 8px rgba(30, 30, 30, .06);
 }
 .card__rodape {
   margin-top: 14px;
@@ -31,7 +31,7 @@
   font-size: 13px;
 }
 .card__rodape strong { color: var(--tinta); }
-.link { color: var(--azul); font-weight: 600; }
+.link { color: var(--destaque); font-weight: 600; }
 
 .filtros {
   display: grid;
@@ -56,23 +56,24 @@
   align-items: flex-start;
   gap: 16px;
 }
-.detalhe-cabecalho h2 { margin: 0 0 6px; font-size: 22px; }
+.detalhe-cabecalho h2 { margin: 0 0 8px; font-size: 26px; }
 .detalhe-descricao { margin: 12px 0 0; color: var(--suave); }
 .detalhe-secao { display: grid; gap: 12px; }
 .detalhe-secao__topo {
+  padding-bottom: 8px; border-bottom: 1px solid var(--borda);
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
 }
-.detalhe-secao__topo h3 { margin: 0; font-size: 18px; }
+.detalhe-secao__topo h3 { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--menu-ativo); }
 .detalhe-secao__topo > span, .detalhe-secao__topo > div > span {
   color: var(--suave);
   font-size: 13px;
 }
 .vagas-grade, .equipe-grade {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 14px;
 }
 .vaga-card { min-height: 210px; display: flex; flex-direction: column; }
@@ -84,7 +85,7 @@
 /* Popup "Candidatar-se ao projeto" (Pagina do Projeto, visao do estudante) */
 .candidatura-vaga {
   display: grid; gap: 8px; padding: 12px 14px;
-  border: 1px solid var(--borda); border-radius: 10px; background: var(--fundo);
+  border: 1px solid var(--borda); border-radius: var(--raio); background: var(--fundo);
 }
 .candidatura-vaga h4 { margin: 0; font-size: 15.5px; }
 .candidatura-vaga .vaga-areas { margin-top: 0; }
@@ -104,7 +105,7 @@
   width: 100%;
   max-height: 420px;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: var(--raio);
   border: 1px solid var(--borda);
   margin-top: 12px;
 }
@@ -150,16 +151,19 @@
 .vagas-filtros__rotulo { color: var(--suave); font-size: 13px; font-weight: 600; margin-right: 4px; }
 .vagas-filtros__carga { width: 90px !important; }
 .vaga-areas { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+/* areas tematicas em cinza (as etiquetas coloridas ficam para o status) */
+.vaga-areas .etiqueta--aceita { background: var(--cinza-claro); color: var(--menu-ativo); font-weight: 400; }
 .etiqueta--botao { border: 0; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 600;
-  background: var(--azul-claro); color: var(--azul); }
+  background: var(--destaque-claro); color: var(--destaque); }
 .etiqueta--botao:hover { text-decoration: underline; }
 
-.detalhe-vaga__dados { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 12px 24px; margin: 16px 0 0; }
-.detalhe-vaga__dados dt { color: var(--suave); font-size: 12.5px; }
-.detalhe-vaga__dados dd { margin: 0; font-size: 14.5px; }
+.detalhe-vaga__dados { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  margin: 18px 0 0; border-top: 1px solid var(--borda); border-left: 1px solid var(--borda); }
+.detalhe-vaga__dados > div { padding: 12px 16px; border-right: 1px solid var(--borda); border-bottom: 1px solid var(--borda); }
+.detalhe-vaga__dados dt { color: var(--suave); font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.detalhe-vaga__dados dd { margin: 3px 0 0; font-size: 14.5px; }
 .detalhe-vaga__largo { grid-column: 1 / -1; }
-.detalhe-vaga__subtitulo { margin: 0; font-size: 17px; }
+.detalhe-vaga__subtitulo { margin: 0; font-size: 13px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--menu-ativo); }
 .detalhe-vaga__acoes { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .detalhe-vaga__candidatar { display: grid; justify-items: end; gap: 6px; max-width: 60%; }
 .detalhe-vaga__motivo { margin: 0; color: var(--vermelho); font-size: 13.5px; text-align: right; }
