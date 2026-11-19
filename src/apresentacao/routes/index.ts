@@ -7,6 +7,7 @@ import { ProjetoController } from '../controllers/ProjetoController';
 import { AtividadeController } from '../controllers/AtividadeController';
 import { NotificacaoController } from '../controllers/NotificacaoController';
 import { IncorporacaoController } from '../controllers/IncorporacaoController';
+import { UsuarioController } from '../controllers/UsuarioController';
 
 /** Todos os controllers, montados no main.ts. Cada frente acrescenta o seu aqui. */
 export interface Controllers {
@@ -17,6 +18,7 @@ export interface Controllers {
   atividade: AtividadeController;
   notificacao: NotificacaoController;
   incorporacao: IncorporacaoController;
+  usuario: UsuarioController;
 }
 
 /**
@@ -34,6 +36,10 @@ export function criarRotas(c: Controllers): Router {
   rotas.post('/sessao', c.sessao.entrar);
   rotas.get('/sessao', c.sessao.atual);
   rotas.delete('/sessao', c.sessao.sair);
+
+  // C16 - visualizar e editar perfil
+  rotas.get('/usuarios/:id/perfil', exigirLogin, c.usuario.perfil);
+  rotas.put('/perfil', exigirLogin, c.usuario.atualizarPerfil);
 
   // C01 - consultar e filtrar vagas
   rotas.get('/vagas', exigirLogin, c.vaga.listar);

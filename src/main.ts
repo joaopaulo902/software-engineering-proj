@@ -22,6 +22,7 @@ import { ProjetoService } from './dominio/servicos/ProjetoService';
 import { AtividadeService } from './dominio/servicos/AtividadeService';
 import { NotificacaoService } from './dominio/servicos/NotificacaoService';
 import { IncorporacaoService } from './dominio/servicos/IncorporacaoService';
+import { UsuarioService } from './dominio/servicos/UsuarioService';
 import { PublicadorDeEventos } from './dominio/eventos/PublicadorDeEventos';
 import { NotificadorInApp } from './dominio/eventos/NotificadorInApp';
 
@@ -33,6 +34,7 @@ import { ProjetoController } from './apresentacao/controllers/ProjetoController'
 import { AtividadeController } from './apresentacao/controllers/AtividadeController';
 import { NotificacaoController } from './apresentacao/controllers/NotificacaoController';
 import { IncorporacaoController } from './apresentacao/controllers/IncorporacaoController';
+import { UsuarioController } from './apresentacao/controllers/UsuarioController';
 import { criarRotas } from './apresentacao/routes';
 import { tratadorDeErros } from './apresentacao/middlewares/tratadorDeErros';
 
@@ -131,6 +133,12 @@ async function principal(): Promise<void> {
     usuarioRepository,
     eventos
   );
+  const usuarioService = new UsuarioService(
+    unidadeDeTrabalho,
+    usuarioRepository,
+    projetoRepository,
+    participacaoRepository
+  );
 
   // --- camada de apresentacao -------------------------------------------
   const controllers = {
@@ -140,7 +148,8 @@ async function principal(): Promise<void> {
     projeto: new ProjetoController(projetoService),
     atividade: new AtividadeController(atividadeService),
     notificacao: new NotificacaoController(notificacaoService),
-    incorporacao: new IncorporacaoController(incorporacaoService)
+    incorporacao: new IncorporacaoController(incorporacaoService),
+    usuario: new UsuarioController(usuarioService)
   };
 
   const app = express();

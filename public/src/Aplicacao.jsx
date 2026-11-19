@@ -47,6 +47,7 @@ export function Aplicacao() {
       key={usuario.id}
       usuario={usuario}
       endereco={endereco}
+      aoAtualizarUsuario={setUsuario}
       aoSair={async () => {
         await api.sair().catch(() => {});
         limparEndereco();
@@ -57,7 +58,7 @@ export function Aplicacao() {
 }
 
 /** Estrutura comum + a tela do endereco atual. */
-function AreaLogada({ usuario, endereco, aoSair }) {
+function AreaLogada({ usuario, endereco, aoAtualizarUsuario, aoSair }) {
   const { caminho, consulta, versao } = endereco;
   const achada = useMemo(() => acharRota(caminho, ROTAS), [caminho]);
 
@@ -91,8 +92,13 @@ function AreaLogada({ usuario, endereco, aoSair }) {
   }, []);
 
   const contexto = useMemo(
-    () => ({ usuario, mensagemRapida, definirContadorDoSino: setNaoLidas }),
-    [usuario, mensagemRapida]
+    () => ({
+      usuario,
+      mensagemRapida,
+      definirContadorDoSino: setNaoLidas,
+      atualizarUsuario: aoAtualizarUsuario
+    }),
+    [usuario, mensagemRapida, aoAtualizarUsuario]
   );
 
   const definirTitulo = useCallback(

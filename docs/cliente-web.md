@@ -101,17 +101,18 @@ O que já está pronto para usar:
 | Trocar o título do cabeçalho | `definirTitulo('Robótica na Escola')` (prop da tela) |
 | Desenhar a tela de novo depois de uma ação | `recarregar()` (prop da tela) |
 | Quem está logado | `usuario` (prop da tela) ou `useAplicacao().usuario` |
+| Atualizar quem está logado (depois de editar o perfil) | `atualizarUsuario(usuario)` de `useAplicacao()` |
 | Item novo no menu lateral | `MENU` em `rotas.js`; ícone novo em `componentes/Icones.jsx` |
 
 Endereços que as telas de candidatura já usam e que apontam para telas de
-outras frentes (os de perfil ainda caem na tela provisória):
+outras frentes:
 
 | Endereço | Quem abre | Dono |
 |---|---|---|
 | `#/vagas/:id` | botão "Ver vaga" de Minha candidatura | frente C (Detalhes da Vaga, C03) |
-| `#/usuarios/:id` | botão "Ver perfil" da Candidatura do coordenador | frente C (C16) |
+| `#/usuarios/:id` | botão "Ver perfil" da Candidatura do coordenador; "Responsável" da vaga | frente C (Perfil, C16) |
 | `#/meus-projetos` | Minha candidatura, depois de confirmar o ingresso | dupla B |
-| `#/perfil` | avatar do cabeçalho e rodapé do menu | frente C (C16) |
+| `#/perfil` | avatar do cabeçalho e rodapé do menu | frente C (Perfil com Configurações, C16) |
 
 E os endereços das telas de candidatura, para os links das notificações (dupla B):
 
@@ -232,8 +233,14 @@ atualizar um banco já inicializado, recrie o banco de desenvolvimento com
 
 ## 6. Diferenças em relação aos protótipos
 
-- **Nomes do menu**: "Vagas abertas" no lugar de "Main Page" e "Projetos" no
-  lugar de "Buscar", seguindo os nomes das telas na divisão do trabalho.
+- **Nomes do menu**: "Início" é a "Main Page" (o Feed de Vagas/Atividades de
+  projetos, em `#/inicio`, a tela que abre depois de entrar); "Vagas abertas"
+  é a busca com filtros (C01); "Projetos" fica no lugar de "Buscar", seguindo
+  os nomes das telas na divisão do trabalho.
+- **Perfil**: a foto do protótipo é o avatar com as iniciais (não há envio de
+  foto). "Avaliações do estudante" aparece sem itens, com um aviso: as
+  avaliações são o C08, do nível 3. O perfil ganhou a lista de projetos da
+  pessoa, que o protótipo não desenha.
 - **Menu do coordenador**: ganhou "Candidaturas recebidas" e "Ofertar nova
   vaga". No protótipo essas telas abrem a partir das Notificações e da Página
   do Projeto, que ainda não existem. Quando existirem, basta tirar as duas

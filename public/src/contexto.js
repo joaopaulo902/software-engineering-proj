@@ -12,6 +12,8 @@ export const ContextoDaAplicacao = createContext(null);
  *                                  pode ser chamada logo antes de navegar(...) ou
  *                                  recarregar(): aparece na tela seguinte
  *   definirContadorDoSino(n)       numero no sino do cabecalho; 0 esconde
+ *   atualizarUsuario(usuario)      troca os dados de quem esta logado depois de
+ *                                  editar o perfil (o cabecalho mostra o semestre)
  * }
  */
 export function useAplicacao() {

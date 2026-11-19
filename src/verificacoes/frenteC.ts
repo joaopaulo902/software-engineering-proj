@@ -22,6 +22,11 @@ import { NaoEncontrado, RegraDeNegocio } from '../dominio/erros';
 import { ParticipacaoRepository } from '../persistencia/repositorios/ParticipacaoRepository';
 import { PublicadorDeEventos } from '../dominio/eventos/PublicadorDeEventos';
 import { MAIOR_ID, lerId } from '../apresentacao/parametros';
+import { UsuarioService } from '../dominio/servicos/UsuarioService';
+import { CARGO_DO_COORDENADOR } from '../dominio/servicos/ProjetoService';
+import { DadosDoPerfil } from '../persistencia/interfaces/IUsuarioRepository';
+import { lerDadosDoPerfil } from '../apresentacao/controllers/UsuarioController';
+import { apresentarVagaComProjeto } from '../apresentacao/apresentadores';
 
 /** O que o `verificar.ts` empresta: a contagem de resultados e a vaga padrao. */
 export interface FerramentasDeVerificacao {
@@ -67,6 +72,148 @@ export async function verificarFrenteC(
   await verificarFiltrosDoC01(vagaService, ferramentas);
   await verificarDetalheDaVaga(vagaService, ferramentas);
   await verificarProjetoInativoEVagaEsgotada(banco, vagaService, candidaturaService, ferramentas);
+
+  const usuarioService = new UsuarioService(
+    banco.unidade,
+    usuarios,
+    projetos,
+    new ParticipacaoRepository(banco.executor)
+  );
+  await verificarPerfil(banco, usuarioService, vagaService, ferramentas);
+}
+
+/**
+ * C16: perfil proprio e de outra pessoa, quem ve o e-mail, Configuracoes e
+ * a leitura do corpo do PUT /api/perfil. O Diego e editado e volta ao que
+ * era no fim, porque a frente A roda depois e usa o seed.
+ */
+async function verificarPerfil(
+  banco: BancoEmMemoria,
+  usuarioService: UsuarioService,
+  vagaService: VagaService,
+  { conferir, esperaErro }: FerramentasDeVerificacao
+): Promise<void> {
+  console.log('\nFrente C - C16: perfil\n');
+
+  const daAna = await usuarioService.perfil(ANA, ANA);
+  conferir(
+    'perfil proprio: dados do seed, e-mail e Configuracoes',
+    daAna.ehProprio && daAna.emailVisivel && daAna.usuario.curso === 'Ciência da Computação' &&
+      (daAna.usuario.perfil.github ?? '').includes('ana-souza'),
+    `${daAna.usuario.nome} · ${daAna.usuario.perfil.github}`
+  );
+  const equipeDaAna = daAna.projetos.find((p) => p.projetoId === SAUDE_DIGITAL);
+  conferir(
+    'o perfil lista os projetos em que a pessoa esta',
+    equipeDaAna !== undefined && equipeDaAna.participacao !== null && equipeDaAna.participacao.estaAtiva(),
+    daAna.projetos.map((p) => `${p.projetoNome} (${p.cargo})`).join(', ')
+  );
+
+  const anaParaDiego = await usuarioService.perfil(ANA, DIEGO);
+  conferir(
+    'outro estudante ve o perfil, mas nao o e-mail',
+    !anaParaDiego.ehProprio && !anaParaDiego.emailVisivel && anaParaDiego.usuario.nome === 'Ana Souza'
+  );
+  const anaParaCoordenadora = await usuarioService.perfil(ANA, COORDENADORA);
+  conferir('coordenador ve o e-mail do estudante', anaParaCoordenadora.emailVisivel);
+
+  const ruiParaDiego = await usuarioService.perfil(COORDENADOR_RUI, DIEGO);
+  const coordenado = ruiParaDiego.projetos.find((p) => p.projetoId === SAUDE_DIGITAL);
+  conferir(
+    'perfil do coordenador: e-mail institucional e os projetos que coordena',
+    ruiParaDiego.emailVisivel && coordenado?.participacao === null && coordenado?.cargo === CARGO_DO_COORDENADOR,
+    ruiParaDiego.projetos.map((p) => `${p.projetoNome} (${p.cargo})`).join(', ')
+  );
+
+  await esperaErro('perfil de usuario inexistente', NaoEncontrado, 'usuário não encontrado', () =>
+    usuarioService.perfil(999, DIEGO)
+  );
+
+  console.log('\nConfiguracoes do perfil');
+  const perfilDoDiego: DadosDoPerfil = {
+    descricao: 'Estudante de CC interessado em dados abertos.',
+    contato: 'Telegram: @diego',
+    lattes: null,
+    linkedin: 'https://www.linkedin.com/in/diego-exemplo',
+    github: null,
+    paginaPessoal: 'https://diego.exemplo.dev',
+    curso: 'Ciência da Computação',
+    semestre: 4
+  };
+  try {
+    const antes = await vagaService.detalhar(OFICINA_DADOS, DIEGO);
+    await usuarioService.atualizarPerfil(DIEGO, perfilDoDiego);
+    const salvo = (await usuarioService.perfil(DIEGO, DIEGO)).usuario;
+    conferir(
+      'grava descricao, contato e links',
+      salvo.perfil.descricao === perfilDoDiego.descricao &&
+        salvo.perfil.contato === perfilDoDiego.contato &&
+        salvo.perfil.linkedin === perfilDoDiego.linkedin &&
+        salvo.perfil.paginaPessoal === perfilDoDiego.paginaPessoal &&
+        salvo.perfil.lattes === null,
+      JSON.stringify(salvo.perfil)
+    );
+
+    await usuarioService.atualizarPerfil(DIEGO, { ...perfilDoDiego, semestre: 6 });
+    const depois = await vagaService.detalhar(OFICINA_DADOS, DIEGO);
+    conferir(
+      'o semestre editado no perfil vale na regra de candidatura',
+      (antes.motivoDeInelegibilidade ?? '').includes('6º semestre') && depois.motivoDeInelegibilidade === null,
+      `antes: ${antes.motivoDeInelegibilidade} · depois: ${depois.motivoDeInelegibilidade}`
+    );
+
+    await esperaErro('estudante nao fica sem curso e semestre', RegraDeNegocio, 'curso e o semestre', () =>
+      usuarioService.atualizarPerfil(DIEGO, { ...perfilDoDiego, curso: null, semestre: null })
+    );
+    await esperaErro('coordenador nao tem curso nem semestre', RegraDeNegocio, 'perfil de estudante', () =>
+      usuarioService.atualizarPerfil(COORDENADORA, { ...perfilDoDiego, curso: 'Estatística', semestre: 3 })
+    );
+  } finally {
+    await banco.executor.query(
+      `UPDATE usuario
+          SET descricao = '', contato = '', lattes = NULL, linkedin = NULL, github = NULL,
+              pagina_pessoal = NULL, curso = 'Ciência da Computação', semestre = 4
+        WHERE id = $1`,
+      [DIEGO]
+    );
+  }
+
+  console.log('\nPUT /api/perfil: leitura do corpo');
+  conferir(
+    'link "javascript:" e recusado',
+    typeof lerDadosDoPerfil({ github: 'javascript:alert(1)' }) === 'string'
+  );
+  conferir(
+    'link sem http(s) e recusado',
+    typeof lerDadosDoPerfil({ linkedin: 'linkedin.com/in/fulano' }) === 'string'
+  );
+  conferir('caractere NUL e recusado', typeof lerDadosDoPerfil({ descricao: 'a\u0000b' }) === 'string');
+  conferir(
+    'descricao acima de 1000 caracteres e recusada',
+    typeof lerDadosDoPerfil({ descricao: 'x'.repeat(1001) }) === 'string'
+  );
+  conferir('semestre fora de 1 a 20 e recusado', typeof lerDadosDoPerfil({ semestre: 21 }) === 'string');
+  conferir('campo que nao e texto e recusado', typeof lerDadosDoPerfil({ contato: 42 }) === 'string');
+  const lido = lerDadosDoPerfil({
+    descricao: '  Oi  ',
+    lattes: '   ',
+    github: 'https://github.com/fulano',
+    curso: 'Estatística',
+    semestre: '3'
+  });
+  conferir(
+    'dados validos: espacos cortados e link em branco vira vazio',
+    typeof lido !== 'string' && lido.descricao === 'Oi' && lido.lattes === null &&
+      lido.github === 'https://github.com/fulano' && lido.semestre === 3 && lido.contato === '',
+    JSON.stringify(lido)
+  );
+
+  const card = apresentarVagaComProjeto((await vagaService.detalhar(COMUNICACAO, DIEGO)).vaga);
+  conferir(
+    'card de vaga traz o id do responsavel, para o link do perfil',
+    card.coordenadorId === COORDENADOR_RUI,
+    String(card.coordenadorId)
+  );
 }
 
 /**

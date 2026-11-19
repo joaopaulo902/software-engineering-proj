@@ -1,5 +1,5 @@
 import { Usuario, Papel } from '../../dominio/entidades/Usuario';
-import { IUsuarioRepository } from '../interfaces/IUsuarioRepository';
+import { DadosDoPerfil, IUsuarioRepository } from '../interfaces/IUsuarioRepository';
 import { Transacao } from '../interfaces/IUnidadeDeTrabalho';
 
 export class UsuarioRepository implements IUsuarioRepository {
@@ -20,6 +20,26 @@ export class UsuarioRepository implements IUsuarioRepository {
     );
     return resultado.rows.map(montarUsuario);
   }
+
+  async atualizarPerfil(usuarioId: number, dados: DadosDoPerfil, tx?: Transacao): Promise<void> {
+    await this.executor(tx).query(
+      `UPDATE usuario
+          SET descricao = $2, contato = $3, lattes = $4, linkedin = $5,
+              github = $6, pagina_pessoal = $7, curso = $8, semestre = $9
+        WHERE id = $1`,
+      [
+        usuarioId,
+        dados.descricao,
+        dados.contato,
+        dados.lattes,
+        dados.linkedin,
+        dados.github,
+        dados.paginaPessoal,
+        dados.curso,
+        dados.semestre
+      ]
+    );
+  }
 }
 
 function montarUsuario(linha: any): Usuario {
@@ -29,6 +49,14 @@ function montarUsuario(linha: any): Usuario {
     linha.email,
     linha.papel as Papel,
     linha.curso,
-    linha.semestre
+    linha.semestre,
+    {
+      descricao: linha.descricao ?? '',
+      contato: linha.contato ?? '',
+      lattes: linha.lattes ?? null,
+      linkedin: linha.linkedin ?? null,
+      github: linha.github ?? null,
+      paginaPessoal: linha.pagina_pessoal ?? null
+    }
   );
 }

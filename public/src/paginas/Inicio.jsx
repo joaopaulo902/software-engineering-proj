@@ -105,7 +105,9 @@ function CardDaVagaNoFeed({ vaga }) {
       {vaga.descricao && <p className="feed-vaga__descricao">{resumir(vaga.descricao, 160)}</p>}
 
       <footer className="feed__rodape">
-        <span className="chip chip--pessoa">Responsável: {vaga.coordenadorNome}</span>
+        <a className="chip chip--pessoa" href={`#/usuarios/${vaga.coordenadorId}`} title="Ver o perfil">
+          Responsável: <strong>{vaga.coordenadorNome}</strong>
+        </a>
         <span>até {dataBr(vaga.dataEncerramento)}</span>
       </footer>
     </article>

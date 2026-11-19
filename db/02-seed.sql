@@ -173,3 +173,32 @@ INSERT INTO notificacao (destinatario_id, tipo, texto, referencia_id, lida, cria
          c.id, false, now() - interval '1 hour'
     FROM candidatura c
    WHERE c.vaga_id = 5 AND c.estudante_id = 5;
+
+-- ---------------------------------------------------------------------------
+-- Frente C: perfil (C16)
+-- Os links sao de demonstracao. Bruno e Diego ficam com o perfil vazio, para
+-- a tela mostrar tambem esse caso.
+UPDATE usuario SET
+  descricao = 'Professora do INF. Coordena projetos de robótica educacional e de letramento em dados com escolas e associações de Porto Alegre.',
+  contato = 'Sala 205 do prédio 43424, terças e quintas à tarde.',
+  lattes = 'http://lattes.cnpq.br/connext-demo-carla-menezes',
+  pagina_pessoal = 'https://www.inf.ufrgs.br/~connext-demo-carla'
+WHERE id = 2;
+
+UPDATE usuario SET
+  descricao = 'Professor do INF. Trabalha com sistemas para a saúde pública e coordena o projeto Saúde Digital.',
+  contato = 'Atendimento por e-mail; reuniões às segundas pela manhã.',
+  lattes = 'http://lattes.cnpq.br/connext-demo-rui-bastos'
+WHERE id = 3;
+
+UPDATE usuario SET
+  descricao = 'Estudante de Ciência da Computação. Gosto de desenvolvimento web e de projetos com impacto social.',
+  contato = 'Discord: ana.souza',
+  linkedin = 'https://www.linkedin.com/in/connext-demo-ana-souza',
+  github = 'https://github.com/connext-demo/ana-souza'
+WHERE id = 4;
+
+UPDATE usuario SET
+  descricao = 'Estudante de Engenharia da Computação, monitora de eletrônica no projeto Robótica na Escola.',
+  github = 'https://github.com/connext-demo/carla-dias'
+WHERE id = 6;
