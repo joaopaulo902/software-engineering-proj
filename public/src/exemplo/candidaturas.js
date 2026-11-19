@@ -409,7 +409,7 @@ function montarIniciais() {
       [['EM_ANALISE', 3 * DIA]]),
 
     // Status final de declinio. A vaga Desenvolvimento Web continua com 1 de 1
-    // no seed, o que bate: quem declina devolve a posicao.
+    // no seed, o que bate: so o ingresso confirmado ocupa posicao.
     candidatura(9007, CARLA, VAGA.web,
       'Trabalhei com JavaScript e PostgreSQL na disciplina de Banco de Dados.',
       [['EM_ANALISE', 12 * DIA], ['ACEITA', 9 * DIA], ['DECLINADA', 8 * DIA, 'Consegui uma bolsa de iniciação científica no mesmo turno.']])

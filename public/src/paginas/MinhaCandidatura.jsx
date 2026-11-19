@@ -18,11 +18,11 @@ const SITUACAO = {
   EM_ANALISE:
     'A coordenação ainda não avaliou sua candidatura. Enquanto ela estiver em análise, você pode removê-la.',
   ACEITA:
-    'A coordenação aceitou sua candidatura. Confirme o ingresso para entrar na equipe ou decline para liberar a vaga.',
+    'A coordenação aceitou sua candidatura. Confirme o ingresso para ocupar uma das posições da vaga e entrar na equipe, ou decline se não quiser mais participar.',
   CONFIRMADA:
     'Você confirmou o ingresso e faz parte da equipe. A coordenação oficializa sua entrada pelos meios institucionais.',
   RECUSADA: 'A coordenação não selecionou esta candidatura.',
-  DECLINADA: 'Você declinou o ingresso e a vaga foi liberada.',
+  DECLINADA: 'Você declinou o ingresso nesta vaga.',
   REMOVIDA: 'Você removeu esta candidatura. Se a vaga ainda estiver aberta, pode se candidatar de novo.',
   CANCELADA: 'Esta candidatura foi cancelada.'
 };
@@ -136,13 +136,13 @@ export function MinhaCandidatura({ params, recarregar }) {
         perigo
         aoConfirmar={async () => {
           await api.declinarIngresso(candidatura.id, motivo.trim());
-          mensagemRapida('Ingresso declinado. A vaga foi liberada e a coordenação foi avisada.');
+          mensagemRapida('Ingresso declinado. A coordenação foi avisada.');
           recarregar();
         }}
       >
         <p>
-          Esta ação é irreversível: a vaga <strong>{candidatura.vagaTitulo}</strong> será
-          liberada para outro candidato.
+          Esta ação é irreversível: você deixa de concorrer à vaga{' '}
+          <strong>{candidatura.vagaTitulo}</strong> e não poderá mais confirmar o ingresso.
         </p>
         <div className="campo">
           <label htmlFor="motivoDoDeclinio">Motivo da recusa (opcional)</label>

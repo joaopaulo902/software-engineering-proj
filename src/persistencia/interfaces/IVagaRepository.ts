@@ -33,17 +33,24 @@ export interface IVagaRepository {
    * Busca a vaga TRAVANDO a linha no banco (SELECT ... FOR UPDATE).
    *
    * Qualquer outra transacao que peca a mesma vaga fica esperando aqui ate
-   * esta terminar. E o que garante que a verificacao de posições disponíveis
-   * e a reserva aconteçam sem que ninguem passe no meio.
+   * esta terminar. E o que garante que, na confirmacao do ingresso (C07), a
+   * verificacao de posições disponíveis e o desconto aconteçam sem que
+   * ninguem passe no meio.
    */
   buscarParaAtualizacao(id: number, tx: Transacao): Promise<Vaga | null>;
 
-  /** Desconta uma posicao da vaga. So faz sentido dentro de uma transacao. */
+  /**
+   * Desconta uma posicao da vaga: o estudante aceito confirmou o ingresso
+   * (C07). Candidatar-se e ser aceito nao descontam. So faz sentido dentro de
+   * uma transacao. O banco recusa ficar abaixo de zero.
+   */
   reservarUmaPosicao(id: number, tx: Transacao): Promise<void>;
 
   /**
-   * Devolve uma posicao a vaga: candidatura recusada (C11), declinada (C07)
-   * ou removida (C18). O banco recusa passar de `vagas_totais`.
+   * Devolve uma posicao a vaga, quando uma candidatura que ocupava deixa de
+   * ocupar. Hoje so a Confirmada ocupa, e ela e final; recusar (C11),
+   * declinar (C07) e remover (C18) nao devolvem nada porque nao ocupavam.
+   * O banco recusa passar de `vagas_totais`.
    */
   liberarUmaPosicao(id: number, tx: Transacao): Promise<void>;
 

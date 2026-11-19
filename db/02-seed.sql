@@ -46,10 +46,10 @@ INSERT INTO vaga
 
 -- Uma candidatura já existente, para demonstrar a regra de candidatura repetida
 -- quando a Ana tentar se candidatar de novo à Monitoria de Algoritmos.
+-- Em analise nao ocupa posicao: so a confirmacao do ingresso (C07) desconta
+-- uma posicao da vaga, entao a Monitoria continua com 2 de 2.
 INSERT INTO candidatura (vaga_id, estudante_id, status, mensagem) VALUES
   (1, 4, 'EM_ANALISE', 'Tenho interesse em atuar com ensino de algoritmos.');
-
-UPDATE vaga SET vagas_restantes = vagas_restantes - 1 WHERE id = 1;
 
 -- ---------------------------------------------------------------------------
 -- Frente B: projetos e avisos (Etapa 3)
@@ -163,8 +163,8 @@ INSERT INTO historico_status (candidatura_id, status, ocorrido_em)
   SELECT id, 'ACEITA', now() - interval '1 hour'
     FROM candidatura WHERE vaga_id = 5 AND estudante_id = 5;
 
--- A posicao fica reservada enquanto a candidatura esta aceita.
-UPDATE vaga SET vagas_restantes = vagas_restantes - 1 WHERE id = 5;
+-- Aceita ainda nao ocupa posicao: a Comunicacao continua com 4 de 4 ate o
+-- Bruno confirmar o ingresso.
 
 -- O aviso que o Bruno teria recebido no C11 (sino comeca com 1).
 INSERT INTO notificacao (destinatario_id, tipo, texto, referencia_id, lida, criada_em)

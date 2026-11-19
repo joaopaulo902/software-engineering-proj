@@ -67,8 +67,9 @@ export class VagaRepository implements IVagaRepository {
   /**
    * FOR UPDATE trava a linha ate o fim da transacao.
    *
-   * Este `FOR UPDATE` e a linha mais importante do caso de uso: e ele que
-   * serializa duas candidaturas simultaneas para a mesma vaga.
+   * Este `FOR UPDATE` e o que serializa duas confirmacoes de ingresso (C07)
+   * simultaneas na mesma vaga: a segunda so le a vaga depois do desconto da
+   * primeira.
    */
   async buscarParaAtualizacao(id: number, tx: Transacao): Promise<Vaga | null> {
     const resultado = await tx.query(`SELECT * FROM vaga WHERE id = $1 FOR UPDATE`, [id]);

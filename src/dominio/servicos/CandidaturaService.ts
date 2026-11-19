@@ -85,8 +85,12 @@ export class CandidaturaService {
   /**
    * Fluxo basico do C04.
    *
+   * Candidatar-se NAO consome posicao da vaga: o estudante so pediu para
+   * entrar, a coordenacao nem avaliou ainda. A posicao so e descontada quando
+   * o estudante aceito confirma o ingresso (C07, `confirmarIngresso`).
+   *
    * Tudo roda dentro de UMA transacao. Se qualquer passo lancar erro, nada e
-   * gravado: nem a candidatura, nem o historico, nem o desconto da posicao.
+   * gravado: nem a candidatura, nem o historico.
    */
   async candidatar(
     estudanteId: number,
@@ -98,10 +102,11 @@ export class CandidaturaService {
 
     const candidatura = await this.unidade.emTransacao(async (tx) => {
 
-      // 1. Trava a linha da vaga. Outra candidatura para a MESMA vaga espera
-      //    aqui ate esta transacao terminar. Sem esta trava, dois estudantes
-      //    poderiam ler "resta 1" ao mesmo tempo e ambos seriam aceitos.
-      const vaga = await this.vagas.buscarParaAtualizacao(vagaId, tx);
+      // 1. A vaga. Sem trava: a candidatura nao muda a contagem de posicoes,
+      //    entao duas candidaturas a mesma vaga podem correr juntas. Quem
+      //    disputa a ultima posicao e a confirmacao do ingresso (C07), que
+      //    trava a linha da vaga.
+      const vaga = await this.vagas.buscarPorId(vagaId, tx);
       if (!vaga) {
         throw new NaoEncontrado('Vaga não encontrada.');
       }
@@ -117,7 +122,7 @@ export class CandidaturaService {
 
       // 3. Candidatura repetida vem ANTES das regras da vaga: para quem ja se
       //    candidatou, "voce já se candidatou" e uma resposta mais util do que
-      //    "a vaga esgotou" — e foi ele mesmo quem ocupou a ultima posicao.
+      //    "a vaga esgotou" (ele pode ate ter confirmado a ultima posicao).
       //    Uma candidatura removida (C18) nao conta. O banco tambem recusa,
       //    pelo indice unico parcial; esta verificacao da a mensagem legivel.
       if (await this.candidaturas.existeNaoRemovida(estudanteId, vagaId, tx)) {
@@ -126,16 +131,17 @@ export class CandidaturaService {
 
       // 4. Regras da vaga: a regra unica de elegibilidade da frente C (prazo,
       //    perfil, curso, semestre e posicao), a mesma que a tela Detalhes
-      //    da Vaga (C03) usa para mostrar o motivo.
+      //    da Vaga (C03) usa para mostrar o motivo. "Sem posicao" aqui quer
+      //    dizer que os ingressos CONFIRMADOS ja preencheram a vaga.
       const motivo = vaga.motivoDeInelegibilidade(estudante, agora);
       if (motivo) {
         throw new RegraDeNegocio(motivo);
       }
 
       // 5. Quem ja faz parte da equipe do projeto nao se candidata a outra
-      //    vaga dele. Sem esta regra, o coordenador aprovaria (C11), o C07
-      //    recusaria a confirmacao, e a posicao ficaria presa numa candidatura
-      //    aceita que nunca vira participacao. E a mesma regra do C07.
+      //    vaga dele. Sem esta regra, o coordenador aprovaria (C11) e o C07
+      //    recusaria a confirmacao: uma candidatura aceita que nunca vira
+      //    participacao. E a mesma regra do C07.
       if (
         this.participacoes &&
         (await this.participacoes.estaVinculado(estudanteId, vaga.projetoId, tx))
@@ -143,14 +149,9 @@ export class CandidaturaService {
         throw new RegraDeNegocio('Você já faz parte da equipe deste projeto.');
       }
 
-      // 6. Grava a candidatura (com a primeira linha do historico) e reserva
-      //    a posicao. Tudo junto, ou nada.
-      const nova = await this.candidaturas.inserir(estudanteId, vagaId, mensagem, tx);
-      if (nova.ocupaPosicao()) {
-        await this.vagas.reservarUmaPosicao(vagaId, tx);
-      }
-
-      return nova;
+      // 6. Grava a candidatura, com a primeira linha do historico. A vaga
+      //    fica como esta: em analise nao ocupa posicao.
+      return this.candidaturas.inserir(estudanteId, vagaId, mensagem, tx);
 
     });
 
@@ -183,7 +184,7 @@ export class CandidaturaService {
 
   // C18
 
-  /** O estudante retira a candidatura em analise; a posicao volta para a vaga. */
+  /** O estudante retira a candidatura em analise. Ela nao ocupava posicao, entao a vaga nao muda. */
   async remover(
     estudanteId: number,
     candidaturaId: number,
@@ -206,8 +207,11 @@ export class CandidaturaService {
   /**
    * Fluxo basico do C07: o estudante aceito confirma e entra na equipe.
    *
-   * A posicao continua ocupada (agora por um membro da equipe). Se a vaga
-   * tem duracao, a participacao ja nasce com a data prevista de fim.
+   * E AQUI, e so aqui, que a candidatura passa a ocupar uma posicao da vaga.
+   * Se os ingressos ja confirmados preencheram a vaga, a confirmacao e
+   * recusada e a candidatura continua aceita (o estudante ainda pode
+   * declinar). Se a vaga tem duracao, a participacao ja nasce com a data
+   * prevista de fim.
    */
   async confirmarIngresso(
     estudanteId: number,
@@ -223,7 +227,10 @@ export class CandidaturaService {
       const ocupava = candidatura.ocupaPosicao();
       candidatura.confirmar(agora); // o State recusa se nao estiver ACEITA
 
-      const vaga = await this.vagas.buscarPorId(candidatura.vagaId, tx);
+      // Trava a linha da vaga ate o fim da transacao. Dois aceitos que
+      // confirmam ao mesmo tempo a ultima posicao passam por aqui um de cada
+      // vez: o segundo ja le a vaga sem posicao e recebe a mensagem abaixo.
+      const vaga = await this.vagas.buscarParaAtualizacao(candidatura.vagaId, tx);
       if (!vaga) {
         throw new NaoEncontrado('Vaga não encontrada.');
       }
@@ -234,6 +241,14 @@ export class CandidaturaService {
         throw new RegraDeNegocio('Você já faz parte da equipe deste projeto.');
       }
 
+      if (!vaga.temPosicaoDisponivel()) {
+        throw new RegraDeNegocio(
+          'Todas as posições desta vaga já foram preenchidas por quem confirmou o ingresso antes. ' +
+          'Você ainda pode declinar a vaga.'
+        );
+      }
+
+      // Confirmada passa a ocupar posicao: gravarTransicao desconta uma da vaga.
       await this.gravarTransicao(candidatura, ocupava, tx);
 
       const previstoAte =
@@ -263,9 +278,9 @@ export class CandidaturaService {
   }
 
   /**
-   * C07, fluxo 2.a: o estudante aceito desiste. O motivo e opcional; a
-   * posicao volta para a vaga. (A lista de espera e nivel 3: nao ha
-   * "proximo candidato" a chamar.)
+   * C07, fluxo 2.a: o estudante aceito desiste. O motivo e opcional. A
+   * candidatura aceita nao ocupava posicao, entao a vaga nao muda. (A lista
+   * de espera e nivel 3: nao ha "proximo candidato" a chamar.)
    */
   async declinarIngresso(
     estudanteId: number,
@@ -321,9 +336,12 @@ export class CandidaturaService {
   // C11
 
   /**
-   * O coordenador aprova ou recusa uma candidatura em analise. Aprovar mantem
-   * a posicao reservada ate o estudante confirmar ou declinar; recusar a
-   * devolve para a vaga.
+   * O coordenador aprova ou recusa uma candidatura em analise. Nenhuma das
+   * duas mexe na contagem de posicoes: aprovar so habilita o estudante a
+   * confirmar o ingresso (C07), e e a confirmacao que ocupa a posicao.
+   *
+   * Aprovar exige que a vaga ainda tenha posicao livre. Com a vaga cheia de
+   * ingressos confirmados, o estudante aprovado nunca conseguiria confirmar.
    */
   async avaliar(
     coordenadorId: number,
@@ -352,7 +370,16 @@ export class CandidaturaService {
       }
       const ocupava = candidatura.ocupaPosicao();
       if (decisao === 'ACEITAR') {
-        candidatura.aceitar(agora);
+        candidatura.aceitar(agora); // o State recusa se nao estiver EM_ANALISE
+        const vaga = await this.vagas.buscarPorId(candidatura.vagaId, tx);
+        if (!vaga) {
+          throw new NaoEncontrado('Vaga não encontrada.');
+        }
+        if (!vaga.temPosicaoDisponivel()) {
+          throw new RegraDeNegocio(
+            'Esta vaga não tem mais posições livres: todas já foram ocupadas por ingressos confirmados.'
+          );
+        }
       } else {
         candidatura.recusar(agora);
       }
@@ -389,8 +416,9 @@ export class CandidaturaService {
 
   /**
    * Grava o que uma transicao do State mudou: o status (e o motivo), as
-   * linhas novas do historico e, se a candidatura deixou de ocupar posicao,
-   * a posicao devolvida a vaga. Quem diz se ocupa e o proprio estado.
+   * linhas novas do historico e a contagem de posicoes da vaga. Quem diz se
+   * a candidatura ocupa posicao e o proprio estado (so a CONFIRMADA ocupa):
+   * passou a ocupar, desconta uma; deixou de ocupar, devolve uma.
    */
   private async gravarTransicao(
     candidatura: Candidatura,
@@ -408,7 +436,10 @@ export class CandidaturaService {
         linha.observacao
       );
     }
-    if (ocupavaAntes && !candidatura.ocupaPosicao()) {
+    const ocupaAgora = candidatura.ocupaPosicao();
+    if (!ocupavaAntes && ocupaAgora) {
+      await this.vagas.reservarUmaPosicao(candidatura.vagaId, tx);
+    } else if (ocupavaAntes && !ocupaAgora) {
       await this.vagas.liberarUmaPosicao(candidatura.vagaId, tx);
     }
 
