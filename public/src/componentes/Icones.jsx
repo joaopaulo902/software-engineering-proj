@@ -3,6 +3,7 @@
 
 const DESENHOS = {
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  inicio: <path d="M3 11l9-7 9 7M5 9.5V20h5v-6h4v6h5V9.5" />,
   vagas: (
     <>
       <rect x="3" y="7" width="18" height="13" rx="2" />
