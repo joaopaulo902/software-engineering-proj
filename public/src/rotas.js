@@ -32,6 +32,8 @@ const TODOS = ['ESTUDANTE', 'COORDENADOR', 'ADMIN'];
  */
 export const ROTAS = [
   // ---------------------------------------------------------- frente C · vagas
+  { caminho: '/inicio', titulo: 'Início', papeis: TODOS,
+    pagina: tela(() => import('./paginas/Inicio.jsx'), 'Inicio') },
   { caminho: '/vagas', titulo: 'Vagas abertas', papeis: TODOS,
     pagina: tela(() => import('./paginas/VagasAbertas.jsx'), 'VagasAbertas') },
   { caminho: '/vagas/nova', titulo: 'Ofertar nova vaga', papeis: ['COORDENADOR'],
@@ -86,6 +88,7 @@ export const ROTAS = [
  */
 export const MENU = {
   ESTUDANTE: [
+    { rotulo: 'Início', caminho: '/inicio', icone: 'inicio' },
     { rotulo: 'Vagas abertas', caminho: '/vagas', icone: 'vagas' },
     { rotulo: 'Minhas candidaturas', caminho: '/candidaturas', icone: 'candidaturas' },
     { rotulo: 'Projetos', caminho: '/projetos', icone: 'projetos' },
@@ -93,6 +96,7 @@ export const MENU = {
     { rotulo: 'Notificações', caminho: '/notificacoes', icone: 'sino' }
   ],
   COORDENADOR: [
+    { rotulo: 'Início', caminho: '/inicio', icone: 'inicio' },
     { rotulo: 'Vagas abertas', caminho: '/vagas', icone: 'vagas' },
     { rotulo: 'Candidaturas recebidas', caminho: '/candidaturas/recebidas', icone: 'candidaturas' },
     { rotulo: 'Meus projetos', caminho: '/meus-projetos', icone: 'equipe' },
@@ -103,6 +107,7 @@ export const MENU = {
     { rotulo: 'Notificações', caminho: '/notificacoes', icone: 'sino' }
   ],
   ADMIN: [
+    { rotulo: 'Início', caminho: '/inicio', icone: 'inicio' },
     { rotulo: 'Vagas abertas', caminho: '/vagas', icone: 'vagas' },
     { rotulo: 'Projetos', caminho: '/projetos', icone: 'projetos' },
     { rotulo: 'Solicitações de incorporação', caminho: '/incorporacoes', icone: 'base' },
@@ -113,4 +118,4 @@ export const MENU = {
 };
 
 /** Para onde vai quem acabou de entrar. */
-export const ROTA_INICIAL = '/vagas';
+export const ROTA_INICIAL = '/inicio';
