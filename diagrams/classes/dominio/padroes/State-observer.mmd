@@ -17,6 +17,8 @@ class Candidatura {
   +declinar(motivo: string [0..1], agora: Date) void
   +remover(agora: Date) void
   +ocupaPosicao() boolean
+  +transicionarPara(novo: EstadoCandidatura, agora: Date, observacao: string [0..1] = null) void
+  +registrarMotivoDeclinio(motivo: string [0..1]) void
 }
 class EstadoCandidatura {
   <<interface>>
@@ -31,22 +33,38 @@ class EstadoCandidatura {
 class EstadoBase {
   <<abstract>>
   +para(status: StatusCandidatura) EstadoCandidatura$
+  +status() StatusCandidatura*
+  +aceitar(c: Candidatura, agora: Date) void
+  +recusar(c: Candidatura, agora: Date) void
+  +confirmar(c: Candidatura, agora: Date) void
+  +declinar(c: Candidatura, motivo: string [0..1], agora: Date) void
+  +remover(c: Candidatura, agora: Date) void
+  +ocupaPosicao() boolean
 }
 class EmAnalise {
+  +status() StatusCandidatura
   +aceitar(c: Candidatura, agora: Date) void
   +recusar(c: Candidatura, agora: Date) void
   +remover(c: Candidatura, agora: Date) void
 }
 class Aceita {
+  +status() StatusCandidatura
   +confirmar(c: Candidatura, agora: Date) void
   +declinar(c: Candidatura, motivo: string [0..1], agora: Date) void
 }
 class Confirmada {
+  +status() StatusCandidatura
   +ocupaPosicao() boolean
 }
-class Recusada
-class Declinada
-class Removida
+class Recusada {
+  +status() StatusCandidatura
+}
+class Declinada {
+  +status() StatusCandidatura
+}
+class Removida {
+  +status() StatusCandidatura
+}
 class PublicadorDeEventos {
   <<control>>
   -observadores: ObservadorDeEventos [0..*]
@@ -60,14 +78,24 @@ class ObservadorDeEventos {
 class NotificadorInApp {
   <<control>>
   -notificacoes: INotificacaoRepository
-  -candidaturas: ICandidaturaRepository
   -projetos: IProjetoRepository
-  -usuarios: IUsuarioRepository
   -participacoes: IParticipacaoRepository
-  -denuncias: IDenunciaRepository
+  -atividades: IAtividadeRepository
+  -usuarios: IUsuarioRepository
+  -pedidos: IPedidoIncorporacaoRepository
   +notificar(evento: EventoDeDominio) Promise~void~
-  -destinatarios(evento: EventoDeDominio) Promise~number[]~
-  -texto(evento: EventoDeDominio) string
+  -montarAviso(evento: EventoDeDominio) Promise~Aviso [0..1]~
+  -avisoDeCandidatura(evento: EventoDeDominio) Promise~Aviso [0..1]~
+  -avisoDeAtividade(evento: EventoDeDominio) Promise~Aviso [0..1]~
+  -avisoDeFimDeParticipacao(evento: EventoDeDominio) Promise~Aviso [0..1]~
+  -administradores() Promise~number[]~
+  -avisoDeIncorporacao(evento: EventoDeDominio) Promise~Aviso [0..1]~
+}
+class Aviso {
+  <<datatype>>
+  +destinatarios: number [0..*]
+  +texto: string
+  +referenciaId: number [0..1]
 }
 class EventoDeDominio {
   <<datatype>>
@@ -105,8 +133,10 @@ Removida --|> EstadoBase
 PublicadorDeEventos "1" o--> "0..*" ObservadorDeEventos : observadores
 NotificadorInApp ..|> ObservadorDeEventos
 NotificadorInApp --> "1" INotificacaoRepository : notificacoes
+NotificadorInApp ..> Aviso : monta
 PublicadorDeEventos ..> EventoDeDominio : publica
 EventoDeDominio ..> TipoEvento
 note for EstadoBase "Toda ação não sobrescrita lança RegraDeNegocio:<br>a transição não é permitida no status atual.<br>ocupaPosicao() é false por padrão: só Confirmada<br>ocupa posição na vaga (o C07 desconta a posição).<br>Recusada, Declinada e Removida são finais."
-note for PublicadorDeEventos "Os serviços publicam o evento depois do COMMIT.<br>Um canal novo (e-mail) entra como mais um<br>observador, sem alterar os serviços."
-note for NotificadorInApp "Atributos cujo tipo é outra classe (ex.: -vagas: IVagaRepository)<br>são associações navegáveis da classe dona para esse tipo,<br>na notação de atributo da UML (multiplicidade 1, salvo [0..1] ou [0..*])."
+note for PublicadorDeEventos "Os serviços publicam o evento depois do COMMIT.<br>Um canal novo (e-mail) entra como mais um<br>observador, sem alterar os serviços. inscrever<br>ignora observador repetido; a falha de um observador<br>vai para o log, não desfaz o caso de uso e não<br>impede os demais de receber o evento."
+note for NotificadorInApp "Atributos cujo tipo é outra classe (ex.: -vagas: IVagaRepository)<br>são associações navegáveis da classe dona para esse tipo,<br>na notação de atributo da UML (multiplicidade 1, salvo [0..1] ou [0..*]).<br>Gera um aviso por destinatário, com o TipoNotificacao<br>que TIPO_DO_AVISO associa ao TipoEvento; o autor do evento<br>nunca é avisado. AVALIACAO_REGISTRADA e DENUNCIA_JULGADA<br>ainda não geram aviso (C08 e C13 não implementados)."
+note "Nas ações da Candidatura, agora: Date tem o valor padrão<br>new Date#40;#41; (o momento da chamada). Nos estados e em<br>transicionarPara a data é obrigatória: vem da Candidatura."

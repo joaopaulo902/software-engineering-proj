@@ -82,15 +82,15 @@ class PedidoIncorporacao {
   +id: number
   +projetoId: number
   +coordenadorId: number
-  +mensagem: string [0..1]
-  +status: StatusPedido = PENDENTE
+  +mensagem: string [0..1] #123;até 1000 caracteres#125;
+  +status: StatusPedidoIncorporacao = PENDENTE
   +solicitadoEm: Date
-  +avaliadoEm: Date [0..1]
-  +estaPendente() boolean
-  +deferir(agora: Date) void
-  +indeferir(agora: Date) void
+  +avaliadoEm: Date [0..1] #123;vazio só enquanto PENDENTE#125;
+  +deferir(avaliadoEm: Date) void
+  +indeferir(avaliadoEm: Date) void
+  -validarPendente() void
 }
-class StatusPedido {
+class StatusPedidoIncorporacao {
   <<enumeration>>
   PENDENTE
   DEFERIDO
@@ -113,6 +113,8 @@ PedidoIncorporacao "0..*" --> "1" Usuario : coordenador
 Notificacao ..> TipoNotificacao
 Denuncia ..> MotivoDenuncia
 Denuncia ..> StatusDenuncia
-PedidoIncorporacao ..> StatusPedido
+PedidoIncorporacao ..> StatusPedidoIncorporacao
 note for Banimento "Enquanto ativo, o e-mail fica bloqueado<br>para novo cadastro (RF). Reverter (C19)<br>devolve o acesso ao usuário."
 note for Denuncia "A justificativa é obrigatória (C13, fluxo 4.a).<br>Procedente aciona Remover Usuário (C14)<br>com o motivo do banimento. O resultado<br>do julgamento avisa o denunciante."
+note for PedidoIncorporacao "Só um pedido PENDENTE por coordenador e projeto.<br>Deferir ou indeferir um pedido já avaliado lança<br>RegraDeNegocio. Deferido, o coordenador passa a<br>coordenar o projeto (Projeto.coordenadorId, C17)."
+note "Planejados (ainda não implementados): Denuncia, MotivoDenuncia,<br>StatusDenuncia, Banimento e ConfiguracaoDaImportacao.<br>Já implementados: Notificacao e PedidoIncorporacao."

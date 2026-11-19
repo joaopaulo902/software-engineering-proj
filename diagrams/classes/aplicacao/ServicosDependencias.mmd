@@ -12,7 +12,7 @@ class VagaService {
   <<control>>
 }
 class CandidaturaService {
-  <<control>
+  <<control>>
 }
 class ProjetoService {
   <<control>>
@@ -95,15 +95,13 @@ CandidaturaService --> IUnidadeDeTrabalho
 CandidaturaService --> ICandidaturaRepository
 CandidaturaService --> IVagaRepository
 CandidaturaService --> IUsuarioRepository
-CandidaturaService --> IParticipacaoRepository
+CandidaturaService --> "0..1" IParticipacaoRepository
 CandidaturaService --> PublicadorDeEventos
 ProjetoService --> IUnidadeDeTrabalho
 ProjetoService --> IProjetoRepository
 ProjetoService --> IVagaRepository
 ProjetoService --> IAtividadeRepository
 ProjetoService --> IParticipacaoRepository
-ProjetoService --> IAvaliacaoRepository
-ProjetoService --> PublicadorDeEventos
 AtividadeService --> IUnidadeDeTrabalho
 AtividadeService --> IAtividadeRepository
 AtividadeService --> IParticipacaoRepository
@@ -115,7 +113,8 @@ AvaliacaoService --> IParticipacaoRepository
 AvaliacaoService --> PublicadorDeEventos
 UsuarioService --> IUnidadeDeTrabalho
 UsuarioService --> IUsuarioRepository
-UsuarioService --> IBanimentoRepository
+UsuarioService --> IProjetoRepository
+UsuarioService --> IParticipacaoRepository
 NotificacaoService --> INotificacaoRepository
 DenunciaService --> IUnidadeDeTrabalho
 DenunciaService --> IDenunciaRepository
@@ -131,12 +130,12 @@ ModeracaoService --> ICandidaturaRepository
 ModeracaoService --> IParticipacaoRepository
 ModeracaoService --> IVagaRepository
 IncorporacaoService --> IUnidadeDeTrabalho
-IncorporacaoService --> IPedidoIncorporacaoRepository
 IncorporacaoService --> IProjetoRepository
+IncorporacaoService --> IPedidoIncorporacaoRepository
 IncorporacaoService --> IUsuarioRepository
 IncorporacaoService --> PublicadorDeEventos
 BaseInstitucionalService --> IUnidadeDeTrabalho
 BaseInstitucionalService --> IBaseInstitucionalRepository
 BaseInstitucionalService --> IFonteInstitucional
 BaseInstitucionalService --> IUsuarioRepository
-note "Mesmas associações do diagrama 4, onde aparecem como atributos<br>(o nome do papel é o nome do atributo; multiplicidade 1 em todas).<br>A seta indica a navegabilidade: o serviço conhece a interface,<br>a interface não conhece o serviço."
+note "Mesmas associações do diagrama 4, onde aparecem como atributos<br>(o nome do papel é o nome do atributo; multiplicidade 1, salvo onde indicado:<br>o IParticipacaoRepository do CandidaturaService é opcional no construtor).<br>A seta indica a navegabilidade: o serviço conhece a interface,<br>a interface não conhece o serviço."

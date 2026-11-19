@@ -15,12 +15,7 @@ class Usuario {
   +papel: Papel
   +curso: string [0..1]
   +semestre: number [0..1] #123;semestre atual, 1 a 20#125;
-  +descricao: string [0..1]
-  +lattes: string [0..1]
-  +linkedin: string [0..1]
-  +github: string [0..1]
-  +paginaPessoal: string [0..1]
-  +contato: string [0..1]
+  +perfil: PerfilDoUsuario = PERFIL_VAZIO
   +ativo: boolean = true
   -senhaHash: string
   -tentativasFalhas: number #123;0 a 5#125;
@@ -28,9 +23,20 @@ class Usuario {
   +ehEstudante() boolean
   +ehCoordenador() boolean
   +ehAdministrador() boolean
+  +semestreAtual() number
+  +emailVisivelPara(visitante: Usuario) boolean
   +podeEntrar(agora: Date) boolean
   +registrarFalhaDeLogin(agora: Date) void
   +registrarLoginBemSucedido() void
+}
+class PerfilDoUsuario {
+  <<datatype>>
+  +descricao: string #123;até 1000 caracteres#125;
+  +contato: string #123;até 200 caracteres#125;
+  +lattes: string [0..1] #123;link http ou https, até 300 caracteres#125;
+  +linkedin: string [0..1] #123;link http ou https, até 300 caracteres#125;
+  +github: string [0..1] #123;link http ou https, até 300 caracteres#125;
+  +paginaPessoal: string [0..1] #123;link http ou https, até 300 caracteres#125;
 }
 class Papel {
   <<enumeration>>
@@ -48,7 +54,7 @@ class Projeto {
   +situacao: SituacaoProjeto
   +coordenadorCadastrado: string
   +coordenadorId: number [0..1] #123;definido na incorporação#125;
-  +ehCoordenadoPor(usuario: Usuario) boolean
+  +ehCoordenadoPor(usuario: Pick~Usuario, 'id'~) boolean
   +estaIncorporado() boolean
   +aceitaVagas() boolean
 }
@@ -62,18 +68,18 @@ class Vaga {
   +id: number
   +projetoId: number
   +titulo: string #123;3 a 100 caracteres#125;
-  +descricao: string #123;até 2000 caracteres#125;
-  +areasTematicas: string [1..*]
-  +cursosAceitos: string [0..*] #123;vazio = todos#125;
-  +semestreMinimo: number #123;1 a 20#125;
-  +outrosRequisitos: string [0..1]
+  +requisitos: string #123;1 a 500 caracteres#125;
   +cargaHoraria: number #123;1 a 40 h/semana#125;
-  +turno: Turno
-  +modalidade: Modalidade
-  +beneficio: Beneficio
+  +turno: string #123;Manhã, Tarde ou Noite#125;
+  +modalidade: string #123;Presencial, Remoto ou Híbrido#125;
+  +semestreMinimo: number #123;1 a 20#125;
   +vagasTotais: number #123;1 a 100#125;
   +vagasRestantes: number #123;0 ≤ vagasRestantes ≤ vagasTotais#125;
   +dataEncerramento: Date #123;dia de calendário#125;
+  +descricao: string #123;até 2000 caracteres#125;
+  +areasTematicas: string [1..*] #123;vazia na publicação = área do projeto#125;
+  +cursosAceitos: string [0..*] #123;vazio = todos#125;
+  +beneficio: string #123;Horas de extensão ou Bolsa#125;
   +duracaoEmMeses: number [0..1] #123;1 a 24; vazio = sem prazo#125;
   +publicadaEm: Date
   +nova(dados: DadosNovaVaga) Vaga$
@@ -81,25 +87,8 @@ class Vaga {
   +prazoAberto(agora: Date) boolean
   +estaAberta(agora: Date) boolean
   +aceitaSemestre(semestre: number) boolean
-  +aceitaCurso(curso: string) boolean
-  +motivoDeInelegibilidade(estudante: Usuario, agora: Date) string [0..1]
-}
-class Turno {
-  <<enumeration>>
-  MANHA
-  TARDE
-  NOITE
-}
-class Modalidade {
-  <<enumeration>>
-  PRESENCIAL
-  REMOTO
-  HIBRIDO
-}
-class Beneficio {
-  <<enumeration>>
-  HORAS_DE_EXTENSAO
-  BOLSA
+  +aceitaCurso(curso: string [0..1]) boolean
+  +motivoDeInelegibilidade(usuario: Usuario, agora: Date) string [0..1]
 }
 class Candidatura {
   <<entity>>
@@ -108,15 +97,20 @@ class Candidatura {
   +estudanteId: number
   +/status: StatusCandidatura #123;derivado do estado#125;
   +mensagem: string [0..1] #123;até 500 caracteres#125;
-  +motivoDeclinio: string [0..1]
   +criadaEm: Date
+  +/motivoDeclinio: string [0..1] #123;lido de motivo#125;
   -estado: EstadoCandidatura
+  -motivo: string [0..1] #123;até 500 caracteres#125;
   +aceitar(agora: Date) void
   +recusar(agora: Date) void
   +confirmar(agora: Date) void
   +declinar(motivo: string [0..1], agora: Date) void
   +remover(agora: Date) void
   +ocupaPosicao() boolean
+  +estaEmAnalise() boolean
+  +historicoNaoGravado() HistoricoDeStatus [0..*]
+  +transicionarPara(novo: EstadoCandidatura, agora: Date, observacao: string [0..1] = null) void
+  +registrarMotivoDeclinio(motivo: string [0..1]) void
 }
 class StatusCandidatura {
   <<enumeration>>
@@ -129,7 +123,7 @@ class StatusCandidatura {
 }
 class HistoricoDeStatus {
   <<entity>>
-  +id: number
+  +id: number #123;0 enquanto não gravado#125;
   +candidaturaId: number
   +status: StatusCandidatura
   +ocorridoEm: Date
@@ -155,8 +149,8 @@ class Atividade {
   +id: number
   +projetoId: number
   +autorId: number
-  +titulo: string
-  +descricao: string
+  +titulo: string #123;3 a 100 caracteres#125;
+  +descricao: string #123;1 a 2000 caracteres#125;
   +fotoUrl: string [0..1]
   +publicadaEm: Date
 }
@@ -179,7 +173,8 @@ Projeto "0..*" --> "0..1" Usuario : coordenador
 Vaga "0..*" --> "1" Projeto : projeto
 Candidatura "0..*" --> "1" Vaga : vaga
 Candidatura "0..*" --> "1" Usuario : estudante
-Candidatura "1" *--> "1..*" HistoricoDeStatus : historico
+Candidatura "1" *--> "0..*" HistoricoDeStatus : -historicoNovo
+HistoricoDeStatus "1..*" --> "1" Candidatura : candidatura
 Participacao "0..*" --> "1" Projeto : projeto
 Participacao "0..*" --> "1" Usuario : participante
 Participacao "0..1" --> "0..1" Candidatura : origem
@@ -188,12 +183,12 @@ Atividade "0..*" --> "1" Usuario : autor
 Avaliacao "0..*" --> "1" Participacao : participacao
 Avaliacao "0..*" --> "1" Usuario : autor
 Usuario ..> Papel
+Usuario ..> PerfilDoUsuario
 Projeto ..> SituacaoProjeto
-Vaga ..> Turno
-Vaga ..> Modalidade
-Vaga ..> Beneficio
 Candidatura ..> StatusCandidatura
 Avaliacao ..> TipoAvaliacao
-note for Candidatura "Só uma candidatura não removida por<br>vaga e estudante: remover (C18) libera<br>uma nova candidatura à mesma vaga.<br>/status é derivado do estado atual<br>(padrão State, página 3)."
-note for Participacao "Se a vaga tem duração, previstoAte é definido<br>ao confirmar o ingresso. O AgendadorDeTarefas<br>encerra as participações vencidas e o coordenador<br>é notificado para avaliar o estudante (C08)."
-note for Usuario "5 falhas seguidas de login bloqueiam<br>a conta por 15 minutos (RNF).<br>O cadastro aberto cria só ESTUDANTE<br>ou COORDENADOR; o ADMIN vem do seed.<br>semestre é o atual, editável no perfil."
+note for Candidatura "Só uma candidatura não removida por<br>vaga e estudante: remover (C18) libera<br>uma nova candidatura à mesma vaga.<br>/status é derivado do estado atual<br>(padrão State, página 3). Só a CONFIRMADA<br>ocupa posição: candidatar-se e ser aceito<br>não descontam vagasRestantes.<br>Toda candidatura tem ao menos uma linha de<br>histórico (EM_ANALISE, gravada no C04);<br>historicoNovo guarda só as linhas das<br>transições ainda não gravadas."
+note for Participacao "Se a vaga tem duração, previstoAte é definido<br>ao confirmar o ingresso. Planejado: o AgendadorDeTarefas<br>encerrará as participações vencidas e o coordenador<br>será notificado para avaliar o estudante (C08)."
+note for Usuario "semestre é o atual, editável no perfil.<br>O e-mail do estudante só é visível para<br>ele, coordenadores e administradores.<br>Planejado (login com senha e cadastro):<br>ativo, senhaHash, tentativasFalhas, bloqueadoAte,<br>podeEntrar e registrar*Login; 5 falhas seguidas<br>bloquearão a conta por 15 minutos (RNF), e o<br>cadastro aberto criará só ESTUDANTE ou<br>COORDENADOR. Hoje o ADMIN e todos os<br>usuários vêm do seed."
+note "Os parâmetros agora: Date de Vaga, Candidatura e Participacao têm,<br>no código, o valor padrão new Date#40;#41; (o momento da chamada).<br>Exceção: transicionarPara, que recebe a data de quem a chama."
+note "Planejados (ainda não implementados): Avaliacao e TipoAvaliacao<br>(avaliações e recomendações), e os membros de login com senha do Usuario."

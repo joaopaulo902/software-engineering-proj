@@ -13,22 +13,22 @@ namespace Filtros_e_opcoes_de_consulta {
     <<datatype>>
     +termo: string [0..1]
     +areas: string [0..*]
-    +turnos: Turno [0..*]
-    +modalidades: Modalidade [0..*]
-    +cargaHorariaMaxima: number [0..1] #123;~ 0#125;
-    +ordenarPor: CriterioDeOrdenacao [0..1]
+    +turnos: string [0..*]
+    +modalidades: string [0..*]
+    +cargaHorariaMaxima: number [0..1] #123;1 a 40#125;
+    +ordenarPor: CriterioDeOrdenacao [0..1] = PRAZO
   }
   class CriterioDeOrdenacao {
     <<enumeration>>
-    PUBLICACAO
     PRAZO
+    PUBLICACAO
     CARGA_HORARIA
   }
   class FiltroDeProjetos {
     <<datatype>>
     +termo: string [0..1]
     +areas: string [0..*]
-    +somenteComVagasAbertas: boolean = false
+    +somenteComVagasAbertas: boolean [0..1] = false
   }
   class FiltroDeAtividades {
     <<datatype>>
@@ -50,6 +50,11 @@ namespace Filtros_e_opcoes_de_consulta {
     ACEITAR
     RECUSAR
   }
+  class DecisaoIncorporacao {
+    <<enumeration>>
+    DEFERIDO
+    INDEFERIDO
+  }
 }
 
 namespace Dados_de_entrada {
@@ -57,17 +62,17 @@ namespace Dados_de_entrada {
     <<datatype>>
     +projetoId: number
     +titulo: string
-    +descricao: string
-    +areasTematicas: string [1..*]
-    +cursosAceitos: string [0..*]
-    +semestreMinimo: number
-    +outrosRequisitos: string [0..1]
+    +requisitos: string
     +cargaHoraria: number
-    +turno: Turno
-    +modalidade: Modalidade
-    +beneficio: Beneficio
+    +turno: string #123;Manhã, Tarde ou Noite#125;
+    +modalidade: string #123;Presencial, Remoto ou Híbrido#125;
+    +semestreMinimo: number
     +vagasTotais: number
     +dataEncerramento: Date
+    +descricao: string
+    +areasTematicas: string [0..*] #123;vazia = área do projeto#125;
+    +cursosAceitos: string [0..*] #123;vazia = todos os cursos#125;
+    +beneficio: string #123;Horas de extensão ou Bolsa#125;
     +duracaoEmMeses: number [0..1]
   }
   class DadosAtividade {
@@ -83,16 +88,19 @@ namespace Dados_de_entrada {
     +justificativa: string
     +anexos: string [0..*]
   }
-  class DadosPerfil {
+  class PerfilDoUsuario {
     <<datatype>>
-    +curso: string [0..1] #123;só estudante#125;
-    +semestre: number [0..1] #123;só estudante, 1 a 20#125;
-    +descricao: string [0..1]
+    +descricao: string
+    +contato: string
     +lattes: string [0..1]
     +linkedin: string [0..1]
     +github: string [0..1]
     +paginaPessoal: string [0..1]
-    +contato: string [0..1]
+  }
+  class DadosDoPerfil {
+    <<datatype>>
+    +curso: string [0..1] #123;só estudante#125;
+    +semestre: number [0..1] #123;só estudante, 1 a 20#125;
   }
   class DadosCadastro {
     <<datatype>>
@@ -131,7 +139,7 @@ namespace Itens_de_listagem {
     +projetoNome: string
     +projetoArea: string
     +coordenadorNome: string
-    +publicadaEm: Date
+    +coordenadorId: number
   }
   class CandidaturaComVaga {
     <<datatype>>
@@ -145,6 +153,7 @@ namespace Itens_de_listagem {
     <<datatype>>
     +candidatura: Candidatura
     +vagaTitulo: string
+    +projetoNome: string
     +estudante: Usuario
   }
   class ResumoDeProjeto {
@@ -155,8 +164,12 @@ namespace Itens_de_listagem {
   }
   class ParticipacaoComProjeto {
     <<datatype>>
-    +participacao: Participacao
+    +participacao: Participacao [0..1] #123;vazia = coordenador#125;
+    +projetoId: number
     +projetoNome: string
+    +projetoArea: string
+    +projetoIcone: string [0..1]
+    +cargo: string
   }
   class Participante {
     <<datatype>>
@@ -187,7 +200,7 @@ namespace Itens_de_listagem {
   class PedidoComProjeto {
     <<datatype>>
     +pedido: PedidoIncorporacao
-    +projetoNome: string
+    +projeto: Projeto
     +coordenadorNome: string
   }
 }
@@ -203,18 +216,31 @@ namespace Detalhes_e_resumos {
     +candidatura: CandidaturaComVaga
     +historico: HistoricoDeStatus [1..*]
   }
+  class DetalheDaCandidaturaRecebida {
+    <<datatype>>
+    +historico: HistoricoDeStatus [1..*]
+  }
+  class ContextoDaCandidatura {
+    <<datatype>>
+    +candidaturaId: number
+    +status: StatusCandidatura
+    +estudanteId: number
+    +estudanteNome: string
+    +vagaTitulo: string
+    +projeto: Projeto
+  }
   class DetalheDoProjeto {
     <<datatype>>
     +projeto: Projeto
     +coordenadorNome: string [0..1]
     +vagas: VagaComProjeto [0..*]
     +atividades: AtividadeComProjeto [0..*]
-    +recomendacoes: Avaliacao [0..*]
   }
-  class PerfilDoUsuario {
+  class PerfilCompleto {
     <<datatype>>
     +usuario: Usuario
-    +avaliacoes: Avaliacao [0..*]
+    +ehProprio: boolean
+    +emailVisivel: boolean
     +projetos: ParticipacaoComProjeto [0..*]
   }
   class ResumoDaImportacao {
@@ -228,7 +254,11 @@ namespace Detalhes_e_resumos {
 
 %% Ligações só de layout: empilham os grupos em linhas.
 %% Não são relações do modelo; o themeCSS acima as esconde.
-FiltroDeUsuarios .. DadosPerfil
-DadosPerfil .. ParticipacaoComProjeto
+FiltroDeUsuarios .. DadosDoPerfil
+DadosDoPerfil .. ParticipacaoComProjeto
 ParticipacaoComProjeto .. DetalheDoProjeto
+PerfilDoUsuario <|-- DadosDoPerfil
+CandidaturaRecebida <|-- DetalheDaCandidaturaRecebida
 note "Atributos cujo tipo é uma entidade (ex.: +vaga: Vaga) são associações<br>navegáveis do tipo de dado para a entidade, na notação de atributo da UML."
+note "Herança (oculta, como todas as linhas): DadosDoPerfil estende PerfilDoUsuario<br>e DetalheDaCandidaturaRecebida estende CandidaturaRecebida; ambos herdam<br>todos os campos do pai. Atributos [0..1] em filtros são opcionais (campo ausente não filtra)."
+note "Planejados (ainda não implementados): FiltroDeUsuarios, DadosDenuncia,<br>DadosCadastro, DadosInstitucionais, ProjetoInstitucional, ResumoDeUsuario,<br>BanimentoComUsuario e ResumoDaImportacao. Com as avaliações (Avaliacao),<br>DetalheDoProjeto ganha recomendacoes e PerfilCompleto ganha avaliacoes."
