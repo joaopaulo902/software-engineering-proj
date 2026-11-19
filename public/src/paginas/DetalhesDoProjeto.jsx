@@ -124,7 +124,18 @@ export function DetalhesDoProjeto({ params, usuario }) {
               {projeto.situacao || 'EM_ANDAMENTO'}
             </span>
             {projeto.area && ` · Área: ${projeto.area}`}
-            {projeto.coordenadorNome && ` · Coordenação: ${projeto.coordenadorNome}`}
+            {projeto.coordenadorNome && (
+              <>
+                {' · Coordenação: '}
+                {projeto.coordenadorId ? (
+                  <a className="link" href={`#/usuarios/${projeto.coordenadorId}`} title="Ver o perfil">
+                    {projeto.coordenadorNome}
+                  </a>
+                ) : (
+                  projeto.coordenadorNome
+                )}
+              </>
+            )}
           </p>
           {projeto.descricao && <p className="detalhe-descricao">{projeto.descricao}</p>}
         </div>
@@ -204,7 +215,14 @@ export function DetalhesDoProjeto({ params, usuario }) {
               return (
                 <article className="card participante-card" key={idParticipacao}>
                   <span className="avatar avatar--grande" aria-hidden="true">●</span>
-                  <strong>{participante.nome || `Utilizador #${participante.usuarioId}`}</strong>
+                  {/* O nome leva ao perfil da pessoa (C16, frente C). */}
+                  {participante.usuarioId ? (
+                    <a className="link" href={`#/usuarios/${participante.usuarioId}`} title="Ver o perfil">
+                      {participante.nome || `Utilizador #${participante.usuarioId}`}
+                    </a>
+                  ) : (
+                    <strong>{participante.nome || 'Participante'}</strong>
+                  )}
                   <span className="etiqueta">{participante.cargo || 'Membro'}</span>
                   {coordenador && (
                     <div className="participante-card__acoes">
