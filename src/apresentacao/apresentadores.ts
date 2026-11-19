@@ -17,7 +17,8 @@ export function apresentarVagaComProjeto(item: VagaComProjeto) {
     ...apresentarVaga(item.vaga),
     projetoNome: item.projetoNome,
     projetoArea: item.projetoArea,
-    coordenadorNome: item.coordenadorNome
+    coordenadorNome: item.coordenadorNome,
+    coordenadorId: item.coordenadorId
   };
 }
 

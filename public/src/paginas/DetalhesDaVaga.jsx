@@ -79,7 +79,10 @@ export function DetalhesDaVaga({ params, usuario }) {
                       onClick={() => navegar(`/projetos/${vaga.projetoId}`)}>
                 {vaga.projetoNome}
               </button>
-              <span className="etiqueta">Responsável: {vaga.coordenadorNome}</span>
+              <button type="button" className="etiqueta etiqueta--botao"
+                      onClick={() => navegar(`/usuarios/${vaga.coordenadorId}`)}>
+                Responsável: {vaga.coordenadorNome}
+              </button>
               {vaga.areasTematicas?.map((area) => (
                 <span className="etiqueta etiqueta--aceita" key={area}>{area}</span>
               ))}

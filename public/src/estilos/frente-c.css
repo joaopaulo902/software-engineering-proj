@@ -65,3 +65,51 @@ a.chip:hover { border-color: #93c5fd; color: var(--azul); }
     grid-column: auto; grid-row: auto;
   }
 }
+
+/* ------------------------------------------------------------ perfil */
+.perfil { display: grid; gap: 22px; min-width: 0; }
+.perfil h2 { margin: 0; font-size: 19px; }
+
+.perfil__cabeca { display: flex; align-items: flex-start; gap: 20px; padding: 22px 24px; }
+.perfil__identidade { flex: 1; min-width: 0; display: grid; gap: 12px; }
+.perfil__identidade h2 { font-size: 24px; letter-spacing: -0.01em; }
+.perfil__sobre { margin: -8px 0 0; color: var(--suave); font-size: 14px; }
+.perfil__descricao {
+  margin: 0; padding: 12px 14px; max-width: none;
+  border: 1px solid var(--borda); border-radius: 10px; background: var(--fundo);
+}
+.perfil__descricao--vazia { color: var(--suave); font-size: 14px; font-style: italic; }
+.perfil__links { display: flex; flex-wrap: wrap; gap: 8px; }
+.perfil__contato { display: grid; gap: 2px; }
+.perfil__contato h3 { margin: 0 0 2px; font-size: 14px; }
+.perfil__contato p { margin: 0; font-size: 14px; }
+.perfil__foto {
+  display: grid; place-items: center; width: 112px; height: 112px; flex-shrink: 0;
+  border-radius: 16px; background: var(--azul-claro); color: var(--azul);
+  font-size: 34px; font-weight: 700;
+}
+
+.perfil__secao { display: grid; gap: 12px; padding-top: 18px; border-top: 1px solid var(--borda); }
+.perfil__projetos {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+}
+.perfil__projeto { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
+.perfil__projeto > div { min-width: 0; }
+.perfil__projeto p { margin: 2px 0 0; }
+
+.perfil-config input[type="url"] {
+  width: 100%; padding: 10px 12px; font: inherit; font-size: 14px;
+  border: 1px solid var(--borda); border-radius: 8px; background: #fff; color: var(--tinta);
+}
+.perfil-config__links, .perfil-config__curso {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px;
+}
+.perfil-config__nota { grid-column: 1 / -1; margin-top: -6px; }
+.perfil-config small { font-size: 12.5px; }
+
+@media (max-width: 640px) {
+  .perfil__cabeca { flex-direction: column-reverse; padding: 18px; }
+  .perfil__foto { width: 72px; height: 72px; font-size: 24px; border-radius: 12px; }
+  .perfil__projetos, .perfil-config__links, .perfil-config__curso { grid-template-columns: minmax(0, 1fr); }
+}

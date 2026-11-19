@@ -8,7 +8,8 @@ const SELECT_COM_PROJETO = `
   SELECT v.*,
          p.nome AS projeto_nome,
          p.area AS projeto_area,
-         u.nome AS coordenador_nome
+         u.nome AS coordenador_nome,
+         u.id   AS coordenador_id
     FROM vaga v
     JOIN projeto p ON p.id = v.projeto_id
     JOIN usuario u ON u.id = p.coordenador_id`;
@@ -128,7 +129,8 @@ function montarComProjeto(linha: any): VagaComProjeto {
     vaga: montarVaga(linha),
     projetoNome: linha.projeto_nome,
     projetoArea: linha.projeto_area,
-    coordenadorNome: linha.coordenador_nome
+    coordenadorNome: linha.coordenador_nome,
+    coordenadorId: linha.coordenador_id
   };
 }
 

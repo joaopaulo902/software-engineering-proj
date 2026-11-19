@@ -21,7 +21,14 @@ CREATE TABLE usuario (
     papel     papel_usuario NOT NULL,
     curso     TEXT,
     semestre  INTEGER       CHECK (semestre IS NULL OR semestre BETWEEN 1 AND 20),
-    criado_em TIMESTAMPTZ   NOT NULL DEFAULT now()
+    criado_em TIMESTAMPTZ   NOT NULL DEFAULT now(),
+    -- Perfil (C16, frente C). Tudo opcional: o perfil comeca vazio.
+    descricao      TEXT NOT NULL DEFAULT '' CHECK (length(descricao) <= 1000),
+    contato        TEXT NOT NULL DEFAULT '' CHECK (length(contato) <= 200),
+    lattes         TEXT CHECK (length(lattes) <= 300),
+    linkedin       TEXT CHECK (length(linkedin) <= 300),
+    github         TEXT CHECK (length(github) <= 300),
+    pagina_pessoal TEXT CHECK (length(pagina_pessoal) <= 300)
 );
 
 CREATE TYPE situacao_projeto AS ENUM ('ATIVO', 'INATIVO');

@@ -18,6 +18,7 @@ function tela(carregar, nome) {
 }
 
 const EmConstrucao = tela(() => import('./paginas/EmConstrucao.jsx'), 'EmConstrucao');
+const Perfil = tela(() => import('./paginas/Perfil.jsx'), 'Perfil');
 
 const TODOS = ['ESTUDANTE', 'COORDENADOR', 'ADMIN'];
 
@@ -72,10 +73,9 @@ export const ROTAS = [
     pagina: tela(() => import('./paginas/Notificacoes.jsx'), 'Notificacoes') },
 
   // -------------------------------------- frente C · perfil e administracao
-  { caminho: '/perfil', titulo: 'Perfil', papeis: TODOS,
-    pagina: EmConstrucao, dono: 'frente C (C16)' },
-  { caminho: '/usuarios/:id', titulo: 'Perfil', papeis: TODOS,
-    pagina: EmConstrucao, dono: 'frente C (C16)' },
+  // O proprio perfil (com Configuracoes) e o de outra pessoa usam a mesma tela.
+  { caminho: '/perfil', titulo: 'Perfil', papeis: TODOS, pagina: Perfil },
+  { caminho: '/usuarios/:id', titulo: 'Perfil', papeis: TODOS, pagina: Perfil },
   { caminho: '/banlist', titulo: 'BanList', papeis: ['ADMIN'],
     pagina: EmConstrucao, dono: 'frente C (C12 e C19)' },
   { caminho: '/base-institucional', titulo: 'Base de dados', papeis: ['ADMIN'],

@@ -158,6 +158,14 @@ export const api = {
   publicarVaga: (dados) =>
     pedir('/vagas', { method: 'POST', body: JSON.stringify(dados) }),
 
+  // ------------------------------------------------- frente C · perfil (C16)
+  // O e-mail vem null quando quem esta vendo nao pode ve-lo.
+  perfil: (usuarioId) => pedir(`/usuarios/${encodeURIComponent(usuarioId)}/perfil`),
+
+  // Configuracoes: devolve o perfil salvo, no mesmo formato de `perfil`.
+  atualizarPerfil: (dados) =>
+    pedir('/perfil', { method: 'PUT', body: JSON.stringify(dados) }),
+
   // ------------------------------------------- dupla B · projetos e atividades
   projetos: (filtros = {}) => {
     const parametros = new URLSearchParams();

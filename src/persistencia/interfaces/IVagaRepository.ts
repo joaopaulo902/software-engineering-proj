@@ -7,6 +7,8 @@ export interface VagaComProjeto {
   projetoNome: string;
   projetoArea: string;
   coordenadorNome: string;
+  /** Para o chip "Responsavel" do card levar ao perfil (C16). */
+  coordenadorId: number;
 }
 
 export interface IVagaRepository {
