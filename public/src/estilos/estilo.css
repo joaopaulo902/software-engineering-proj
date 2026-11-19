@@ -93,7 +93,7 @@ a.botao { display: inline-block; text-decoration: none; text-align: center; }
 .busca select { width: auto; min-width: 160px; }
 
 /* -------------------------------------------------------------- cards */
-.lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: 16px; align-items: start; }
+.lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: 16px; align-items: stretch; }
 
 .card {
   background: #fff; border: 1px solid var(--borda); border-radius: var(--raio); padding: 18px 20px;
