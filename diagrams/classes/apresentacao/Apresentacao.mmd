@@ -14,21 +14,31 @@ class rotas {
 class middlewares {
   <<utility>>
   +exigirLogin(req: Request, res: Response, next: NextFunction) void$
-  +exigirPapel(papeis: Papel [1..*]) RequestHandler$
   +tratadorDeErros(erro: unknown, req: Request, res: Response, next: NextFunction) void$
 }
 class parametros {
   <<utility>>
+  +MAIOR_ID: number$
   +lerTexto(valor: unknown) string [0..1]$
   +lerLista(valor: unknown) string [0..*]$
+  +lerId(valor: unknown) number [0..1]$
+}
+class apresentadores {
+  <<utility>>
+  +apresentarVagaComProjeto(item: VagaComProjeto) object$
+  +apresentarVaga(vaga: Vaga) object$
+  +apresentarAtividade(item: AtividadeComProjeto) object$
 }
 class SessaoController {
   <<boundary>>
-  -servico: UsuarioService
+  -usuarios: IUsuarioRepository
+  +listarUsuarios(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/usuarios
   +entrar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/sessao
   +atual(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/sessao
   +sair(req: Request, res: Response) void · DELETE /api/sessao
-  +cadastrar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/usuarios
+}
+class IUsuarioRepository {
+  <<interface>>
 }
 class UsuarioService {
   <<control>>
@@ -37,8 +47,7 @@ class UsuarioController {
   <<boundary>>
   -servico: UsuarioService
   +perfil(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/usuarios/:id/perfil · C16
-  +atualizarPerfil(req: Request, res: Response, next: NextFunction) Promise~void~ · PUT /api/perfil · C04 2.a
-  +buscar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/usuarios · C01
+  +atualizarPerfil(req: Request, res: Response, next: NextFunction) Promise~void~ · PUT /api/perfil · C16
 }
 class VagaController {
   <<boundary>>
@@ -70,13 +79,12 @@ class CandidaturaService {
 class ProjetoController {
   <<boundary>>
   -servico: ProjetoService
-  +listar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos · C01
+  +listar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos
   +detalhar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos/:id · C02
+  +listarParticipantes(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos/:id/participantes · C02
   +meusProjetos(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/participacoes/minhas
-  +listarParticipantes(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/projetos/:id/participantes
   +alterarCargo(req: Request, res: Response, next: NextFunction) Promise~void~ · PATCH /api/participacoes/:id
   +removerParticipante(req: Request, res: Response, next: NextFunction) Promise~void~ · DELETE /api/participacoes/:id
-  +sair(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/participacoes/:id/saida · C08
 }
 class ProjetoService {
   <<control>>
@@ -84,7 +92,7 @@ class ProjetoService {
 class AtividadeController {
   <<boundary>>
   -servico: AtividadeService
-  +listar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/atividades
+  +listar(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/atividades · C10
   +postar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/projetos/:id/atividades · C10
 }
 class AtividadeService {
@@ -133,8 +141,9 @@ class ModeracaoService {
 class IncorporacaoController {
   <<boundary>>
   -servico: IncorporacaoService
-  +buscarProjetos(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/base-institucional/projetos · C17
+  +listarProjetosDisponiveis(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/base-institucional/projetos · C17
   +solicitar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/incorporacoes · C17
+  +listarMinhasPendentes(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/incorporacoes/minhas · C17
   +listarPendentes(req: Request, res: Response, next: NextFunction) Promise~void~ · GET /api/incorporacoes/pendentes · C17
   +avaliar(req: Request, res: Response, next: NextFunction) Promise~void~ · POST /api/incorporacoes/:id/avaliacao · C17
 }
@@ -155,11 +164,11 @@ class AgendadorDeTarefas {
   <<boundary>>
   -base: BaseInstitucionalService
   -projetos: ProjetoService
-  +iniciar(intervaloEmMinutos: number) void · chamado no main.ts
+  +iniciar(intervaloEmMinutos: number) void · será chamado no main.ts (planejado)
   -executar(agora: Date) Promise~void~ · importarSeVencida (C09) e encerrarParticipacoesVencidas (C08)
 }
 
-SessaoController --> "1" UsuarioService : servico
+SessaoController --> "1" IUsuarioRepository : usuarios
 UsuarioController --> "1" UsuarioService : servico
 VagaController --> "1" VagaService : servico
 CandidaturaController --> "1" CandidaturaService : servico
@@ -173,4 +182,7 @@ IncorporacaoController --> "1" IncorporacaoService : servico
 BaseInstitucionalController --> "1" BaseInstitucionalService : servico
 AgendadorDeTarefas --> "1" BaseInstitucionalService : base
 AgendadorDeTarefas --> "1" ProjetoService : projetos
-note for rotas "criarRotas registra as rotas fixas<br>(/minhas, /recebidas, /meus) antes das<br>rotas com :id. Senão o Express lê<br>«minhas» como se fosse um id."
+note for rotas "criarRotas registra as rotas fixas<br>(/minhas, /recebidas, /meus) antes das<br>rotas com :id. Senão o Express lê<br>«minhas» como se fosse um id.<br>O main.ts monta o Router em /api.<br>Todas as rotas passam por exigirLogin,<br>menos GET /api/usuarios e as três de /api/sessao."
+note for middlewares "exigirLogin responde 401 quando<br>a sessão não tem usuarioId.<br>tratadorDeErros é o único ponto que traduz<br>erro de domínio em status HTTP:<br>NaoAutenticado 401, SemPermissao 403,<br>NaoEncontrado 404, RegraDeNegocio 409;<br>violação de UNIQUE (23505) ou CHECK (23514)<br>do PostgreSQL vira 409; o resto, 500.<br>O papel do usuário é conferido nos serviços."
+note for SessaoController "Login simplificado: o usuário é escolhido<br>numa lista, sem senha. Lê IUsuarioRepository<br>direto, sem passar por um serviço."
+note "Planejados, ainda sem código:<br>AvaliacaoController, DenunciaController, ModeracaoController,<br>BaseInstitucionalController, AgendadorDeTarefas e seus serviços.<br>Também planejados: a saída do projeto (C08, POST /api/participacoes/:id/saida),<br>o cadastro (POST /api/usuarios) e o login com senha e a busca de usuários<br>(UsuarioService.entrar, cadastrar e buscar). Hoje GET /api/usuarios<br>é só a lista do login simplificado."

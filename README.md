@@ -14,28 +14,31 @@ Arquitetura do projeto segue o padrão Cliente-Servidor/Camadas, com o seguinte 
 
 ### 1.2 Sobre os pacotes
 #### 1.2.1 Cliente Web
-   O cliente web é um SPA (Single Page Application) e deverá ser escrito usando a biblioteca react.js para componentização. Ele roda no navegador e se comunica com o servidor via HTTP/JSON via express.
+   O cliente web é um SPA (Single Page Application) escrito em React, numa aplicação só (`public/src`). Ele roda no navegador e se comunica com o servidor Express via HTTP/JSON.
+   - **Aplicação, rotas, navegação e contexto**: montam a tela, escolhem a página pelo endereço e compartilham o usuário logado.
    - **páginas**: telas e navegação entre elas.
    - **componentes**: pedaços de interface reutilizados, como formulários, listas e filtros.
-   - **serviços_api**: dispara as requisições HTTP para o servidor e trata as respostas, disponibilizando os dados para os componentes.
+   - **servicos-api**: dispara as requisições HTTP para o servidor e trata as respostas, disponibilizando os dados para os componentes.
 
 #### 1.2.2 Servidor de Aplicação
    O servidor de aplicação é um processo Node.js que expõe uma API RESTful e implementa a lógica de negócio.
    - **Camada de Apresentação**: traduz as requisições HTTP para chamadas ao domínio.
      - **routes**: define os endpoints da API e associa métodos HTTP a funções.
-     - **middlewares**: funções intermediárias para autenticação, logging e tratamento de erros.
+     - **middlewares**: funções intermediárias para autenticação (`exigirLogin`) e tratamento de erros (`tratadorDeErros`).
      - **controllers**: recebem as requisições, validam dados e chamam os serviços do domínio.
    - **Camada de Domínio**: contém as regras de negócio e o controle da transação.
      - **Serviços**: implementam as regras de negócio e coordenam a transação entre entidades e repositórios.
-     - **Entidades**: representam os objetos do domínio (Usuário, Projeto, Vaga, Candidatura) com seus comportamentos.
+     - **Entidades**: representam os objetos do domínio (Usuário, Projeto, Vaga, Candidatura, Participação, Atividade, Notificação, Pedido de incorporação) com seus comportamentos.
+     - **Eventos**: avisos de domínio (padrão Observer) que geram as notificações.
    - **Camada de Persistência**: gerencia o acesso ao banco de dados.
      - **Interfaces**: definem a fachada que o domínio utiliza para acessar os repositórios.
      - **Repositórios**: implementam a persistência dos dados, contendo o SQL necessário.
-     - **infra_db**: gerencia conexões, migrations e seed do banco.
+     - **infra**: gerencia a conexão, a transação e o banco em memória (PGlite). O esquema e o seed ficam em `db/`.
+   - **main**: cria e conecta as três camadas.
 #### 1.2.3 Camada de Apoio de Sistema
    - **PostgreSQL**: SGBD relacional utilizado para armazenar os dados do sistema.
 
-**Nota**: As setas tracejadas com ponta aberta representam dependências entre os pacotes, garantindo que cada camada só interaja com a camada imediatamente inferior.
+**Nota**: As setas tracejadas com ponta aberta representam dependências entre os pacotes. Não há ciclo: o Domínio enxerga a Persistência só pelas interfaces, a Persistência importa as entidades apenas para montá-las, e a Apresentação também usa as interfaces da Persistência diretamente (tipos de retorno e o login simplificado).
 ## O que está implementado
 
 | Caso de uso                                | Situação                                                |

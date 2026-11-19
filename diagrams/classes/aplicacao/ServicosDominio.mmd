@@ -14,9 +14,10 @@ class VagaService {
   -projetos: IProjetoRepository
   -usuarios: IUsuarioRepository
   +listarAbertas(filtro: FiltroDeVagas) Promise~VagaComProjeto[]~
-  +detalhar(vagaId: number, usuarioId: number) Promise~DetalheDaVaga~
-  +projetosParaPublicar(coordenadorId: number) Promise~Projeto[]~
-  +publicar(coordenadorId: number, dados: DadosNovaVaga, agora: Date) Promise~Vaga~
+  +detalhar(vagaId: number, usuarioId: number, agora: Date) Promise~DetalheDaVaga~
+  +buscarPorId(id: number) Promise~Vaga~
+  +projetosParaPublicar(usuarioId: number) Promise~Projeto[]~
+  +publicar(usuarioId: number, dados: DadosNovaVaga, agora: Date) Promise~Vaga~
 }
 class CandidaturaService {
   <<control>>
@@ -24,17 +25,17 @@ class CandidaturaService {
   -candidaturas: ICandidaturaRepository
   -vagas: IVagaRepository
   -usuarios: IUsuarioRepository
-  -participacoes: IParticipacaoRepository
+  -participacoes: IParticipacaoRepository [0..1]
   -eventos: PublicadorDeEventos
   +candidatar(estudanteId: number, vagaId: number, mensagem: string [0..1]) Promise~Candidatura~
   +listarDoEstudante(estudanteId: number) Promise~CandidaturaComVaga[]~
   +detalhar(estudanteId: number, candidaturaId: number) Promise~DetalheDaCandidatura~
-  +remover(estudanteId: number, candidaturaId: number) Promise~void~
-  +confirmarIngresso(estudanteId: number, candidaturaId: number) Promise~Participacao~
-  +declinarIngresso(estudanteId: number, candidaturaId: number, motivo: string [0..1]) Promise~void~
+  +remover(estudanteId: number, candidaturaId: number, agora: Date) Promise~void~
+  +confirmarIngresso(estudanteId: number, candidaturaId: number, agora: Date) Promise~Participacao~
+  +declinarIngresso(estudanteId: number, candidaturaId: number, motivo: string [0..1], agora: Date) Promise~void~
   +listarRecebidas(coordenadorId: number, filtro: FiltroDeCandidaturas) Promise~CandidaturaRecebida[]~
-  +detalharRecebida(coordenadorId: number, candidaturaId: number) Promise~CandidaturaRecebida~
-  +avaliar(coordenadorId: number, candidaturaId: number, decisao: Decisao) Promise~Candidatura~
+  +detalharRecebida(coordenadorId: number, candidaturaId: number) Promise~DetalheDaCandidaturaRecebida~
+  +avaliar(coordenadorId: number, candidaturaId: number, decisao: Decisao, agora: Date) Promise~Candidatura~
 }
 class ProjetoService {
   <<control>>
@@ -43,14 +44,12 @@ class ProjetoService {
   -vagas: IVagaRepository
   -atividades: IAtividadeRepository
   -participacoes: IParticipacaoRepository
-  -avaliacoes: IAvaliacaoRepository
-  -eventos: PublicadorDeEventos
   +listar(filtro: FiltroDeProjetos) Promise~ResumoDeProjeto[]~
   +detalhar(projetoId: number) Promise~DetalheDoProjeto~
   +meusProjetos(usuarioId: number) Promise~ParticipacaoComProjeto[]~
   +listarParticipantes(projetoId: number) Promise~Participante[]~
   +alterarCargo(coordenadorId: number, participacaoId: number, cargo: string) Promise~void~
-  +removerParticipante(coordenadorId: number, participacaoId: number) Promise~void~
+  +removerParticipante(coordenadorId: number, participacaoId: number, agora: Date) Promise~void~
   +sairDoProjeto(estudanteId: number, participacaoId: number, mensagem: string [0..1], recomendacao: string [0..1]) Promise~void~
   +encerrarParticipacoesVencidas(agora: Date) Promise~number~
 }
@@ -79,11 +78,12 @@ class UsuarioService {
   <<control>>
   -unidade: IUnidadeDeTrabalho
   -usuarios: IUsuarioRepository
-  -banimentos: IBanimentoRepository
+  -projetos: IProjetoRepository
+  -participacoes: IParticipacaoRepository
+  +perfil(usuarioId: number, visitanteId: number) Promise~PerfilCompleto~
+  +atualizarPerfil(usuarioId: number, dados: DadosDoPerfil) Promise~Usuario~
   +entrar(email: string, senha: string, agora: Date) Promise~Usuario~
   +cadastrar(dados: DadosCadastro) Promise~Usuario~
-  +perfil(usuarioId: number, visitanteId: number) Promise~PerfilDoUsuario~
-  +atualizarPerfil(usuarioId: number, dados: DadosPerfil) Promise~Usuario~
   +buscar(filtro: FiltroDeUsuarios) Promise~ResumoDeUsuario[]~
 }
 class NotificacaoService {
@@ -120,14 +120,15 @@ class ModeracaoService {
 class IncorporacaoService {
   <<control>>
   -unidade: IUnidadeDeTrabalho
-  -pedidos: IPedidoIncorporacaoRepository
   -projetos: IProjetoRepository
+  -pedidos: IPedidoIncorporacaoRepository
   -usuarios: IUsuarioRepository
   -eventos: PublicadorDeEventos
-  +buscarNaBaseInstitucional(termo: string) Promise~Projeto[]~
+  +listarProjetosDisponiveis(coordenadorId: number, termo: string [0..1]) Promise~Projeto[]~
   +solicitar(coordenadorId: number, projetoId: number, mensagem: string [0..1]) Promise~PedidoIncorporacao~
-  +listarPendentes(adminId: number) Promise~PedidoComProjeto[]~
-  +avaliar(adminId: number, pedidoId: number, deferir: boolean) Promise~void~
+  +listarPendentes(administradorId: number) Promise~PedidoComProjeto[]~
+  +listarPendentesDoCoordenador(coordenadorId: number) Promise~PedidoComProjeto[]~
+  +avaliar(administradorId: number, pedidoId: number, decisao: DecisaoIncorporacao) Promise~PedidoIncorporacao~
 }
 class BaseInstitucionalService {
   <<control>>
@@ -160,11 +161,17 @@ class NaoEncontrado
 class RegraDeNegocio
 class SemPermissao
 class NaoAutenticado
+class Error
 
+ErroDeDominio --|> Error
 NaoEncontrado --|> ErroDeDominio
 RegraDeNegocio --|> ErroDeDominio
 SemPermissao --|> ErroDeDominio
 NaoAutenticado --|> ErroDeDominio
 DenunciaService --> "1" ModeracaoService : moderacao
+note for CandidaturaService "Só a candidatura CONFIRMADA ocupa posição da vaga.<br>candidatar não consome posição. confirmarIngresso trava a vaga e<br>consome uma; com a vaga cheia, lança RegraDeNegocio.<br>avaliar(ACEITAR) é recusado se a vaga não tem posição livre.<br>Recusar, remover e declinar não mudam a contagem.<br>Sem participacoes, confirmarIngresso falha (o main.ts sempre o passa)."
+note for ProjetoService "sairDoProjeto e encerrarParticipacoesVencidas são planejados<br>(ainda não implementados); quando entrarem, o serviço<br>passará a receber IAvaliacaoRepository e PublicadorDeEventos."
+note for UsuarioService "entrar, cadastrar e buscar são planejados (ainda não implementados).<br>Hoje o login simplificado fica no SessaoController, que usa<br>o IUsuarioRepository direto. Com entrar, o serviço passará<br>a receber IBanimentoRepository."
 note for ErroDeDominio "O tratadorDeErros traduz em HTTP:<br>NaoEncontrado 404 · RegraDeNegocio 409<br>SemPermissao 403 · NaoAutenticado 401"
 note "Atributos cujo tipo é outra classe (ex.: -vagas: IVagaRepository)<br>são associações navegáveis da classe dona para esse tipo,<br>na notação de atributo da UML (multiplicidade 1, salvo [0..1] ou [0..*]).<br>As associações dos serviços estão desenhadas no diagrama 4b."
+note "Todo parâmetro agora: Date dos serviços tem, no código,<br>o valor padrão new Date#40;#41;: o momento da chamada."

@@ -1,45 +1,56 @@
 flowchart LR
 
-    subgraph ClienteWeb ["&laquo;system&raquo; Cliente Web — executa no navegador"]
+    subgraph ClienteWeb ["&laquo;system&raquo; Cliente Web — aplicação React (SPA) no navegador"]
         direction TB
-        paginas["<b>paginas</b><br>telas e navegação"]
-        componentes["<b>componentes</b><br>formulários, listas, filtros"]
-        servicos_api["<b>servicos_api</b><br>dispara as requisições (fetch)"]
+        aplicacao["<b>Aplicacao · rotas · navegacao · contexto</b><br>sessão, tabela de telas e menu de cada papel"]
+        paginas["<b>paginas</b><br>telas, uma por componente"]
+        componentes["<b>componentes</b><br>estrutura, popups, cards, avisos"]
+        servicos_api["<b>servicos-api</b><br>dispara as requisições (fetch);<br>único lugar com os endereços da API"]
     end
 
     subgraph ServidorAplicacao ["&laquo;system&raquo; Servidor de Aplicação — um único processo Node.js"]
         direction TB
 
+        main["<b>main</b><br>raiz de composição: cria as classes<br>concretas e injeta pelo construtor"]
+
         subgraph Apresentacao ["Camada de Apresentação"]
             direction LR
             routes["<b>routes</b><br>Express — método + caminho"]
-            middlewares["<b>middlewares</b><br>login, log, tratamento de erro"]
-            controllers["<b>controllers</b><br>traduz HTTP para o domínio"]
+            middlewares["<b>middlewares</b><br>exigirLogin, tratadorDeErros"]
+            controllers["<b>controllers</b><br>traduz HTTP para o domínio<br>(com parametros e apresentadores)"]
         end
 
         subgraph Dominio ["Camada de Domínio"]
             direction LR
-            Servicos["<b>Serviços</b><br>regras de negócio e controle da transação<br>Vaga · Candidatura · Usuario · Relatorio"]
-            Entidades["<b>Entidades</b><br>Usuario · Projeto · Vaga · Candidatura<br>com seus comportamentos"]
+            Servicos["<b>servicos</b><br>regras de negócio e controle da transação<br>Vaga · Candidatura · Projeto · Atividade<br>Notificacao · Incorporacao · Usuario"]
+            Entidades["<b>entidades</b><br>Usuario · Projeto · Vaga · Candidatura<br>Participacao · Atividade · Notificacao<br>PedidoIncorporacao, com seus comportamentos"]
+            eventos["<b>eventos</b><br>Observer: os serviços publicam,<br>o NotificadorInApp grava os avisos"]
+            apoio_dominio["<b>erros · calendario · busca</b><br>erros sem HTTP, datas de prazo,<br>busca sem acento"]
         end
 
         subgraph Persistencia ["Camada de Persistência"]
             direction LR
-            Interfaces["<b>Interfaces</b><br>a fachada da camada"]
-            Repositorios["<b>Repositórios</b><br>único lugar com SQL"]
-            infra_db["<b>infra_db</b><br>conexões, migrations, seed"]
+            Interfaces["<b>interfaces</b><br>a fachada da camada<br>repositórios e unidade de trabalho"]
+            Repositorios["<b>repositorios</b><br>único lugar com SQL"]
+            infra["<b>infra</b><br>conexão, transação,<br>banco em memória"]
         end
 
+        main -.-> |"&laquo;create&raquo;"| Apresentacao
+        main -.-> |"&laquo;create&raquo;"| Dominio
+        main -.-> |"&laquo;create&raquo;"| Persistencia
         Apresentacao -.-> |"&laquo;use&raquo;"| Dominio
-        Dominio -.-> |"&laquo;use&raquo; — somente pela fachada (passo 6)"| Persistencia
+        controllers -.-> |"&laquo;use&raquo; — só a fachada: tipos de retorno<br>e IUsuarioRepository no SessaoController"| Interfaces
+        Dominio -.-> |"&laquo;use&raquo; — somente pela fachada (passo 6)"| Interfaces
+        Persistencia -.-> |"&laquo;use&raquo; — monta as entidades"| Entidades
     end
 
     subgraph Apoio ["Camada de Apoio de Sistema"]
         direction TB
         subgraph postgres ["PostgreSQL"]
-            sgbd["<b>sgbd</b><br>&laquo;system&raquo; SGBD relacional"]
+            sgbd["<b>sgbd</b><br>&laquo;system&raquo; SGBD relacional<br>Docker, ou PGlite em memória"]
+            scripts_db["<b>db</b><br>01-schema.sql · 02-seed.sql"]
         end
-        note1["Seta tracejada com ponta aberta = dependência.<br>Cada seta desce exatamente um nível: nenhuma camada<br>pula outra, e não há ciclo de dependência."]
+        note1["Seta tracejada com ponta aberta = dependência.<br>Não há ciclo: as entidades não dependem de nenhum pacote;<br>a Persistência só as importa para montar os objetos.<br>O Domínio enxerga a Persistência somente pelas interfaces;<br>a Apresentação também usa essas interfaces direto."]
     end
 
 %% Relacionamentos (Conectando os nós e camadas externas)

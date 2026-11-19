@@ -89,7 +89,7 @@ export class Candidatura {
     this.estado.remover(this, agora);
   }
 
-  /** Segura uma posicao da vaga: EM_ANALISE, ACEITA e CONFIRMADA. */
+  /** Segura uma posicao da vaga: so a CONFIRMADA (o ingresso confirmado no C07). */
   ocupaPosicao(): boolean {
     return this.estado.ocupaPosicao();
   }
