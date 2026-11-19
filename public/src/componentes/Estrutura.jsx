@@ -96,7 +96,7 @@ export function Estrutura({
                   aria-label="Recolher ou expandir o menu">
             <Icone nome="menu" />
           </button>
-          <span className="menu__marca">Connext</span>
+          <span className="menu__marca">Connext<small>Extensão · INF</small></span>
         </div>
 
         <nav className="menu__itens">
@@ -124,6 +124,7 @@ export function Estrutura({
       <div className="menu__fundo" onClick={() => setMenuAberto(false)} />
 
       <div className="palco">
+        <p className="faixa-institucional">Universidade Federal do Rio Grande do Sul · Instituto de Informática</p>
         <header className="cabecalho">
           <button type="button" className="cabecalho__menu" onClick={() => setMenuAberto(true)}
                   aria-label="Abrir o menu" aria-controls="menu">
