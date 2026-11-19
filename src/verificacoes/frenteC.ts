@@ -71,7 +71,7 @@ export async function verificarFrenteC(
   await verificarRegraDeCandidatura(vagas, usuarios, candidaturaService, ferramentas);
   await verificarFiltrosDoC01(vagaService, ferramentas);
   await verificarDetalheDaVaga(vagaService, ferramentas);
-  await verificarProjetoInativoEVagaEsgotada(banco, vagaService, candidaturaService, ferramentas);
+  await verificarProjetoInativoEVagaEsgotada(banco, vagaService, candidaturaService, vagas, ferramentas);
 
   const usuarioService = new UsuarioService(
     banco.unidade,
@@ -224,6 +224,7 @@ async function verificarProjetoInativoEVagaEsgotada(
   banco: BancoEmMemoria,
   vagaService: VagaService,
   candidaturaService: CandidaturaService,
+  vagas: VagaRepository,
   { conferir, esperaErro, novaVaga }: FerramentasDeVerificacao
 ): Promise<void> {
   console.log('\nFrente C - Projeto inativo, vaga esgotada e ids\n');
@@ -244,20 +245,65 @@ async function verificarProjetoInativoEVagaEsgotada(
     await banco.executor.query(`UPDATE projeto SET situacao = 'ATIVO' WHERE id = $1`, [DADOS_PARA_TODOS]);
   }
 
-  console.log('\nVaga esgotada sai do C01');
+  console.log('\nSo o ingresso confirmado consome a vaga');
   const unica = await vagaService.publicar(
     COORDENADORA,
     novaVaga({ titulo: 'Vaga de uma posição', vagasTotais: 1 })
   );
+  const naBusca = async () => (await vagaService.listarAbertas()).some((i) => i.vaga.id === unica.id);
+  const livres = async () => (await vagas.buscarPorId(unica.id))!.vagasRestantes;
+  conferir('com posicao livre, aparece na busca', await naBusca());
+
+  // Tres estudantes concorrem a mesma posicao. Nenhum deles consome a vaga
+  // so por se candidatar ou por ser aprovado.
+  const daAna = await candidaturaService.candidatar(ANA, unica.id, null);
+  const doDiego = await candidaturaService.candidatar(DIEGO, unica.id, null);
+  const doBruno = await candidaturaService.candidatar(BRUNO, unica.id, null);
   conferir(
-    'com posicao livre, aparece na busca',
-    (await vagaService.listarAbertas()).some((i) => i.vaga.id === unica.id)
+    'tres candidaturas em analise nao consomem a posicao',
+    (await livres()) === 1 && (await naBusca()),
+    `${await livres()} livre(s)`
   );
-  await candidaturaService.candidatar(ANA, unica.id, null);
+  await candidaturaService.avaliar(COORDENADORA, daAna.id, 'ACEITAR');
+  await candidaturaService.avaliar(COORDENADORA, doDiego.id, 'ACEITAR');
   conferir(
-    'depois de ocupada a ultima posicao, sai da busca',
-    !(await vagaService.listarAbertas()).some((i) => i.vaga.id === unica.id)
+    'duas aprovadas, sem confirmar, tambem nao consomem',
+    (await livres()) === 1 && (await naBusca()),
+    `${await livres()} livre(s)`
   );
+
+  await candidaturaService.confirmarIngresso(ANA, daAna.id);
+  conferir('confirmar o ingresso consome a posicao', (await livres()) === 0, `${await livres()} livre(s)`);
+  conferir('depois de ocupada a ultima posicao, sai da busca', !(await naBusca()));
+
+  await esperaErro(
+    'o segundo aprovado nao confirma: a vaga ja foi preenchida',
+    RegraDeNegocio,
+    'já foram preenchidas',
+    () => candidaturaService.confirmarIngresso(DIEGO, doDiego.id)
+  );
+  const doDiegoDepois = await candidaturaService.detalhar(DIEGO, doDiego.id);
+  conferir(
+    'a confirmacao recusada nao grava nada (continua aceita, vaga sem posicao negativa)',
+    doDiegoDepois.candidatura.candidatura.status === 'ACEITA' &&
+      doDiegoDepois.historico.length === 2 &&
+      (await livres()) === 0
+  );
+  await esperaErro(
+    'com a vaga cheia, o coordenador nao aprova mais ninguem',
+    RegraDeNegocio,
+    'não tem mais posições livres',
+    () => candidaturaService.avaliar(COORDENADORA, doBruno.id, 'ACEITAR')
+  );
+  conferir(
+    'a aprovacao recusada nao grava nada (continua em analise)',
+    (await candidaturaService.detalhar(BRUNO, doBruno.id)).candidatura.candidatura.status === 'EM_ANALISE'
+  );
+  // Fecha as duas, como o coordenador e o Diego fariam. Nenhuma devolve
+  // posicao, porque nenhuma ocupava.
+  await candidaturaService.avaliar(COORDENADORA, doBruno.id, 'RECUSAR');
+  await candidaturaService.declinarIngresso(DIEGO, doDiego.id, null);
+  conferir('recusar e declinar nao mexem na vaga cheia', (await livres()) === 0, `${await livres()} livre(s)`);
   const detalhe = await vagaService.detalhar(unica.id, DIEGO);
   conferir(
     'mas o detalhe continua abrindo, com o motivo',
@@ -329,7 +375,8 @@ async function verificarDetalheDaVaga(
  *   5 Comunicacao e Divulgacao  Manha  Remoto      6h  Saude, Comunicacao  coord. Rui
  *   e "Desenvolvimento Mobile", publicada aqui com os dados da vaga 2 do seed
  *   (Manha, Remoto, 12h, Saude e Tecnologia, coord. Rui). A vaga 2 tem uma
- *   posicao so, que o teste do C04 ocupa, e por isso sai da busca.
+ *   posicao so, que o verificar.ts preenche (como um ingresso confirmado), e
+ *   por isso sai da busca.
  * A 4 (Apoio em Eletronica) ja encerrou.
  */
 async function verificarFiltrosDoC01(

@@ -36,12 +36,10 @@ class EmAnalise {
   +aceitar(c: Candidatura, agora: Date) void
   +recusar(c: Candidatura, agora: Date) void
   +remover(c: Candidatura, agora: Date) void
-  +ocupaPosicao() boolean
 }
 class Aceita {
   +confirmar(c: Candidatura, agora: Date) void
   +declinar(c: Candidatura, motivo: string [0..1], agora: Date) void
-  +ocupaPosicao() boolean
 }
 class Confirmada {
   +ocupaPosicao() boolean
@@ -109,6 +107,6 @@ NotificadorInApp ..|> ObservadorDeEventos
 NotificadorInApp --> "1" INotificacaoRepository : notificacoes
 PublicadorDeEventos ..> EventoDeDominio : publica
 EventoDeDominio ..> TipoEvento
-note for EstadoBase "Toda ação não sobrescrita lança RegraDeNegocio:<br>a transição não é permitida no status atual.<br>Recusada, Declinada e Removida são finais e<br>não ocupam posição na vaga."
+note for EstadoBase "Toda ação não sobrescrita lança RegraDeNegocio:<br>a transição não é permitida no status atual.<br>ocupaPosicao() é false por padrão: só Confirmada<br>ocupa posição na vaga (o C07 desconta a posição).<br>Recusada, Declinada e Removida são finais."
 note for PublicadorDeEventos "Os serviços publicam o evento depois do COMMIT.<br>Um canal novo (e-mail) entra como mais um<br>observador, sem alterar os serviços."
 note for NotificadorInApp "Atributos cujo tipo é outra classe (ex.: -vagas: IVagaRepository)<br>são associações navegáveis da classe dona para esse tipo,<br>na notação de atributo da UML (multiplicidade 1, salvo [0..1] ou [0..*])."

@@ -16,8 +16,9 @@ export interface IUnidadeDeTrabalho {
    * Executa `trabalho` dentro de UMA transacao de banco.
    *
    * Confirma (COMMIT) se o trabalho terminar sem erro; desfaz tudo (ROLLBACK)
-   * se qualquer passo falhar. E esta garantia que impede duas candidaturas
-   * simultaneas de ocuparem a mesma ultima posicao de uma vaga.
+   * se qualquer passo falhar. Junto com a trava de `buscarParaAtualizacao`, e
+   * esta garantia que impede duas confirmacoes de ingresso simultaneas de
+   * ocuparem a mesma ultima posicao de uma vaga.
    */
   emTransacao<T>(trabalho: (tx: Transacao) => Promise<T>): Promise<T>;
 }

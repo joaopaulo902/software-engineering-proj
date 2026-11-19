@@ -17,7 +17,7 @@ const SITUACAO = {
   ACEITA: 'Você aprovou esta candidatura. Falta o estudante confirmar o ingresso.',
   CONFIRMADA: 'O estudante confirmou o ingresso. Oficialize a entrada dele pelos meios institucionais.',
   RECUSADA: 'Você recusou esta candidatura.',
-  DECLINADA: 'O estudante declinou o ingresso e a posição voltou a ficar disponível.',
+  DECLINADA: 'O estudante declinou o ingresso.',
   REMOVIDA: 'O estudante removeu esta candidatura.',
   CANCELADA: 'Esta candidatura foi cancelada.'
 };
@@ -119,13 +119,13 @@ export function CandidaturaRecebida({ params, definirTitulo, recarregar }) {
         {aprovar ? (
           <p>
             <strong>{nome}</strong> é notificado e precisa confirmar o ingresso na vaga{' '}
-            <strong>{candidatura.vagaTitulo}</strong>. A posição fica reservada até lá.
+            <strong>{candidatura.vagaTitulo}</strong>. A posição só é ocupada quando ele confirmar.
           </p>
         ) : (
           <>
             <p>
               <strong>{nome}</strong> é notificado de que não foi selecionado para a vaga{' '}
-              <strong>{candidatura.vagaTitulo}</strong>, e a posição volta a ficar disponível.
+              <strong>{candidatura.vagaTitulo}</strong>.
             </p>
             <p className="discreto">Depois de recusada, a candidatura não pode ser reavaliada.</p>
           </>

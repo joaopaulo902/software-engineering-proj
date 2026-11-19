@@ -127,10 +127,20 @@ async function principal(): Promise<void> {
   conferir('status inicial Em Analise', candidatura.estaEmAnalise(), candidatura.status);
   const depoisDevWeb = (await vagas.buscarPorId(DEV_WEB))!.vagasRestantes;
   conferir(
-    'posicao reservada na vaga',
-    depoisDevWeb === antesDevWeb - 1,
+    'candidatar nao consome posicao da vaga',
+    depoisDevWeb === antesDevWeb,
     `antes ${antesDevWeb}, depois ${depoisDevWeb}`
   );
+  conferir(
+    'com a candidatura em analise, a vaga continua aberta',
+    (await vagas.buscarPorId(DEV_WEB))!.estaAberta()
+  );
+
+  // A unica posicao da Desenvolvimento Web passa a ser de alguem que
+  // confirmou o ingresso. O fluxo completo (candidatar, aprovar, confirmar)
+  // e conferido nas frentes A e C; aqui ninguem do seed pode entrar na equipe
+  // da Saude Digital sem mudar o que as outras verificacoes esperam.
+  await banco.unidade.emTransacao((tx) => vagas.reservarUmaPosicao(DEV_WEB, tx));
 
   console.log('\nFluxos alternativos');
   await esperaErro(

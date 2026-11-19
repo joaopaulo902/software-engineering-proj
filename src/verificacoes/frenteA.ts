@@ -113,10 +113,10 @@ export async function verificarFrenteA(
   const nova = () => new Candidatura(0, MONITORIA, DIEGO, 'EM_ANALISE', null, new Date());
 
   const emAnalise = nova();
-  conferir('em analise ocupa posicao', emAnalise.ocupaPosicao());
+  conferir('em analise nao ocupa posicao', !emAnalise.ocupaPosicao());
   emAnalise.aceitar(new Date());
   conferir('aceitar leva a ACEITA', emAnalise.status === 'ACEITA', emAnalise.status);
-  conferir('aceita continua ocupando posicao', emAnalise.ocupaPosicao());
+  conferir('aceita ainda nao ocupa posicao (falta confirmar)', !emAnalise.ocupaPosicao());
   conferir(
     'a transicao anota uma linha de historico',
     emAnalise.historicoNaoGravado().length === 1 &&
@@ -181,9 +181,9 @@ export async function verificarFrenteA(
   }
   conferir('recusada, declinada, removida e confirmada nao aceitam nenhuma acao', todasAsAcoesRecusadas);
   conferir(
-    'recusada, declinada e removida nao ocupam posicao',
-    (['RECUSADA', 'DECLINADA', 'REMOVIDA'] as StatusCandidatura[]).every(
-      (s) => !new Candidatura(1, 1, 1, s, null, new Date()).ocupaPosicao()
+    'so a confirmada ocupa posicao',
+    STATUS_DE_CANDIDATURA.every(
+      (s) => new Candidatura(1, 1, 1, s, null, new Date()).ocupaPosicao() === (s === 'CONFIRMADA')
     )
   );
   conferir(
@@ -197,8 +197,8 @@ export async function verificarFrenteA(
   const doDiego = await servico.candidatar(DIEGO, MONITORIA, 'Gosto de ensinar Python.');
   conferir('candidatura em analise', doDiego.status === 'EM_ANALISE', doDiego.status);
   conferir(
-    'posicao reservada na vaga',
-    (await restantes(MONITORIA)) === antesMonitoria - 1,
+    'candidatar nao consome posicao da vaga',
+    (await restantes(MONITORIA)) === antesMonitoria,
     `antes ${antesMonitoria}, depois ${await restantes(MONITORIA)}`
   );
   const historicoInicial = await candidaturas.listarHistorico(doDiego.id);
@@ -224,7 +224,7 @@ export async function verificarFrenteA(
   const daCarlaDias = await servico.candidatar(CARLA_DIAS, COMUNICACAO, null);
 
   // Ana participa da Saude Digital pelo seed: nao se candidata a vaga dela.
-  // Se pudesse, a candidatura aceita prenderia a posicao, porque o C07 a recusaria.
+  // Se pudesse, a candidatura aceita ficaria parada, porque o C07 a recusaria.
   const antesDaAna = await restantes(COMUNICACAO);
   await esperaErro(
     'quem ja esta na equipe nao se candidata a vaga do mesmo projeto',
@@ -232,7 +232,7 @@ export async function verificarFrenteA(
     'já faz parte',
     () => servico.candidatar(ANA, COMUNICACAO, null)
   );
-  conferir('a recusa nao reserva posicao', (await restantes(COMUNICACAO)) === antesDaAna);
+  conferir('a recusa nao mexe na vaga', (await restantes(COMUNICACAO)) === antesDaAna);
 
   console.log('\nDupla A - C05 Minha candidatura\n');
 
@@ -317,10 +317,14 @@ export async function verificarFrenteA(
 
   console.log('\nDupla A - C11 Avaliar candidatura\n');
 
-  const reservadas = await restantes(MONITORIA);
+  const antesDeAprovar = await restantes(MONITORIA);
   const aceita = await servico.avaliar(COORDENADORA, doDiego.id, 'ACEITAR');
   conferir('aprovar leva a ACEITA', aceita.status === 'ACEITA', aceita.status);
-  conferir('a posicao continua reservada', (await restantes(MONITORIA)) === reservadas);
+  conferir(
+    'aprovar nao consome posicao (so a confirmacao consome)',
+    (await restantes(MONITORIA)) === antesDeAprovar,
+    `antes ${antesDeAprovar}, depois ${await restantes(MONITORIA)}`
+  );
   conferir(
     'o historico ganha a linha ACEITA',
     (await candidaturas.listarHistorico(doDiego.id)).map((h) => h.status).join() === 'EM_ANALISE,ACEITA'
@@ -341,8 +345,8 @@ export async function verificarFrenteA(
   const recusada = await servico.avaliar(COORDENADORA, daAna.id, 'RECUSAR');
   conferir('recusar leva a RECUSADA', recusada.status === 'RECUSADA', recusada.status);
   conferir(
-    'recusar devolve a posicao a vaga',
-    (await restantes(MONITORIA)) === antesDeRecusar + 1,
+    'recusar nao mexe na vaga (a candidatura nao ocupava posicao)',
+    (await restantes(MONITORIA)) === antesDeRecusar,
     `antes ${antesDeRecusar}, depois ${await restantes(MONITORIA)}`
   );
   const avisoDeRecusa = await avisosSobre(ANA, 'RESULTADO_DA_AVALIACAO', daAna.id);
@@ -383,8 +387,8 @@ export async function verificarFrenteA(
   );
   const statusFinal = await statusDe(CARLA_DIAS, disputada.id);
   conferir(
-    'a posicao bate com quem venceu',
-    (await restantes(disputada.vagaId)) === antesDaDisputa + (statusFinal === 'RECUSADA' ? 1 : 0),
+    'a vaga nao muda, venca quem vencer',
+    (await restantes(disputada.vagaId)) === antesDaDisputa,
     `${statusFinal}, ${antesDaDisputa} -> ${await restantes(disputada.vagaId)}`
   );
   conferir(
@@ -413,7 +417,11 @@ export async function verificarFrenteA(
     relida.previstoAte !== null && formatarDia(relida.previstoAte) === esperado,
     `${relida.previstoAte && formatarDia(relida.previstoAte)} (esperado ${esperado})`
   );
-  conferir('a posicao continua ocupada', (await restantes(MONITORIA)) === antesDeConfirmar);
+  conferir(
+    'confirmar consome uma posicao da vaga',
+    (await restantes(MONITORIA)) === antesDeConfirmar - 1,
+    `antes ${antesDeConfirmar}, depois ${await restantes(MONITORIA)}`
+  );
   conferir(
     'entra na equipe do projeto',
     (await participacoes.listarDoProjeto(ROBOTICA)).some((p) => p.participacao.usuarioId === DIEGO)
@@ -439,7 +447,13 @@ export async function verificarFrenteA(
   );
 
   console.log('\nCandidatura aceita do seed (Bruno, sem duracao)');
+  const antesDoBruno = await restantes(COMUNICACAO);
   const doBruno = await servico.confirmarIngresso(BRUNO, doBrunoNaComunicacao.id);
+  conferir(
+    'a confirmacao do aceito do seed consome a posicao',
+    (await restantes(COMUNICACAO)) === antesDoBruno - 1,
+    `antes ${antesDoBruno}, depois ${await restantes(COMUNICACAO)}`
+  );
   conferir(
     'vaga sem duracao: participacao sem data prevista',
     doBruno.projetoId === SAUDE_DIGITAL && doBruno.previstoAte === null
@@ -452,14 +466,14 @@ export async function verificarFrenteA(
   console.log('\nDupla A - C18 Remover candidatura\n');
 
   const aRemover = await servico.candidatar(DIEGO, COMUNICACAO, null);
-  const comElaReservada = await restantes(COMUNICACAO);
+  const antesDeRemover = await restantes(COMUNICACAO);
   await esperaErro('outro estudante nao remove', NaoEncontrado, 'não encontrada', () =>
     servico.remover(ANA, aRemover.id)
   );
   await servico.remover(DIEGO, aRemover.id);
   conferir(
-    'remover devolve a posicao a vaga',
-    (await restantes(COMUNICACAO)) === comElaReservada + 1
+    'remover nao mexe na vaga (a candidatura nao ocupava posicao)',
+    (await restantes(COMUNICACAO)) === antesDeRemover
   );
   conferir(
     'some da lista do estudante',
@@ -522,7 +536,7 @@ export async function verificarFrenteA(
 
   console.log('\nDupla A - C07 fluxo 2.a: declinar o ingresso\n');
 
-  // Sem poder confirmar, o Diego declina: e a saida que libera a posicao.
+  // Sem poder confirmar, o Diego declina: e a saida que encerra a candidatura.
   const motivo = 'Já entrei na equipe por outro caminho.';
   const antesDeDeclinar = await restantes(COMUNICACAO);
   await servico.declinarIngresso(DIEGO, deNovo.id, motivo);
@@ -534,8 +548,8 @@ export async function verificarFrenteA(
     declinada.historico[declinada.historico.length - 1]?.observacao === motivo
   );
   conferir(
-    'declinar devolve a posicao a vaga',
-    (await restantes(COMUNICACAO)) === antesDeDeclinar + 1,
+    'declinar nao mexe na vaga (a candidatura aceita nao ocupava posicao)',
+    (await restantes(COMUNICACAO)) === antesDeDeclinar,
     `antes ${antesDeDeclinar}, depois ${await restantes(COMUNICACAO)}`
   );
   conferir(

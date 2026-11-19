@@ -17,7 +17,9 @@ import type {
  *
  * O servico nunca compara status com `if`: ele pede a acao a candidatura, e o
  * estado atual aceita ou lanca RegraDeNegocio. A regra de "quem ocupa uma
- * posicao na vaga" tambem mora aqui (`ocupaPosicao`).
+ * posicao na vaga" tambem mora aqui (`ocupaPosicao`): so a CONFIRMADA ocupa.
+ * Candidatar-se (EM_ANALISE) e ser aceito pela coordenacao (ACEITA) nao
+ * consomem vaga; a posicao so e descontada quando o estudante confirma.
  */
 export interface EstadoCandidatura {
   status(): StatusCandidatura;
@@ -31,9 +33,9 @@ export interface EstadoCandidatura {
 }
 
 /**
- * Comportamento padrao: toda acao nao sobrescrita e proibida no estado atual.
- * Recusada, Declinada e Removida nao sobrescrevem nada: sao finais e nao
- * ocupam posicao.
+ * Comportamento padrao: toda acao nao sobrescrita e proibida no estado atual,
+ * e o estado nao ocupa posicao (so Confirmada sobrescreve `ocupaPosicao`).
+ * Recusada, Declinada e Removida nao sobrescrevem nada: sao finais.
  */
 export abstract class EstadoBase implements EstadoCandidatura {
 
@@ -107,11 +109,6 @@ export class EmAnalise extends EstadoBase {
     c.transicionarPara(new Removida(), agora);
   }
 
-  /** A posicao e reservada no C04, para dois estudantes nao disputarem a mesma. */
-  ocupaPosicao(): boolean {
-    return true;
-  }
-
 }
 
 /** Aprovada pelo coordenador (C11). Falta o estudante confirmar ou declinar (C07). */
@@ -133,13 +130,12 @@ export class Aceita extends EstadoBase {
 
   }
 
-  ocupaPosicao(): boolean {
-    return true;
-  }
-
 }
 
-/** O estudante entrou na equipe (C07). A posicao fica com ele. */
+/**
+ * O estudante entrou na equipe (C07). E o UNICO estado que ocupa posicao: a
+ * vaga so e consumida quando o estudante aceito confirma o ingresso.
+ */
 export class Confirmada extends EstadoBase {
 
   status(): StatusCandidatura {
